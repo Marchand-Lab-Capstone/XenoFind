@@ -1,4 +1,4 @@
-#Marchand Lab Capstone Project
+# Marchand Lab Capstone Project
 
 Initial read me text for capstone 
 
