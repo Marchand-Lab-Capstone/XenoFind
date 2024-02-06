@@ -2,6 +2,10 @@
 
 Initial read me text for capstone 
 
+
+## development-sebastian
+Experimental Branch for Sebastian's work & contributions
+
 ### Tentative Objectives 
 
 Winter quarter:
@@ -21,3 +25,4 @@ o High accuracy, low precision
 • Tier 3 – Develop an end-to-end basecalling pipeline that uses a (PyTorch model, such as a
 LSTM RNN or other) to identify position and identity of XNA within a sequence from a raw data input.
 o   High accuracy, high precision
+
