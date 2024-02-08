@@ -1,0 +1,19 @@
+User:
+Story?
+A researcher named Jeff, quiere performado de-novo bsae calling
+He is a biotech technician, 
+el trabajo a un comanero que trabaja con basos modificados
+se recibieron samples con modificados basos pero no tiene informciaon
+donde estan lost basos modificados?
+Jeff se entrado el informacion de naonopore sequencing entre sus information
+quiere sequencing or locations of los basos modificados or ranges
+Jeff quiere a UI por que no quiero
+
+
+
+Let us never write the jayson story
+Jayson has not slept in 48 hours, and Jorge has called on him to sequence de-novo sequences
+Jayson says he wants to do this
+He does not want to be staring at a fast5 file for 10 hours
+He wants to drag and drop files so no thoughts head empty
+UI interact w database/can save sequences, color code/visuals might be needed
