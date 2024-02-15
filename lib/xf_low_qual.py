@@ -1,7 +1,8 @@
 import os
 import glob
 import sys
-from xd_params import * 
+from xf_params import * 
+from xf_params import *
 
 #Initialize
 #working_dir = os.path.expanduser(sys.argv[1]) #will be final impolemented version, will be testing in large scale script later 
@@ -26,4 +27,5 @@ if bam_to_fastq == True:
     cmd = 'samtools bam2fq ' + os.path.join(bam_dir,'bc.bam') + ' > ' + os.path.join(fastq_dir, 'bc.fastq')
     os.system(cmd) 
 
+if analyze_fastq == True: 
 
