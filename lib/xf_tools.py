@@ -8,6 +8,8 @@ By: By: J. Sumabat, N. Lai, Y. Huang, S. Peck, H. Kawabe, N. Kaplan, J. A. March
 
 '''
 #####################################################################################
+import os
+from pathlib import Path
 
 #Scans directory and subdirectory to get proper fast5 file path. Not explicitly handled with pod5 commands
 def get_fast5_subdir(fast5_dir): 
