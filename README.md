@@ -1,8 +1,12 @@
-# XenoFind 
+# XenoFind: A de novo XNA detection pipeline
 
-## Overview 
+## About 
 
-XenoFind is a modified/synthetic base detection pipeline stemming from Chem E 546/547 from the University of Washington. The purpose of this pipeline is to identify regions within DNA where non-standard bases may be present. This information will 
+XenoFind is a modified/synthetic base detection pipeline stemming from Chem E 546/547 in collaboration with the Marchand Group at the University of Washington. XenoFind was motivated by the lack of de novo unnatural base-pairing xenonucleic acid (ubpXNAs or XNAs) basecalling pipelines and aims to bridge the gap between canonical & modified basecalling. The purpose of this pipeline is to identify regions within DNA where non-standard bases may be present and output that information in bioinformatic relevant file formats to be used in downstream analysis. 
+
+## Dependencies 
+
+## XenoFind command groups 
 
 ### Tentative Objectives 
 
