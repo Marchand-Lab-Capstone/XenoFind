@@ -1,6 +1,7 @@
 import os
 import glob
 import sys
+import pysam
 from pathlib import Path
 from xf_params import * 
 from xf_tools import *
@@ -13,6 +14,7 @@ from xf_tools import *
 #Initialize (manual input of datasets) 
 working_dir = '/home/marchandlab/github/jay/capstone/xenofind/xenofind_test/240215_lq_tests'
 raw_dir = '/home/marchandlab/DataAnalysis/Sumabat/231117_PZn_libv4_minion/20231117_1644_MN37138_FAX70078_76df2751/subset_fast5'
+ref_fasta = '' #this is ground truth for now, will be substituted by consensus sequence formation pipeline once that is done (inside lab project)
 
 # Generate Required Directories
 working_dir = check_make_dir(working_dir)
@@ -48,8 +50,36 @@ if basecall_pod == True:
     cmd = os.path.expanduser(basecaller_path)+ ' basecaller hac  --no-trim --emit-fastq ' + pod_dir + ' > '+os.path.join(bc_dir, 'bc.fastq') #can probably do this in a bam file as well 
     os.system(cmd)
 
-if merge_fastq == True: 
-    cmd = ''
-
 if analyze_fastq == True: 
-    ''
+    
+    def extract_read_info(bam_file_path):
+        """ 
+        ChatGPT first pass for relevant bam info extraction
+        """
+        # Open the BAM file
+        with pysam.AlignmentFile(bam_file_path, "rb") as bamfile:
+            for read in bamfile:
+                # Check if the read is mapped
+                if not read.is_unmapped:
+                    # Position of the read relative to the reference
+                    position = read.reference_start
+                    
+                    # Query name of the read
+                    query_name = read.query_name
+                    
+                    # Quality string of the read
+                    quality_string = read.qual
+                    
+                    # Sequence basecalled
+                    sequence_basecalled = read.query_sequence
+                    
+                    # Quality score string (ASCII representation)
+                    quality_score_string = read.query_qualities
+                    
+                    # Converting quality score string from array of integers to ASCII
+                    quality_score_string_ascii = ''.join([chr(q + 33) for q in quality_score_string])
+                    
+                    # You can process these variables further as per your requirements
+                    print(f"Query Name: {query_name}, Position: {position}, Sequence: {sequence_basecalled}, Quality String: {quality_string}, Quality Score String: {quality_score_string_ascii}")
+                else:
+                    print(f"Read {read.query_name} is unmapped and does not have a reference position.")
