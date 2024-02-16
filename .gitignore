@@ -50,6 +50,8 @@ coverage.xml
 .pytest_cache/
 cover/
 
+# Running Tests
+xenofind_test/
 # Translations
 *.mo
 *.pot
