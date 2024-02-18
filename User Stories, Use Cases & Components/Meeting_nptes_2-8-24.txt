@@ -1,0 +1,82 @@
+Notes from meeting W Jorge on Feb 8, 2024
+ - General motivation behind project - Antibodies, primarily used in theraputics & cancer treat
+ment specifically. 
+Antibody generation process:
+ell bank storg -=working cell - mvc thaw - tflask shake - shake flask steps  biroeactor cell culture, cstr batch continual scale
+- eventually do centrifugation to primary recovery in vessel functioning as purification
+
+Year over year, follows population cap gaph, in terms of g/l on rpocess improvement
+de-novo synthesis is designed to exceed classical synthesis, which involves being able to readily identify and mark specific genome sequences on antibodies that are designed
+General goal : aptameer that are able to function akin to antibodies like target binding or the like
+historical method involved natural selection and development within biological systems
+aptamers are syntheticlaly evolved as opposed to in vitro evolution - eg, selex
+In vitro evolution is not viable for xDNA/xRNA
+Existing technology *theoretically* agnostic to base type
+as threading through pore, ion goes past generating current that can be measured
+Sequence of dna translates to signal recieved, but not derived from first principles
+SOA uses ml for this rather than base scientific theory
+
+Goal:
+From nanopore traces, Can We Figure Out where there is, or wherre there might be, modified letters. Can we tell where those are from
+any given raw signal. We have generated training data of a variety of forms
+this was done through knowledge of exact position of each xrna in a sequence, and then see
+"can we throw something at it."
+iow, we have a ground truth whith which to proress.
+"Detection" of modified nucleotides: recognizing that it is not ATCG
+Is there something we can try to apply to solve these problems
+Learn to work with the type of data for what we produce
+in select cycle, enrichment is done. Millin reads, each comprised of 10,000 variants,
+observed 100 times each, to develop reference 
+Establish benchmarking metrics for how effective different strategies are
+
+
+Agnostic of milestones: What is what you imagine using this tool to be like?
+1: Contains modified base, y/n
+2: Range of sequences, fine tuning the range
+3: 
+
+- these are the sequences in your dataset, each 
+Takes in fast5, fastq, can read variety of bases, adopted from field of epigenetics
+1-5 out of 40 to 60 modified bases, use nearest standard looking sequece, 
+out of 40-60, get all but 5-6 correct 
+- level of confidence score for every letter, and depending on that.
+Positional probability of each base
+
+
+What kind of methods wouldbe deployed to break down the reads by sequence and system
+standard step is consensus building, done routine. Group up all sequences by how similar each are, and group up to call "consensus"
+-Are you aware of any existing packages for consensus building?
+Racone & Medaca, oxford nanopore pipelines, routinely used for assembly and consensus building
+Non nanopore pipelines like euclus and vsearch are used, but that's not specifically relevant, usually used for illumina sequencing (low error rate), but not really
+applicable here
+
+
+
+
+Remora can be used (oxford nanopore remora, published github)
+remora is ml training package that should be able to solve problem, but is way more difficult to work with
+Dorado written in C, Remora written in python
+Show plotting of raw data, get reads done 
+EOQ: Worth thinking about, too vague a question to ask a classifier? 
+Time is stochastic for hw long it takes to go through pore, duration of read is potentially useful
+raw data points, ave over obs window, dwell time, sampling at 5 MHz, (double check)
+
+
+If needed, we can stick to P and Z as initial xenobases
+NAME IDEA: Xenobased
+if there's data that could be useful , let know
+
+
+2/13/2024
+Move tables: Alignment
+ - If we have a reference file of a basic sequence, and a basic sequence that aligns , we can then map the respective raw signal of the sequence into the characters that are basecalled. For our purposes, not that important, but it is taling the actual bases and making a relationship betweeen signal and the chars
+
+What do we really care about, what knowledge do we need about the nanopore sequences
+Residence time due to chemical structure, naye? 
+samtools.github.io/hts-specs/SAMv1.pdf
+if we are doing raw basecall, we have a handfull of bits and bitmapping
+stores characters of basecalls, 
+
+
+Demo of current existing pipelines. 
+overakk oioekubem tajes a n
