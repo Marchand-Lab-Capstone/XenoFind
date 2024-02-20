@@ -24,6 +24,10 @@ bc_dir = check_make_dir(os.path.join(processing_dir, 'basecall/'))
 bam_dir = check_make_dir(os.path.join(processing_dir, 'bam/'))
 fastq_dir = check_make_dir(os.path.join(processing_dir, 'fastq/'))
 
+'''
+NOTE: 
+WE CAN ADD A PART WHICH WILL AUTO INSTALL DORADO INTO THIS WORKING DIRECTORY AFTER THE FIRST TIME THE PROGRAM IS CALLED. MIGHT BE WORTH DOING
+''''
 #Step 1: Generate or merge pod5 files if needed
 file_type = os.listdir(raw_dir)
 # Check if the directory is not empty
