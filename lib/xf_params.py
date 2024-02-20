@@ -49,11 +49,8 @@ write_gaps = False
 #Re-basecall pod5 file. Required if new reference files are being used. 
 basecall_pod = True
 
-#Merge Outputted Fastq Files
-merge_fastq = False
-
 #Perform Quality Score Analysis 
-analyze_fastq = False
+analyze_fastq = True
 ############################################################
 
 

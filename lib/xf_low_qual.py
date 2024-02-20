@@ -12,7 +12,7 @@ from xf_tools import *
 
 
 #Initialize (manual input of datasets) 
-working_dir = '/home/marchandlab/github/jay/capstone/xenofind/xenofind_test/240215_lq_tests'
+working_dir = '/home/marchandlab/github/jay/capstone/xenofind/xenofind_test/240216_lq_tests'
 raw_dir = '/home/marchandlab/DataAnalysis/Sumabat/231117_PZn_libv4_minion/20231117_1644_MN37138_FAX70078_76df2751/subset_fast5'
 ref_fasta = '' #this is ground truth for now, will be substituted by consensus sequence formation pipeline once that is done (inside lab project)
 
@@ -47,7 +47,7 @@ else:
     
 if basecall_pod == True:
     print('XenoFind [STATUS] - Performing basecalling using Dorado')
-    cmd = os.path.expanduser(basecaller_path)+ ' basecaller hac  --no-trim --emit-fastq ' + pod_dir + ' > '+os.path.join(bc_dir, 'bc.fastq') #can probably do this in a bam file as well 
+    cmd = os.path.expanduser(basecaller_path)+ ' basecaller hac  --no-trim  ' + pod_dir + ' > '+os.path.join(bc_dir, 'bc.bam') #can probably do this in a bam file as well 
     os.system(cmd)
 
 if analyze_fastq == True: 
@@ -83,3 +83,4 @@ if analyze_fastq == True:
                     print(f"Query Name: {query_name}, Position: {position}, Sequence: {sequence_basecalled}, Quality String: {quality_string}, Quality Score String: {quality_score_string_ascii}")
                 else:
                     print(f"Read {read.query_name} is unmapped and does not have a reference position.")
+    extract_read_info(os.path.join(bc_dir, 'bc.bam'))
