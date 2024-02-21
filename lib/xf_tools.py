@@ -1,6 +1,6 @@
 #####################################################################################
 ''' 
-tools.py
+xf_ools.py
 
 Useful functions to be called on  by other scripts.
 
@@ -13,6 +13,9 @@ from pathlib import Path
 
 #Scans directory and subdirectory to get proper fast5 file path. Not explicitly handled with pod5 commands
 def get_fast5_subdir(fast5_dir): 
+    """
+    This function takes in the inputted fast5 directory and checks that fast5 files are present
+    """
     path = os.path.normpath(os.path.expanduser(fast5_dir))
     if os.path.exists(path):
         fast5_files = list(Path(path).rglob("*.fast5" ))
@@ -29,6 +32,9 @@ def get_fast5_subdir(fast5_dir):
 
 #Scans directory and subdirectory to get proper pod5 file path. 
 def get_pod5_subdir(pod5_dir): 
+    """
+    This function takes in the pod5 directory and checks that pod5 files are present 
+    """
     path = os.path.normpath(os.path.expanduser(pod5_dir))
     if os.path.exists(path):
         pod5_files = list(Path(path).rglob("*.pod5" ))
@@ -45,6 +51,9 @@ def get_pod5_subdir(pod5_dir):
 
 #Check if working directory exists, if not create it. 
 def check_make_dir(directory):
+    """
+    This function is a version of os.makedirs with added print statements to update the user
+    """
     directory = os.path.expanduser(directory)
     if not os.path.isdir(directory):
         os.makedirs(directory)
@@ -53,5 +62,32 @@ def check_make_dir(directory):
 
 #Fast5 to pod5 conversion if fast5 files inputted
 def cod5_to_fast5(fast5_input, pod5_output):
+    """
+    This function calls the program 'pod5' to convert and merge an inputted fast5 dataset into the pod5 format (single file)
+    """
     cmd = 'pod5 convert fast5 '+fast5_input+'/*.fast5 -o '+pod5_output
     os.system(cmd)
+
+#Merge pod5 files
+def pod5_merge(pod5_input, merged_pod5):
+    """
+    This function calls the program 'pod5' to merge a set of pod5 files into a single pod5 file
+    """
+    cmd = 'pod5 merge '+ pod5_input+'/*.pod5 -o ' + merged_pod5
+    os.system(cmd)
+    
+#BAM file primary read filter 
+def filter_primary_alignments(input_bam, output_bam):
+    """
+    This function uses pysam to loop through an aligned bam file and removes any reads that are unaligned, secondary alignments, or supplementary alignments to be left with a dataset only containing primary, useful alignments.
+    """
+    cmd = 'samtools index ' + input_bam #creates index file for BAM
+    os.system(cmd)
+    with pysam.AlignmentFile(input_bam, "rb") as infile, \
+         pysam.AlignmentFile(output_bam, "wb", header=infile.header) as outfile:
+
+        for read in infile:
+            if not read.is_secondary and not read.is_supplementary and not read.is_unmapped:
+                outfile.write(read)
+
+    print(f"Filtered BAM file saved to {output_bam}")
