@@ -47,7 +47,7 @@ write_gaps = False
 ##Analysis instructions 
 
 #Re-basecall pod5 file. Required if new reference files are being used. 
-basecall_pod = True
+basecall_pod = False
 
 #Perform Quality Score Analysis 
 analyze_fastq = True

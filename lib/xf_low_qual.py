@@ -2,6 +2,7 @@ import os
 import glob
 import sys
 import pysam
+import numpy as np
 from pathlib import Path
 from xf_params import * 
 from xf_tools import *
@@ -12,9 +13,11 @@ from xf_tools import *
 
 
 #Initialize (manual input of datasets) 
-working_dir = '/home/marchandlab/github/jay/capstone/xenofind/xenofind_test/240216_lq_tests'
-raw_dir = '/home/marchandlab/DataAnalysis/Sumabat/231117_PZn_libv4_minion/20231117_1644_MN37138_FAX70078_76df2751/subset_fast5'
-ref_fasta = '' #this is ground truth for now, will be substituted by consensus sequence formation pipeline once that is done (inside lab project)
+
+#using dataset nick generated to test 
+working_dir = '/home/marchandlab/github/jay/capstone/xenofind/xenofind_test/240220_lq_tests'
+raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5'
+ref_fasta = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/reference/BSn_90mer_xr_train_can.fa' #this is ground truth for now, will be substituted by consensus sequence formation pipeline once that is done (inside lab project)
 
 # Generate Required Directories
 working_dir = check_make_dir(working_dir)
@@ -27,7 +30,7 @@ fastq_dir = check_make_dir(os.path.join(processing_dir, 'fastq/'))
 '''
 NOTE: 
 WE CAN ADD A PART WHICH WILL AUTO INSTALL DORADO INTO THIS WORKING DIRECTORY AFTER THE FIRST TIME THE PROGRAM IS CALLED. MIGHT BE WORTH DOING
-''''
+'''
 #Step 1: Generate or merge pod5 files if needed
 file_type = os.listdir(raw_dir)
 # Check if the directory is not empty
@@ -51,7 +54,7 @@ else:
     
 if basecall_pod == True:
     print('XenoFind [STATUS] - Performing basecalling using Dorado')
-    cmd = os.path.expanduser(basecaller_path)+ ' basecaller hac  --no-trim  ' + pod_dir + ' > '+os.path.join(bc_dir, 'bc.bam') #can probably do this in a bam file as well 
+    cmd = os.path.expanduser(basecaller_path)+ ' basecaller hac  --no-trim  ' + pod_dir + ' > '+os.path.join(bc_dir, 'bc.bam') + ' --reference ' + ref_fasta#can probably do this in a bam file as well 
     os.system(cmd)
 
 if analyze_fastq == True: 
@@ -60,31 +63,29 @@ if analyze_fastq == True:
         """ 
         ChatGPT first pass for relevant bam info extraction
         """
+        read_info = []
         # Open the BAM file
         with pysam.AlignmentFile(bam_file_path, "rb") as bamfile:
             for read in bamfile:
                 # Check if the read is mapped
                 if not read.is_unmapped:
-                    # Position of the read relative to the reference
-                    position = read.reference_start
-                    
-                    # Query name of the read
-                    query_name = read.query_name
-                    
-                    # Quality string of the read
-                    quality_string = read.qual
-                    
-                    # Sequence basecalled
-                    sequence_basecalled = read.query_sequence
-                    
-                    # Quality score string (ASCII representation)
-                    quality_score_string = read.query_qualities
-                    
-                    # Converting quality score string from array of integers to ASCII
-                    quality_score_string_ascii = ''.join([chr(q + 33) for q in quality_score_string])
-                    
-                    # You can process these variables further as per your requirements
-                    print(f"Query Name: {query_name}, Position: {position}, Sequence: {sequence_basecalled}, Quality String: {quality_string}, Quality Score String: {quality_score_string_ascii}")
+                    features = [
+                    read.query_name,  # Query name of the read
+                    read.query_sequence,  # Sequence basecalled
+                    read.reference_start,  # Position of the read relative to the reference
+                    read.query_qualities  # Quality scores of the read (numerical)
+                    ]
+                    read_info.append(features)
                 else:
                     print(f"Read {read.query_name} is unmapped and does not have a reference position.")
-    extract_read_info(os.path.join(bc_dir, 'bc.bam'))
+            return read_info
+    read_info = extract_read_info(os.path.join(bc_dir, 'bc.bam'))
+    
+    print(read_info) #little more than 50% alignment to ground truth for single sequence context
+    
+    #Predict XNA position using quality string analysis 
+    def xna_guess(read_info):
+        """
+        This function will perform a statistical test on a per read basis 
+        """
+        q_score = read_info
