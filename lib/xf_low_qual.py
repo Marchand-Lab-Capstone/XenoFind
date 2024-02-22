@@ -84,6 +84,7 @@ if analyze_fastq == True:
     print(read_info) #little more than 50% alignment to ground truth for single sequence context
     
     #Predict XNA position using quality string analysis 
+    #Need to make it so reads are grouped by which sequence its aligned to (our current dataset is single sequence context)
     def xna_guess(read_info):
         """
         This function will perform a statistical test on a per read basis 
