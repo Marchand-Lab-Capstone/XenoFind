@@ -53,15 +53,17 @@ else:
     sys.exit()
     
 if basecall_pod == True:
+    #Perform an initial basecalling with a reference file to generate a bam file with all necessary read information 
     print('XenoFind [STATUS] - Performing basecalling using Dorado')
     cmd = os.path.expanduser(basecaller_path)+ ' basecaller hac  --no-trim  ' + pod_dir + ' > '+os.path.join(bc_dir, 'bc.bam') + ' --reference ' + ref_fasta#can probably do this in a bam file as well 
     os.system(cmd)
 
+    #Data filtering here maybe, leaving all data reads for now 
 if analyze_fastq == True: 
     
     def extract_read_info(bam_file_path):
         """ 
-        ChatGPT first pass for relevant bam info extraction
+        This function takes in the bam file generated and extracts the readID, basecalled sequence, start of reference sequence, and the quality score from the bamfile 
         """
         read_info = []
         # Open the BAM file
@@ -69,11 +71,15 @@ if analyze_fastq == True:
             for read in bamfile:
                 # Check if the read is mapped
                 if not read.is_unmapped:
+                    qual = read.query_qualities 
+                    qual = np.array(qual, dtype=int)
+                    avg_qual = np.mean(qual)
                     features = [
                     read.query_name,  # Query name of the read
                     read.query_sequence,  # Sequence basecalled
                     read.reference_start,  # Position of the read relative to the reference
                     read.query_qualities  # Quality scores of the read (numerical)
+                    avg_qual = np.mean(qual)
                     ]
                     read_info.append(features)
                 else:
@@ -81,7 +87,7 @@ if analyze_fastq == True:
             return read_info
     read_info = extract_read_info(os.path.join(bc_dir, 'bc.bam'))
     
-    print(read_info) #little more than 50% alignment to ground truth for single sequence context
+    #print(read_info) #little more than 50% alignment to ground truth for single sequence context
     
     #Predict XNA position using quality string analysis 
     def xna_guess(read_info):
