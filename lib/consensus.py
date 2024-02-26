@@ -11,8 +11,6 @@ from xf_params import *
 
 basecall = True
 trim = False
-merge_fastq = False
-merge_bam = False
 VSEARCH_filter = False
 sort = False
 fastq_to_fasta = False
@@ -83,27 +81,19 @@ if basecall == True:
     cmd = os.path.expanduser(basecaller_path)+ ' basecaller hac  --no-trim  ' + pod_dir + ' > '+os.path.join(bc_dir, 'bc.bam') + ' --reference ' + ref_fasta #can probably do this in a bam file as well 
     os.system(cmd)
     
-#need a merge bam instead of a merge fastq if i want to use alignment check, neither of these needed if using dorado
-if merge_fastq == True:
-    print('Xenovo [STATUS] - Merging fastq files')
-    cmd = 'find ' + fastq_dir + " -type f -name '*.fastq' -exec cat {} + > " + processing_dir + 'merged.fastq'
-    os.system(cmd) 
-if merge_bam == True: 
-    cmd = 'samtools merge ' + os.path.join(bam_dir, os.path.basename(bam_dir))+'.bam'+' ' +os.path.join(mod_fastq_dir,'pass/*.bam -f')
-    os.system(cmd)
 #Read Trimming 
 if trim == True: 
     print('test')
     
     #Reads are trimmed to have all sequences be approximately the same length, will make error analysis be constant as  the ends would not be significatly adding to error 
     #Trim fastq files maybe? 
-    '''
+   
     def read_trim(input_bam, output_fasta):
         bamfile = pysam.AlignmentFile(input_bam, "rb")
         for read in bamfile: 
-            read_length = 
-            if len(
-    '''
+            ref_start = read.reference_start
+            
+    
     '''
     Pseudo code: 
     for reads 
