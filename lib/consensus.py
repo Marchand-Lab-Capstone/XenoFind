@@ -6,12 +6,13 @@ import random
 import subprocess
 from Bio import SeqIO
 import pysam
-from xr_tools  import *
+from xf_tools  import *
+from xf_params import *
 
-basecall = False
+basecall = True
 trim = True
 merge_fastq = False
-merge_bam = True
+merge_bam = False
 VSEARCH_filter = False
 sort = False
 fastq_to_fasta = False
@@ -27,7 +28,7 @@ medaka_consensus = False
 #ref_fasta = '/home/marchandlab/github/jay/xenovo-js/ref/230308_PZ_Xemora_train.fa'
 #ref_dir = '/home/marchandlab/DataAnalysis/Kawabe/231204_Xenovo_FfAME/reference/231204_FfAME_duplexPCR_adapters.fa'
 
-working_dir = '/home/marchandlab/github/jay/xenovo-js/xenovo_test/240226_trimming_work'
+working_dir = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240226_trimming_work'
 raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #dataset to start performing trimming on 
 ref_fasta = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/reference/BSn_90mer_xr_train_can.fa'
 # Making directories 
@@ -59,7 +60,10 @@ else:
     print('Xemora  [ERROR] - Reference fasta xna file not file. Please check file exist or file path.')
     sys.exit()
 
-
+'''
+referenc in theory should be [constant region] - variable region (NNNN) - [constant region] 
+want to trim constant regions out maybe? 
+'''
 #Step 1: Generate or merge pod5 files if needed
 file_type = os.listdir(raw_dir)
 # Check if the directory is not empty
@@ -134,7 +138,6 @@ if trim == True:
     
     
     '''
-    cmd = ''
 #Step 2: Merge fastq 
 
 
