@@ -28,7 +28,8 @@ medaka_consensus = False
 
 working_dir = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240226_trimming_work'
 raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #dataset to start performing trimming on 
-ref_fasta = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/reference/BSn_90mer_xr_train.fa'
+ref_fasta = '/home/marchandlab/github/jay/capstone/reference/xBSn_90mer_xr_train.fa'
+
 # Making directories 
 working_dir = check_make_dir(working_dir)
 ref_dir = check_make_dir(os.path.join(working_dir, 'ref'))
@@ -78,7 +79,11 @@ if basecall == True:
     #cmd=os.path.expanduser(basecaller_path)+' -i '+pod_dir+' -s '+fastq_dir+' -c '+guppy_config_file+' -x auto --bam_out --index --moves_out  -a '+os.path.join(ref_dir,'x'+os.path.basename(ref_fasta)) #Guppy basecalling with alignment
     #cmd=os.path.expanduser(basecaller_path)+' -i '+pod_dir+' -s '+ fastq_dir+' -c '+guppy_config_file+' -x auto --bam_out --index'
     print('Xenovo [STATUS] - Performing basecalling using Dorado')
-    cmd = os.path.expanduser(basecaller_path)+ ' basecaller hac  --no-trim  ' + pod_dir + ' > '+os.path.join(bc_dir, 'bc.bam') + ' --reference ' + ref_fasta #can probably do this in a bam file as well 
+    #cmd = os.path.expanduser(basecaller_path)+ ' basecaller hac  --no-trim  ' + pod_dir + ' > '+os.path.join(bc_dir, 'bc.bam') + ' --reference ' + ref_fasta #can probably do this in a bam file as well 
+    cmd = os.path.expanduser(basecaller_path)+ ' basecaller hac  --no-trim  --emit-fastq ' + pod_dir + ' > '+os.path.join(bc_dir, 'bc.fq)
+    os.system(cmd)
+    
+    cmd = 'minimap2 -ax map-ont -Q --score-N 0 '+ref_fasta+' '+os.path.join(bc_dir, 'bc.fq')+ ' > ' +os.path.join(processing_dir,'bc_aligned.sam')
     os.system(cmd)
     
 #Read Trimming 

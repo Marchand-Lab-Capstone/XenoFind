@@ -18,23 +18,24 @@ from pathlib import Path
 # Paths 
 working_dir = '' 
 raw_data = ''
-
+ref_fasta = '' #This should be a placeholder reference fasta not necessarily ground truth
 ######################################################
 
 
 ######################################################
 
-method_1 = False #placeholder variables 
+consensus = True 
+low_qual_detect = False #placeholder variables 
 method_2 = False
 method_3 = False
 
 ######################################################
 
 # Calls for method 1 
-if method_1 == True: 
-		cmd = '' 
+if consensus == True: 
+		cmd = 'python xenofind.py consensus -w ' + working_dir+' -f '+ raw_data 
 		os.system(cmd)
-
+    cmd = 'python xemora.py train -w '+working_dir+' -f '+xna_raw_dir+' '+dna_raw_dir+' -r '+xna_ref_fasta+' '+dna_ref_fasta
 # Calls for method 2 
 if method_2 == True: 
 	cmd = ''
