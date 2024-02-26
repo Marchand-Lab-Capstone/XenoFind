@@ -91,3 +91,51 @@ def filter_primary_alignments(input_bam, output_bam):
                 outfile.write(read)
 
     print(f"Filtered BAM file saved to {output_bam}")
+
+
+def fetch_xna_pos(xm_header):
+    pos=xm_header[xm_header.find('XPOS[')+5:-1].split('-')
+    xpos = [x.split(':') for x in pos]
+    return xpos
+
+
+def xna_base_rc(xna_base, xna_bp): 
+	for x in xna_bp: 
+		if xna_base in x:
+			if len(x)>1:
+			    xx=list(x)
+			    xx.remove(xna_base)
+			    xrc=xx[0]
+			else:
+			   xrc=False
+	return xrc
+
+
+def check_xfasta_format(xfasta_file,standard_bases): 
+    xfasta_header=False
+    xna_in_sequence = False 
+    with open(xfasta_file, "r") as fh:
+        for line in fh:
+            #Get header
+            if line[0]=='>':
+                header = line
+                if 'XPOS[' in header: 
+                    xfasta_header=True
+                
+            #Get sequence
+            if line[0]!='>':
+            
+                #Make all upper case
+                uline = line.upper()
+                
+                #Look for non-standard base
+                diff = list(set(uline.replace('\n',''))-(set(standard_bases)))
+                
+                #This sequence contains an XNA
+                if len(diff)>0:
+                    xna_in_sequence = True 
+    if xfasta_header==True and xna_in_sequence == False: 
+        return True 
+    else: 
+
+        return False 

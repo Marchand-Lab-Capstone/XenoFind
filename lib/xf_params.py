@@ -65,10 +65,10 @@ kmer_table_path = 'models/remora/9mer_10.4.1.csv'
 ml_model_path = 'models/ConvLSTM_w_ref.py'
 
 #Modified base in Fasta sequence you wish to train model or use model to basecall
-mod_base = 'Z'
+mod_base = 'B'
 
 #Most similar substituted canonical base you will be comparing against 
-can_base = 'C'
+can_base = 'A'
 
 #Extent of Kmer content (-,+) to store for model training
 kmer_context ='4 4' 

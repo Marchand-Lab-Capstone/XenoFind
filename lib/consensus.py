@@ -10,7 +10,7 @@ from xf_tools  import *
 from xf_params import *
 
 basecall = True
-trim = True
+trim = False
 merge_fastq = False
 merge_bam = False
 VSEARCH_filter = False
@@ -30,7 +30,7 @@ medaka_consensus = False
 
 working_dir = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240226_trimming_work'
 raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #dataset to start performing trimming on 
-ref_fasta = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/reference/BSn_90mer_xr_train_can.fa'
+ref_fasta = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/reference/BSn_90mer_xr_train.fa'
 # Making directories 
 working_dir = check_make_dir(working_dir)
 ref_dir = check_make_dir(os.path.join(working_dir, 'ref'))
@@ -49,17 +49,6 @@ similarity_id = 0.90 #between 0 - 1, want this higher
 min_cluster_seq = 2 #minimum number of reads that need to be in a cluster to be allowed for consensus formation
 
 
-
-
-#Step 0: FASTA to xFASTA conversion
-if os.path.isfile(os.path.expanduser(ref_fasta)): 
-    print('pass')
-    cmd = 'python xm_fasta2x_rc.py '+os.path.expanduser(ref_fasta)+' '+os.path.join(ref_dir,'x'+os.path.basename(ref_fasta))
-    os.system(cmd)
-else: 
-    print('Xemora  [ERROR] - Reference fasta xna file not file. Please check file exist or file path.')
-    sys.exit()
-
 '''
 referenc in theory should be [constant region] - variable region (NNNN) - [constant region] 
 want to trim constant regions out maybe? 
@@ -72,7 +61,7 @@ if file_type:
     first_file = file_type[0]
     # Check if the first file is a .pod5 file
     if first_file.endswith(".pod5"):
-        if os.path.isfile(os.path.join(mod_pod_dir,os.path.basename(raw_dir))+'.pod5')==False:
+        if os.path.isfile(os.path.join(pod_dir,os.path.basename(raw_dir))+'.pod5')==False:
             pod5_merge(get_pod5_subdir(raw_dir), os.path.join(pod_dir,os.path.basename(raw_dir))+'.pod5')
         else:
             print('Xenovo [STATUS] - POD5 files merged. Skipping merge')
