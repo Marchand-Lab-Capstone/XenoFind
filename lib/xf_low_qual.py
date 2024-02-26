@@ -20,7 +20,7 @@ from xf_tools import *
 # ref_fasta = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/reference/BSn_90mer_xr_train_can.fa' #this is ground truth for now, will be substituted by consensus sequence formation pipeline once that is done (inside lab project)
 
 working_dir = '/Users/hyj/Curriculum/Capstone_Project/xenofind_test/240225_lq_tests'
-raw_dir = '/Users/hyj/Curriculum/Capstone_Project/datasets/240104_BSn_90mer_xr_train_capstone_set/50fast5'
+raw_dir = '/Users/hyj/Curriculum/Capstone_Project/datasets/240104_BSn_90mer_xr_train_capstone_set/10fast5'
 ref_fasta = '/Users/hyj/Curriculum/Capstone_Project/datasets/240104_BSn_90mer_xr_train_capstone_set/reference/BSn_90mer_xr_train_can.fa' #this is ground truth for now, will be substituted by consensus sequence formation pipeline once that is done (inside lab project)
 
 # Generate Required Directories
@@ -82,7 +82,7 @@ if analyze_fastq == True:
                     read.query_name,  # Query name of the read
                     read.query_sequence,  # Sequence basecalled
                     read.reference_start,  # Position of the read relative to the reference
-                    read.query_qualities,  # Quality scores of the read (numerical)
+                    qual,  # Quality scores of the read (numerical)
                     avg_qual
                     ]
                     read_info.append(features)
@@ -91,8 +91,15 @@ if analyze_fastq == True:
             return read_info
     read_info = extract_read_info(os.path.join(bc_dir, 'bc.bam'))
     
-    #print(read_info) #little more than 50% alignment to ground truth for single sequence context
+# Test if the every base pair gets its own quality score
+if len(read_info[0][1]) == len(read_info[0][3]):
+    print('Yes, the length of the sequences matches the length of quality score string')
+
+else:
+    print('No, the length of the sequences and quality score doesnt match!')
     
+    #print(read_info) #little more than 50% alignment to ground truth for single sequence context#little more than 50% alignment to ground truth for single sequence context
+
     #Predict XNA position using quality string analysis 
     #Need to make it so reads are grouped by which sequence its aligned to (our current dataset is single sequence context)
     def xna_guess(read_info):
