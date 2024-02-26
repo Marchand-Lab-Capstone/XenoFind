@@ -15,9 +15,13 @@ from xf_tools import *
 #Initialize (manual input of datasets) 
 
 #using dataset nick generated to test 
-working_dir = '/home/marchandlab/github/jay/capstone/xenofind/xenofind_test/240220_lq_tests'
-raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5'
-ref_fasta = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/reference/BSn_90mer_xr_train_can.fa' #this is ground truth for now, will be substituted by consensus sequence formation pipeline once that is done (inside lab project)
+# working_dir = '/home/marchandlab/github/jay/capstone/xenofind/xenofind_test/240220_lq_tests'
+# raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5'
+# ref_fasta = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/reference/BSn_90mer_xr_train_can.fa' #this is ground truth for now, will be substituted by consensus sequence formation pipeline once that is done (inside lab project)
+
+working_dir = '/Users/hyj/Curriculum/Capstone_Project/xenofind_test/240225_lq_tests'
+raw_dir = '/Users/hyj/Curriculum/Capstone_Project/datasets/240104_BSn_90mer_xr_train_capstone_set/50fast5'
+ref_fasta = '/Users/hyj/Curriculum/Capstone_Project/datasets/240104_BSn_90mer_xr_train_capstone_set/reference/BSn_90mer_xr_train_can.fa' #this is ground truth for now, will be substituted by consensus sequence formation pipeline once that is done (inside lab project)
 
 # Generate Required Directories
 working_dir = check_make_dir(working_dir)
@@ -78,8 +82,8 @@ if analyze_fastq == True:
                     read.query_name,  # Query name of the read
                     read.query_sequence,  # Sequence basecalled
                     read.reference_start,  # Position of the read relative to the reference
-                    read.query_qualities  # Quality scores of the read (numerical)
-                    avg_qual = np.mean(qual)
+                    read.query_qualities,  # Quality scores of the read (numerical)
+                    avg_qual
                     ]
                     read_info.append(features)
                 else:
