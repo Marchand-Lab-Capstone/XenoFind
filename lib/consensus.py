@@ -9,8 +9,8 @@ import pysam
 from xf_tools  import *
 from xf_params import *
 
-basecall = True
-trim = False
+basecall = False
+trim = True
 VSEARCH_filter = False
 sort = False
 fastq_to_fasta = False
@@ -83,16 +83,15 @@ if basecall == True:
     cmd = os.path.expanduser(basecaller_path)+ ' basecaller hac  --no-trim  --emit-fastq ' + pod_dir + ' > '+os.path.join(bc_dir, 'bc.fq')
     os.system(cmd)
     
-    cmd = 'minimap2 -ax map-ont --score-N 0 --MD '+ref_fasta+' '+os.path.join(bc_dir, 'bc.fq')+ ' > ' +os.path.join(processing_dir,'bc_aligned.sam')
+    cmd = 'minimap2 -ax map-ont --score-N 0 --MD --min-dp-score 10 '+ref_fasta+' '+os.path.join(bc_dir, 'bc.fq')+ ' > ' +os.path.join(processing_dir,'bc_aligned.sam')
     os.system(cmd)
     
 #Read Trimming 
 if trim == True: 
-    print('test')
-    
     #Reads are trimmed to have all sequences be approximately the same length, will make error analysis be constant as  the ends would not be significatly adding to error 
     #Trim fastq files maybe? 
 
+#Primary trimming function, need to add part where fasta file is written separately with the trimmed reads prob and have that be the output, need to decide how to deal with unaligned reads 
     def read_trim(sam_file_path):
         # Open the SAM/BAM file
         with pysam.AlignmentFile(sam_file_path, "r") as samfile:
@@ -111,12 +110,17 @@ if trim == True:
                     aligned_length = read.reference_length  # Length of the alignment on the reference
                     if aligned_length < reference_length:
                         print(f"Read {read.query_name} is shorter than its reference ({aligned_length} < {reference_length}).")
+                        #write to fasta here 
                     else:
                         # If the read is not shorter, print reference start and end positions
                         ref_start = read.reference_start
+                        #do reference and soft clipped check here
+                        
                         ref_end = read.reference_end
+                        #do reference and soft clipped check here
                         print(f"Read {read.query_name} does not meet criteria. Ref start: {ref_start}, Ref end: {ref_end}. Total ref length: {reference_length}")
-
+                        
+    read_trim(os.path.join(processing_dir, 'bc_aligned.sam'))
     '''
     Pseudo code: 
     for reads 
