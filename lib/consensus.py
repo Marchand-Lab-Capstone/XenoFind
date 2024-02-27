@@ -26,7 +26,7 @@ medaka_consensus = False
 #ref_fasta = '/home/marchandlab/github/jay/xenovo-js/ref/230308_PZ_Xemora_train.fa'
 #ref_dir = '/home/marchandlab/DataAnalysis/Kawabe/231204_Xenovo_FfAME/reference/231204_FfAME_duplexPCR_adapters.fa'
 
-working_dir = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240226_trimming_work'
+working_dir = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240226_consensus_trial'
 raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #dataset to start performing trimming on 
 ref_fasta = '/home/marchandlab/github/jay/capstone/reference/xBSn_90mer_xr_train.fa'
 
@@ -80,10 +80,10 @@ if basecall == True:
     #cmd=os.path.expanduser(basecaller_path)+' -i '+pod_dir+' -s '+ fastq_dir+' -c '+guppy_config_file+' -x auto --bam_out --index'
     print('Xenovo [STATUS] - Performing basecalling using Dorado')
     #cmd = os.path.expanduser(basecaller_path)+ ' basecaller hac  --no-trim  ' + pod_dir + ' > '+os.path.join(bc_dir, 'bc.bam') + ' --reference ' + ref_fasta #can probably do this in a bam file as well 
-    cmd = os.path.expanduser(basecaller_path)+ ' basecaller hac  --no-trim  --emit-fastq ' + pod_dir + ' > '+os.path.join(bc_dir, 'bc.fq)
+    cmd = os.path.expanduser(basecaller_path)+ ' basecaller hac  --no-trim  --emit-fastq ' + pod_dir + ' > '+os.path.join(bc_dir, 'bc.fq')
     os.system(cmd)
     
-    cmd = 'minimap2 -ax map-ont -Q --score-N 0 '+ref_fasta+' '+os.path.join(bc_dir, 'bc.fq')+ ' > ' +os.path.join(processing_dir,'bc_aligned.sam')
+    cmd = 'minimap2 -ax map-ont --score-N 0 --MD '+ref_fasta+' '+os.path.join(bc_dir, 'bc.fq')+ ' > ' +os.path.join(processing_dir,'bc_aligned.sam')
     os.system(cmd)
     
 #Read Trimming 
@@ -92,13 +92,31 @@ if trim == True:
     
     #Reads are trimmed to have all sequences be approximately the same length, will make error analysis be constant as  the ends would not be significatly adding to error 
     #Trim fastq files maybe? 
-   
-    def read_trim(input_bam, output_fasta):
-        bamfile = pysam.AlignmentFile(input_bam, "rb")
-        for read in bamfile: 
-            ref_start = read.reference_start
-            
-    
+
+    def read_trim(sam_file_path):
+        # Open the SAM/BAM file
+        with pysam.AlignmentFile(sam_file_path, "r") as samfile:
+            # Iterate over each read in the SAM/BAM file
+            for read in samfile.fetch():
+                if read.is_unmapped:
+                    # Skip unmapped reads
+                    continue
+                
+                # Get the total length of the reference sequence for this read
+                reference_length = samfile.get_reference_length(read.reference_name)
+                
+                # Ensure the read has an alignment (is not unmapped)
+                if not read.is_unmapped:
+                    # Compare the aligned portion of the read to the total reference length
+                    aligned_length = read.reference_length  # Length of the alignment on the reference
+                    if aligned_length < reference_length:
+                        print(f"Read {read.query_name} is shorter than its reference ({aligned_length} < {reference_length}).")
+                    else:
+                        # If the read is not shorter, print reference start and end positions
+                        ref_start = read.reference_start
+                        ref_end = read.reference_end
+                        print(f"Read {read.query_name} does not meet criteria. Ref start: {ref_start}, Ref end: {ref_end}. Total ref length: {reference_length}")
+
     '''
     Pseudo code: 
     for reads 
