@@ -9,7 +9,7 @@ import pysam
 from xf_tools  import *
 from xf_params import *
 
-basecall = False
+basecall = True
 trim = True
 VSEARCH_filter = False
 sort = False
@@ -26,9 +26,9 @@ medaka_consensus = False
 #ref_fasta = '/home/marchandlab/github/jay/xenovo-js/ref/230308_PZ_Xemora_train.fa'
 #ref_dir = '/home/marchandlab/DataAnalysis/Kawabe/231204_Xenovo_FfAME/reference/231204_FfAME_duplexPCR_adapters.fa'
 
-working_dir = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240226_consensus_trial'
-raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #dataset to start performing trimming on 
-ref_fasta = '/home/marchandlab/github/jay/capstone/reference/xBSn_90mer_xr_train.fa'
+working_dir = '/Users/hyj/Curriculum/Capstone_Project/xenofind_test/240228_mac_test'
+raw_dir = '/Users/hyj/Curriculum/Capstone_Project/datasets/240104_BSn_90mer_xr_train_capstone_set/10fast5' #dataset to start performing trimming on 
+ref_fasta = '/Users/hyj/Curriculum/Capstone_Project/datasets/240104_BSn_90mer_xr_train_capstone_set/reference/xBSn_90mer_xr_train.fa'
 
 # Making directories 
 working_dir = check_make_dir(working_dir)

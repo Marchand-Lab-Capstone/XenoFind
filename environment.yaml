@@ -1,0 +1,52 @@
+name: remora-re
+channels:
+  - nanoporetech
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bzip2=1.0.8=h93a5062_5
+  - c-ares=1.27.0=h93a5062_0
+  - ca-certificates=2024.2.2=hf0a4a13_0
+  - htslib=1.18=h8a0c2ca_0
+  - krb5=1.21.2=h92f50d5_0
+  - libcurl=8.5.0=h2d989ff_0
+  - libcxx=16.0.6=h4653b0c_0
+  - libdeflate=1.18=h1a8c8d9_0
+  - libedit=3.1.20191231=hc8eb9b7_2
+  - libev=4.33=h93a5062_2
+  - libffi=3.4.2=h3422bc3_5
+  - libnghttp2=1.58.0=ha4dd798_1
+  - libsqlite=3.45.1=h091b4b1_0
+  - libssh2=1.11.0=h7a5bd25_0
+  - libzlib=1.2.13=h53f4e23_5
+  - m4=1.4.18=h642e427_1001
+  - minimap2=2.24=h8a0c2ca_1
+  - ncurses=6.4=h463b476_2
+  - openssl=3.2.1=h0d3ecfb_0
+  - pip=24.0=pyhd8ed1ab_0
+  - python=3.8.18=h2469fbe_1_cpython
+  - readline=8.2=h92ec313_1
+  - samtools=1.18=h8a0c2ca_0
+  - setuptools=69.1.1=pyhd8ed1ab_0
+  - tk=8.6.13=h5083fa2_1
+  - wheel=0.42.0=pyhd8ed1ab_0
+  - xz=5.2.6=h57fd34a_0
+  - zlib=1.2.13=h53f4e23_5
+  - zstd=1.5.5=h4f39d0f_0
+  - pip:
+      - biopython==1.83
+      - h5py==3.10.0
+      - iso8601==2.1.0
+      - lib-pod5==0.3.6
+      - more-itertools==10.2.0
+      - numpy==1.24.4
+      - packaging==23.2
+      - pod5==0.3.6
+      - polars==0.20.11
+      - pyarrow==14.0.2
+      - pysam==0.22.0
+      - pytz==2024.1
+      - tqdm==4.66.2
+      - vbz-h5py-plugin==1.0.1
+prefix: /Users/hyj/miniconda3/envs/remora-re
