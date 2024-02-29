@@ -26,11 +26,13 @@ This script outlines the first approach for identifying potential positions of X
 ## Internal Components/ Functions 
 
 ### read_trim(consensus.py)
-This function takes in the sam file generated from minimap2, trim the reads according to the length of the reference sequence and outputs the reads with approximately the same length.
+This function takes in the sam file generated from minimap2, trim the reads according to the length of the reference sequence and outputs the reads with approximately the same length in a fasta file.
 
 ### random_fasta_sample(consensus.py)
+This function takes in the fasta file with the reads sorted by length, generates a list containing the paired headers and sequences and select X sequences randomly without replacement.
 
 ### cluster_size_filter(consensus.py)
+Following the VSEARCH clustering, this function establishes a threshold and selectively filters the clusters based on the number of reads they contain. Only clusters surpassing this specified threshold are considered eligible for the formation of a consensus sequence.
 
 ### extract_read_info function (xf_low_qual.py)
 This function takes in the merged bam file and extracts the readID, basecalled sequence, start of reference sequence, the quality socre per base and the average quality score of each read.
