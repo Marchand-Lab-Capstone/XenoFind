@@ -17,10 +17,20 @@ This will contain the parameters used in any of the detection methods such as th
 ### xf_tools 
 This script contains all the reusable, general functions that can be called as needed (e.g., fast5 to pod5 conversion). This script is imported to most of the scripts in this program. 
 
+### consensus.py
+This script takes in the fast5 files generated from Nanopore Sequencing and outputs a fasta file as the reference sequence for downstream possible location detection of the XNAs.
+
 ### xf_low_qual.py
-This script outlines the first approach for identifying potential positions of XNA bases with limited accuracy and precision. In this method, the raw datasets will be merged and basecalled into a ```.bam``` file, and the features of the reads in the bam file will be generated. Then it conducts a statistical test to identify low-quality scores on a per-read basis. Following this assessment, the reads are recentered and grouped to the reference sequence. Finally, positions with low-quality scores indicative of XNA presence are extracted.
+This script outlines the first approach for identifying potential positions of XNA bases with limited accuracy and precision. In this method, the raw datasets will be merged and basecalled with the fasta reference sequence from ```consensus.py``` into a ```.bam``` file, and the features of the reads in the bam file will be generated. Then it conducts a statistical test to identify low-quality scores on a per-read basis. Following this assessment, the reads are recentered and grouped to the reference sequence. Finally, positions with low-quality scores indicative of XNA presence are extracted.
 
 ## Internal Components/ Functions 
+
+### read_trim(consensus.py)
+This function takes in the sam file generated from minimap2, trim the reads according to the length of the reference sequence and outputs the reads with approximately the same length.
+
+### random_fasta_sample(consensus.py)
+
+### cluster_size_filter(consensus.py)
 
 ### extract_read_info function (xf_low_qual.py)
 This function takes in the merged bam file and extracts the readID, basecalled sequence, start of reference sequence, the quality socre per base and the average quality score of each read.
