@@ -90,7 +90,8 @@ if basecall == True:
 if trim == True: 
     #Reads are trimmed to have all sequences be approximately the same length, will make error analysis be constant as  the ends would not be significatly adding to error 
     #Trim fastq files maybe? 
-
+    
+    #CIGAR parser function 
 #Primary trimming function, need to add part where fasta file is written separately with the trimmed reads prob and have that be the output, need to decide how to deal with unaligned reads 
     def read_trim(sam_file_path, fasta_output):
         # Open the SAM/BAM file
@@ -109,14 +110,17 @@ if trim == True:
                     # Compare the aligned portion of the read to the total reference length
                     aligned_length = read.reference_length  # Length of the alignment on the reference
                     if aligned_length < reference_length:
-                        print(f"Read {read.query_name} is shorter than its reference ({aligned_length} < {reference_length}).")
+                        print(f"Read {read.query_name} is shorter than its reference ({aligned_length} < {reference_length}). Keeping Read")
                         # Write to fasta here
                         fasta_file.write(f">{read.query_name}\n{read.query_sequence}\n")
                     else:
                         # If the read is not shorter, print reference start and end positions
                         ref_start = read.reference_start
                         ref_end = read.reference_end
+                        cigar = read.cigartuples #extract CIGAR string to analyze bases at start and end of the read 
                         # Here you can add your logic for reference and soft clipped check
+                        if ref_start != 1: 
+                            
                         print(f"Read {read.query_name} does not meet criteria. Ref start: {ref_start}, Ref end: {ref_end}. Total ref length: {reference_length}")
 
     read_trim(os.path.join(processing_dir, 'bc_aligned.sam'), os.path.join(processing_dir, 'trimmed.fasta'))
