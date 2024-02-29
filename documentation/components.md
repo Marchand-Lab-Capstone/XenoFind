@@ -20,8 +20,10 @@ This script contains all the reusable, general functions that can be called as n
 ### xf_low_qual.py
 This script outlines the first approach for identifying potential positions of XNA bases with limited accuracy and precision. In this method, the raw datasets will be merged and basecalled into a ```.bam``` file, and the features of the reads in the bam file will be generated. Then it conducts a statistical test to identify low-quality scores on a per-read basis. Following this assessment, the reads are recentered and grouped to the reference sequence. Finally, positions with low-quality scores indicative of XNA presence are extracted.
 
-### extract_read_info function
+## Internal Components/ Functions 
+
+### extract_read_info function (xf_low_qual.py)
 This function takes in the merged bam file and extracts the readID, basecalled sequence, start of reference sequence, the quality socre per base and the average quality score of each read.
 
-### xna_guess function
+### xna_guess function (xf_low_qual.py)
 This function performs a statistical test on a per base read to indentify low-quality scores, recenters and groups the reads to the reference sequence, and extracts the positions indicative of the XNA presence.
