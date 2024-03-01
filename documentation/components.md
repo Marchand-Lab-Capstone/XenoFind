@@ -26,7 +26,8 @@ This script outlines the first approach for identifying potential positions of X
 ## Internal Components/ Functions 
 
 ### read_trim(consensus.py)
-This function takes in the sam file generated from minimap2, trim the reads according to the length of the reference sequence and outputs the reads with approximately the same length in a fasta file.
+This function takes in the sam file generated from minimap2, trim the reads according to the length of the reference sequence and outputs the reads with approximately the same length in a fasta file. This is done by truncating reads the bases that are longer than the 'dummy' reference file where we have a length approximation of the dataset. The output of read_trim is a fasta file formatted as the following 
+```>readID\ trimmed sequence```
 
 ### random_fasta_sample(consensus.py)
 This function takes in the fasta file with the reads sorted by length, generates a list containing the paired headers and sequences and select X sequences randomly without replacement.
