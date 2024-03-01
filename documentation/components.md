@@ -27,7 +27,9 @@ This script outlines the first approach for identifying potential positions of X
 
 ### read_trim(consensus.py)
 This function takes in the sam file generated from minimap2, trim the reads according to the length of the reference sequence and outputs the reads with approximately the same length in a fasta file. This is done by truncating reads the bases that are longer than the 'dummy' reference file where we have a length approximation of the dataset. The output of read_trim is a fasta file formatted as the following 
+
     >readID
+
     trimmed sequence
 
 ### random_fasta_sample(consensus.py)
@@ -50,8 +52,11 @@ This function performs a statistical test on a per base read to indentify low-qu
 
 ### xfasta_gen (xf_low_qual.py)
 xfasta_gen will take in the regions analyzed from xna_guess and will add those significant low-quality score regions to the consensus fasta header in the estabalished 'xFasta' format from the Marchand Lab. The fasta file would be formatted as shown below.
+
     >consensus_sequence+XPOS['X':potential_positions]
+    
     sequence
+
 ### get_fast5_subdir (xf_tools)
 get_fast5_subdir is a function that takes in a fast5 containing directory as its input and extracts that path to be given to other functions such as cod5_to_fast5. The pathway extracted is the 'raw_dir' in the string datatype from either terminal calling xenofind.py or from xenofind_pipe.py
 
