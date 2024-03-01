@@ -42,7 +42,7 @@ output_dir = check_make_dir(os.path.join(working_dir, 'outputs/'))
 
 #Parameters (move to xr_tools later) 
 min_length = 70
-max_length = 300#MAXximum length reads should be, filters out super long reads that are messing with cluster formation
+max_length = 300 #MAXximum length reads should be, filters out super long reads that are messing with cluster formation
 sample_cluser_size = 5000
 similarity_id = 0.90 #between 0 - 1, want this higher 
 min_cluster_seq = 2 #minimum number of reads that need to be in a cluster to be allowed for consensus formation
