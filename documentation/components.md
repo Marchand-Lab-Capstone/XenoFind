@@ -27,20 +27,31 @@ This script outlines the first approach for identifying potential positions of X
 
 ### read_trim(consensus.py)
 This function takes in the sam file generated from minimap2, trim the reads according to the length of the reference sequence and outputs the reads with approximately the same length in a fasta file. This is done by truncating reads the bases that are longer than the 'dummy' reference file where we have a length approximation of the dataset. The output of read_trim is a fasta file formatted as the following 
-```>readID\ trimmed sequence```
+    >readID
+    trimmed sequence
 
 ### random_fasta_sample(consensus.py)
-This function takes in the fasta file with the reads sorted by length, generates a list containing the paired headers and sequences and select X sequences randomly without replacement.
+This function takes in the fasta file generated from read_trim with the reads sorted by length and generates a list containing the paired headers & sequences and select X sequences randomly without replacement.
 
 ### cluster_size_filter(consensus.py)
-Following the VSEARCH clustering, this function establishes a threshold and selectively filters the clusters based on the number of reads they contain. Only clusters surpassing this specified threshold are considered eligible for the formation of a consensus sequence.
+Following the VSEARCH clustering, this function establishes a threshold and selectively filters the clusters based on the number of reads they contain. Only clusters surpassing this specified threshold are considered eligible for the formation of a consensus sequence. The output of this function is a fasta file containing the chosen clusters with the amount of reads grouped in the header. 
 
 ### extract_read_info function (xf_low_qual.py)
-This function takes in the merged bam file and extracts the readID, basecalled sequence, start of reference sequence, the quality socre per base and the average quality score of each read.
+This function takes in the bam file generated during Dorado basecalling and iterates through it using pysam to extract the readID, basecalled sequence, start of reference sequence, and the per base quality score. It also calculates the per read quality score by taking the average of the per base quality scores for a given ead.
+
+Notes for things to add for xf_low_qual
+
+- need a function that will perform a statistical test on a per read level on each base to see if the low quality reads are significant. 
+- need a function to center the reads based on alignment to group low quality regions 
+- update the xna guess function for the specific statistical test we are going to use for grouped low quality region significance 
 
 ### xna_guess function (xf_low_qual.py)
 This function performs a statistical test on a per base read to indentify low-quality scores, recenters and groups the reads to the reference sequence, and extracts the positions indicative of the XNA presence.
 
+### xfasta_gen (xf_low_qual.py)
+xfasta_gen will take in the regions analyzed from xna_guess and will add those significant low-quality score regions to the consensus fasta header in the estabalished 'xFasta' format from the Marchand Lab. The fasta file would be formatted as shown below.
+    >consensus_sequence+XPOS['X':potential_positions]
+    sequence
 ### get_fast5_subdir (xf_tools)
 get_fast5_subdir is a function that takes in a fast5 containing directory as its input and extracts that path to be given to other functions such as cod5_to_fast5. The pathway extracted is the 'raw_dir' in the string datatype from either terminal calling xenofind.py or from xenofind_pipe.py
 
