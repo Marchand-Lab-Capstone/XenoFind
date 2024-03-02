@@ -92,7 +92,7 @@ if trim == True:
     #Trim fastq files maybe? 
     
     #CIGAR parser function 
-#Primary trimming function, need to add part where fasta file is written separately with the trimmed reads prob and have that be the output, need to decide how to deal with unaligned reads 
+    #Primary trimming function, need to add part where fasta file is written separately with the trimmed reads prob and have that be the output, need to decide how to deal with unaligned reads 
     def read_trim(sam_file_path, fasta_output):
         # Open the SAM/BAM file
         with pysam.AlignmentFile(sam_file_path, "r") as samfile, open(fasta_output, 'w') as fasta_file:

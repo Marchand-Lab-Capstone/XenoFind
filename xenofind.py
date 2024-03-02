@@ -54,19 +54,18 @@ subparsers = parser.add_subparsers(dest='subparsers')
 
 
 
-#Train
-parser_train = subparsers.add_parser('train', help='[-w output_dir] [-f xna_raw_dir dna_raw_dir] [-r xna_ref_fasta dna_ref_fasta]')
+#Consensus Formation
+parser_train = subparsers.add_parser('consensus', help='[-w output_dir] [-f raw_dir] [-r placeholder_fasta]')
 parser_train.add_argument('-w',metavar = '[output_dir]', type=str,required = True, help='Path to output directory for storing output intermediates, temp files, and models.')
-parser_train.add_argument('-f',metavar ='[xna_raw_dir dna_raw_dir]', nargs=2, type=str,required = True, help='Path to input directories containing multi-fast5 folders of XNA-containing sequence and DNA-containing sequence.')
-parser_train.add_argument('-r',metavar = '[xna_ref_fasta dna_ref_fasta]', type=str, nargs=2, required = True, help='Path to FASTA (.fa, .fasta) file of sequence or sequences with XNAs (e.g. BSPZKXJV) in the position focused for training. XNA should be in both xna_reference_fasta and dna_reference_fasta. ')
+parser_train.add_argument('-f',metavar ='[raw_dir]', nargs=2, type=str,required = True, help='Path to input directories containing multi-fast5 or pod5 folder')
+parser_train.add_argument('-r',metavar = '[placeholder_fasta]', type=str, nargs=2, required = True, help='Path to FASTA (.fa, .fasta) file of sequence or sequences with barcodes for alignment and randomer placeholders for consensus formation. ')
 
 
-#Basecall 
-parser_basecall = subparsers.add_parser('basecall', help='[-w output_dir] [-f xna_raw_dir] [-r xna_ref_fasta] [-m model_file]')
+#Low Quality XNA Detection
+parser_basecall = subparsers.add_parser('low_qual', help='[-w output_dir] [-f raw_dir] [-r consensus_fasta] ')
 parser_basecall.add_argument('-w',metavar = '[output_dir]', type=str,required = True, help='Path to output directory for storing output intermediates and basecall results.')
 parser_basecall.add_argument('-f',metavar ='[xna_raw_dir]', type=str,required = True, help='Path to input directories containing multi-fast5 folders of XNA-containing sequence.')
 parser_basecall.add_argument('-r',metavar = '[xna_ref_fasta]', type=str, required = True, help='Path to FASTA (.fa, .fasta) file of sequence or sequences with XNAs (e.g. BSPZKXJV). Should be same sequence context as xemora model training.')
-parser_basecall.add_argument('-m',metavar = '[model_file]', type=str, required = True, help='Path to trained xemora model (e.g. model/model_best.pt)')
 
 
 

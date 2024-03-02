@@ -18,6 +18,7 @@ from pathlib import Path
 # Paths 
 working_dir = '' 
 raw_dir = ''
+placeholder_fasta = ''
 ref_fasta = '' #This should be a placeholder reference fasta not necessarily ground truth, consider adding a new variable for consensus fasta.
 ######################################################
 
@@ -26,14 +27,12 @@ ref_fasta = '' #This should be a placeholder reference fasta not necessarily gro
 
 consensus = True 
 lq_detect = False #placeholder variables 
-method_2 = False
-method_3 = False
 
 ######################################################
 
 # Generate consensus fasta 
 if consensus == True: 
-		cmd = 'python xenofind.py consensus -w ' + working_dir+' -f '+ raw_dir+' -r '+ref_fasta
+		cmd = 'python xenofind.py consensus -w ' + working_dir+' -f '+ raw_dir+' -r '+placeholder_fasta
 		os.system(cmd)
 # Low Quality Score Detection 
 if lq_detect == True: 
