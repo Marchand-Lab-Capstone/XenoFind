@@ -22,7 +22,7 @@ from lib.xr_params import *
 
 
 parser = argparse.ArgumentParser(
-        usage='"python xemora.py  [-h] {train, basecall}',
+        usage='"python xenofind.py  [-h] {consensus, low_qual}',
         formatter_class=argparse.RawTextHelpFormatter,
 	description= textwrap.dedent('''
 
@@ -57,15 +57,15 @@ subparsers = parser.add_subparsers(dest='subparsers')
 #Consensus Formation
 parser_train = subparsers.add_parser('consensus', help='[-w output_dir] [-f raw_dir] [-r placeholder_fasta]')
 parser_train.add_argument('-w',metavar = '[output_dir]', type=str,required = True, help='Path to output directory for storing output intermediates, temp files, and models.')
-parser_train.add_argument('-f',metavar ='[raw_dir]', nargs=2, type=str,required = True, help='Path to input directories containing multi-fast5 or pod5 folder')
-parser_train.add_argument('-r',metavar = '[placeholder_fasta]', type=str, nargs=2, required = True, help='Path to FASTA (.fa, .fasta) file of sequence or sequences with barcodes for alignment and randomer placeholders for consensus formation. ')
+parser_train.add_argument('-f',metavar ='[raw_dir]', type=str,required = True, help='Path to input directories containing multi-fast5 or pod5 folder')
+parser_train.add_argument('-r',metavar = '[placeholder_fasta]', type=str, required = True, help='Path to FASTA (.fa, .fasta) file of sequence or sequences with barcodes for alignment and randomer placeholders for consensus formation. ')
 
 
 #Low Quality XNA Detection
 parser_basecall = subparsers.add_parser('low_qual', help='[-w output_dir] [-f raw_dir] [-r consensus_fasta] ')
 parser_basecall.add_argument('-w',metavar = '[output_dir]', type=str,required = True, help='Path to output directory for storing output intermediates and basecall results.')
-parser_basecall.add_argument('-f',metavar ='[xna_raw_dir]', type=str,required = True, help='Path to input directories containing multi-fast5 folders of XNA-containing sequence.')
-parser_basecall.add_argument('-r',metavar = '[xna_ref_fasta]', type=str, required = True, help='Path to FASTA (.fa, .fasta) file of sequence or sequences with XNAs (e.g. BSPZKXJV). Should be same sequence context as xemora model training.')
+parser_basecall.add_argument('-f',metavar ='[raw_dir]', type=str,required = True, help='Path to input directories containing multi-fast5 folders of XNA-containing sequence.')
+parser_basecall.add_argument('-r',metavar = '[con_fasta]', type=str, required = True, help='Path to FASTA (.fa, .fasta) file of sequence or sequences with XNAs (e.g. BSPZKXJV). Should be same sequence context as xemora model training.')
 
 
 
@@ -78,46 +78,39 @@ if args.subparsers==None:
     parser.print_help()
     sys.exit(0)
 
-
-
-if args.subparsers == 'train': 
-    if os.path.exists(os.path.expanduser(args.f[0]))==False or os.path.exists(os.path.expanduser(args.f[1]))==False:
-        print('Xemora [ERROR] - Training requires two input fast5 datasets. At least one of the two file paths was not valid. Check to ensure path to fast5 directory is correct.')
+if args.subparsers == 'consensus': 
+    if os.path.exists(os.path.expanduser(args.f[0]))==False:
+        print('XenoFind [ERROR] - Consensus requires either a Pod5 or Fast5 directory. This file path is invalid. Check to ensure pod5/fast path is correct.')
         exit_flag = True 
 
     if os.path.exists(os.path.expanduser(args.r[0]))==False or os.path.exists(os.path.expanduser(args.r[1]))==False:
-        print('Xemora [ERROR] - Training requires two input reference fasta files: One to designate XNA-containing reads and the other with reads that contain a standard base substitution. At least one of the two file paths was not valid. Check to ensure path to fast5 directory is correct.')
+        print('XenoFind [ERROR] - Consensus requires a dummy fasta to be inputted. This file path is invalid. Check to ensure that the fasta path is corect.')
         exit_flag = True 
 
 
     if exit_flag == False: 
-        cmd = 'python lib/xr_train.py '+args.w+' '+args.f[0]+' '+args.r[0]+' '+args.f[1]+' '+args.r[1]
+        cmd = 'python lib/consensus.py '+args.w+' '+args.f+' '+args.r
         os.system(cmd)
     else: 
-        print('Xemora [ERROR] - At least one file path not properly set. Xemora exiting.')
+        print('XenoFind [ERROR] - At least one file path not properly set. XenoFind exiting.')
         sys.exit()
 
 
-
 #Guppy paths and stuff - add that to xr-parms
-if args.subparsers == 'basecall': 
+if args.subparsers == 'low_qual': 
     if os.path.exists(os.path.expanduser(args.f))==False:
-        print('Xemora [ERROR] - Input Fast5 directory path not found or is not valid. Check to ensure path to fast5 directory is correct.')
+        print('XenoFind [ERROR] - Inputted fast5/pod5 directory path not found or is not valid. Check to ensure path to fast5/pod5 directory is correct.')
         exit_flag = True 
 
     if os.path.exists(os.path.expanduser(args.r))==False:
-        print('Xemora [ERROR] - Xemora basecalling requires identifying locations of possible XNAs by giving it a reference fasta file with XNA bases (e.g., BSPZXKJV) in the sequence fields.')
-        exit_flag = True 
-
-    if os.path.exists(os.path.expanduser(args.m))==False:
-        print('Xemora [ERROR] - Valid model file (e.g. model/best_model.pt) not provided. Run "xemora train" to generate a model for basecalling.')
+        print('XenoFind [ERROR] - Inputted consensus fasta path is not valid. Check to ensure that the fasta path is correct')
         exit_flag = True 
 
 
     if exit_flag == False: 
-        cmd = 'python lib/xr_basecall.py '+args.w+' '+args.f+' '+args.r+' '+args.m
+        cmd = 'python lib/zf_low_qual.py '+args.w+' '+args.f+' '+args.r
         os.system(cmd)
     else: 
-        print('Xemora [ERROR] - At least one file path not properly set. Xemora basecaller exiting.')
+        print('XenoFind [ERROR] - At least one file path not properly set. Xemora basecaller exiting.')
         sys.exit()
 
