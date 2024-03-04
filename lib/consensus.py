@@ -11,24 +11,15 @@ from xf_params import *
 
 basecall = True
 trim = True
-VSEARCH_filter = False
-sort = False
-fastq_to_fasta = False
+sort = True
 clustering_VSEARCH = False
 cluster_filter = False
 medaka_consensus = False
 
-#working_dir = '/home/marchandlab/DataAnalysis/Kawabe/231204_Xenovo_FfAME'
-#fast5_dir = '/home/marchandlab/DataAnalysis/Sumabat/230608_XPCR_Taq/20230608_1726_MN37138_AOD257_b27f754c/fast5'
-#fast5_dir = '/home/marchandlab/DataAnalysis/Kawabe/231204_Xenovo_FfAME/fast5'
-#fast5_dir = '/home/marchandlab/DataAnalysis/Sumabat/xenovo_datasets/mixed_fast5'
-#make a reference directory with ground truths for single dataset
-#ref_fasta = '/home/marchandlab/github/jay/xenovo-js/ref/230308_PZ_Xemora_train.fa'
-#ref_dir = '/home/marchandlab/DataAnalysis/Kawabe/231204_Xenovo_FfAME/reference/231204_FfAME_duplexPCR_adapters.fa'
+working_dir = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240303_sorting_test/'
+raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #dataset to start performing trimming on 
+ref_fasta = '/home/marchandlab/github/jay/capstone/reference/xBSn_90mer_fake_randomer.fa'
 
-working_dir = '/Users/hyj/Curriculum/Capstone_Project/xenofind_test/240303_trim_test'
-raw_dir = '/Users/hyj/Curriculum/Capstone_Project/datasets/240104_BSn_90mer_xr_train_capstone_set/10fast5' #dataset to start performing trimming on 
-ref_fasta = '/Users/hyj/Curriculum/Capstone_Project/datasets/240104_BSn_90mer_xr_train_capstone_set/reference/xBSn_90mer_fake_randomer.fa'
 
 # Making directories 
 working_dir = check_make_dir(working_dir)
@@ -124,11 +115,14 @@ if trim == True:
  
     
 #Step 3: Sorting by length 
-if sort == True:
+if sort == True: #need to change sort function, sequences are being split into multiple lines
     #using biopython
-    records = list(SeqIO.parse("your_fasta_file.fasta", "fasta"))
-    sorted_records = sorted(records, key=lambda x: len(x.seq))
-    SeqIO.write(sorted_records, "sorted_fasta_file.fasta", "fasta")
+    def sort_fasta(input_fasta, output_fasta):
+        records = list(SeqIO.parse(input_fasta, "fasta"))
+        sorted_records = sorted(records, key=lambda x: len(x.seq)) #chatGPT first passs, change variable names
+        SeqIO.write(sorted_records, output_fasta, "fasta")
+    
+    sort_fasta(os.path.join(processing_dir, 'trimmed.fasta'), os.path.join(processing_dir, 'sorted.fasta'))
     
 #Step 4: VSEARCH Clustering 
 if clustering_VSEARCH == True: 
