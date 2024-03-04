@@ -20,6 +20,9 @@ working_dir = '/home/marchandlab/github/jay/capstone/yujia/XenoFind/xenofind_tes
 raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #dataset to start performing trimming on 
 ref_fasta = '/home/marchandlab/github/jay/capstone/reference/xBSn_90mer_fake_randomer.fa'
 
+working_dir = os.path.expanduser(sys.argv[1])
+raw_dir = os.path.expanduser(sys.argv[2])
+ref_fasta = os.path.expanduser(sys.argv[3])
 
 # Making directories 
 working_dir = check_make_dir(working_dir)
@@ -83,8 +86,14 @@ if trim == True:
     #Trim fastq files maybe? 
     
     #CIGAR parser function 
-    #Primary trimming function, need to add part where fasta file is written separately with the trimmed reads prob and have that be the output, need to decide how to deal with unaligned reads 
     def read_trim(sam_file_path, fasta_output):
+        """
+        read_trim is a function that takes in the sam file generated after minimap2 as a string path input & a desired 
+        fasta output path and outputs a fasta file to be used downstream. This function iterates through the sam file using pysam 
+        scanning for aligned reads that are at least 95% aligned to the dummy reference file, removes soft clipped bases (bases that show up in the sequence but aren't aligned)
+        and writes them to the inputted fasta file path. These reads are effectively 'trimmed.' Any reads that are unaligned or less than 95% aligned are ignored. 
+        The outputted fasta file contains sequences that are effeictively the same length and is used downstream to create sequence clusters using VSEARCH. 
+        """
         # Open the SAM/BAM file
         with pysam.AlignmentFile(sam_file_path, "r") as samfile, open(fasta_output, 'w') as fasta_file:
             # Iterate over each read in the SAM/BAM file
@@ -101,18 +110,14 @@ if trim == True:
                     # Compare the aligned portion of the read to the total reference length
                     aligned_length = read.reference_length  # Length of the alignment on the reference
                     if aligned_length < reference_length * 0.95: # If the read is shorter than 95% of the total reference length, toss it
-                        print(f"Read {read.query_name} is shorter than its reference ({aligned_length} < {reference_length}). Keeping Read")
+                        print(f"Read {read.query_name} significantly shorter than the reference: ({aligned_length} < {reference_length}). Discarding")
                         continue
 
                     else:
                         # If the read is not shorter, write to fasta here
-                        # print(len(read.query_alignment_sequence))
                         fasta_file.write(f">{read.query_name}\n{read.query_alignment_sequence}\n")
-                        
-                  
 
     read_trim(os.path.join(processing_dir, 'bc_aligned.sam'), os.path.join(processing_dir, 'trimmed.fasta'))
- 
     
 #Step 3: Sorting by length 
 if sort == True:
