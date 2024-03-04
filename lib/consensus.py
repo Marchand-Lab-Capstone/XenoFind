@@ -26,9 +26,9 @@ medaka_consensus = False
 #ref_fasta = '/home/marchandlab/github/jay/xenovo-js/ref/230308_PZ_Xemora_train.fa'
 #ref_dir = '/home/marchandlab/DataAnalysis/Kawabe/231204_Xenovo_FfAME/reference/231204_FfAME_duplexPCR_adapters.fa'
 
-working_dir = '/Users/hyj/Curriculum/Capstone_Project/xenofind_test/240228_mac_test'
+working_dir = '/Users/hyj/Curriculum/Capstone_Project/xenofind_test/240303_trim_test'
 raw_dir = '/Users/hyj/Curriculum/Capstone_Project/datasets/240104_BSn_90mer_xr_train_capstone_set/10fast5' #dataset to start performing trimming on 
-ref_fasta = '/Users/hyj/Curriculum/Capstone_Project/datasets/240104_BSn_90mer_xr_train_capstone_set/reference/xBSn_90mer_xr_train.fa'
+ref_fasta = '/Users/hyj/Curriculum/Capstone_Project/datasets/240104_BSn_90mer_xr_train_capstone_set/reference/xBSn_90mer_fake_randomer.fa'
 
 # Making directories 
 working_dir = check_make_dir(working_dir)
@@ -52,7 +52,7 @@ min_cluster_seq = 2 #minimum number of reads that need to be in a cluster to be 
 referenc in theory should be [constant region] - variable region (NNNN) - [constant region] 
 want to trim constant regions out maybe? 
 '''
-#Step 1: Generate or merge pod5 files if needed
+#Step 0: Generate or merge pod5 files if needed
 file_type = os.listdir(raw_dir)
 # Check if the directory is not empty
 if file_type:
@@ -86,7 +86,7 @@ if basecall == True:
     cmd = 'minimap2 -ax map-ont --score-N 0 --MD --min-dp-score 10 '+ref_fasta+' '+os.path.join(bc_dir, 'bc.fq')+ ' > ' +os.path.join(processing_dir,'bc_aligned.sam')
     os.system(cmd)
     
-#Read Trimming 
+#Step 2: Read Trimming and fasta generation
 if trim == True: 
     #Reads are trimmed to have all sequences be approximately the same length, will make error analysis be constant as  the ends would not be significatly adding to error 
     #Trim fastq files maybe? 
@@ -109,65 +109,28 @@ if trim == True:
                 if not read.is_unmapped:
                     # Compare the aligned portion of the read to the total reference length
                     aligned_length = read.reference_length  # Length of the alignment on the reference
-                    if aligned_length < reference_length:
+                    if aligned_length < reference_length * 0.95: # If the read is shorter than 95% of the total reference length, toss it
                         print(f"Read {read.query_name} is shorter than its reference ({aligned_length} < {reference_length}). Keeping Read")
-                        # Write to fasta here
-                        fasta_file.write(f">{read.query_name}\n{read.query_sequence}\n")
+                        continue
+
                     else:
-                        # If the read is not shorter, print reference start and end positions
-                        ref_start = read.reference_start
-                        ref_end = read.reference_end
-                        cigar = read.cigartuples #extract CIGAR string to analyze bases at start and end of the read 
-                        # Here you can add your logic for reference and soft clipped check
-                        if ref_start != 1: 
-                            
-                        print(f"Read {read.query_name} does not meet criteria. Ref start: {ref_start}, Ref end: {ref_end}. Total ref length: {reference_length}")
+                        # If the read is not shorter, write to fasta here
+                        print(len(read.query_alignment_sequence))
+                        fasta_file.write(f">{read.query_name}\n{read.query_alignment_sequence}\n")
+                        
+                  
 
     read_trim(os.path.join(processing_dir, 'bc_aligned.sam'), os.path.join(processing_dir, 'trimmed.fasta'))
-    '''
-    Pseudo code: 
-    for reads 
-    check length of read compared to reference at START 
-    1. decide if keep reads if length of query is shorter than reference (might be a question for jorge) 
-    2. if the read is Loner than the reference sequence go through the followin
+ 
     
-    Check start of read compared to alignment, reference file will have which base it starts aligning to 
-        if there are bases before that point, add those basees to bases kept using indexing till reaching samtool index 1 
-        if there arent enough bases 
-            ????
-        
-    at end, not sure how to decide trimming cut off, maybe just go to end of sequence and see if the read length reaches the end 
-        if shorter than desired length keep
-        if longer trim
-        
-    consider case where total length of read is < length of reference sequence 
-        toss read? keep? threshold? 
-    
-    append sequences to a new fasta file with query name and sequence
-    
-    
-    '''
-#Step 2: Merge fastq 
-
-
-# Length and Phred score filtering using VSEARCH, thisstep might not be needed anymore?
-if VSEARCH_filter == True: 
-    cmd = 'vsearch --fastx_filter ' + os.path.join(processing_dir, 'merged.fastq') + ' --fastq_qmax 90 --fastq_maxlen ' + str(max_length) + ' --fastq_minlen ' + str(min_length) + ' --fastqout ' + os.path.join(processing_dir, 'filtered.fastq') 
-    os.system(cmd)
-
-if fastq_to_fasta == True:
-    print('Xenovo [STATUS] - Convering from fastq to fasta')
-    cmd = 'seqtk seq -a ' + os.path.join(processing_dir, 'filtered.fastq') + ' > ' + os.path.join(processing_dir, 'filtered.fasta')
-    os.system(cmd)
-
-#Sorting by length 
+#Step 3: Sorting by length 
 if sort == True:
     #using biopython
     records = list(SeqIO.parse("your_fasta_file.fasta", "fasta"))
     sorted_records = sorted(records, key=lambda x: len(x.seq))
     SeqIO.write(sorted_records, "sorted_fasta_file.fasta", "fasta")
     
-#Step 3: VSEARCH Clustering 
+#Step 4: VSEARCH Clustering 
 if clustering_VSEARCH == True: 
     print('Xenovo [STATUS] - Clustering reads with VSEARCH')
     # Input FASTA file and the number of sequences to select
@@ -193,7 +156,7 @@ if clustering_VSEARCH == True:
     cmd = 'vsearch --cluster_fast ' + os.path.join(processing_dir, 'random_sample.fasta') + ' --id ' + str(similarity_id) + ' --centroids ' + os.path.join(processing_dir, 'clusters.fasta') + ' --uc ' + os.path.join(processing_dir, 'cluster_info.uc') + ' --sizeout --clusterout_sort --consout ' + os.path.join(processing_dir, 'cons.fasta')
     os.system(cmd)
 
-#Step 4: setting a threshold for amount of reads needed in a cluster for cluster to be considering for consensus sequence formation 
+#Step 5: setting a threshold for amount of reads needed in a cluster for cluster to be considering for consensus sequence formation 
 if cluster_filter == True: 
     print('Xenovo [STATUS] - Filtering clusters and choosing representative sequences')
 
@@ -213,7 +176,7 @@ if cluster_filter == True:
 
     cluster_size_filter(os.path.join(processing_dir, 'clusters.fasta'), os.path.join(processing_dir, 'represented_seq.fasta'), min_cluster_seq)
     print('Xenovo [STATUS] - Represented Clusters outputted in', os.path.join(processing_dir, 'represented_seq.fasta'))
-#Step 4: Medaka Consensus Sequence Formation 
+#Step 6: Medaka Consensus Sequence Formation 
 if medaka_consensus == True: 
     print('Xenovo [STATUS] - Performing consensus sequence formation with Medaka')
     cmd = 'medaka_consensus -i ' + os.path.join(processing_dir, 'filtered.fasta') + ' -d ' + os.path.join(processing_dir, 'represented_seq.fasta') + ' -o ' + output_dir + ' -m r1041_e82_400bps_hac_v4.2.0 -f -b 300'
