@@ -16,13 +16,10 @@ clustering_VSEARCH = False
 cluster_filter = False
 medaka_consensus = False
 
-<<<<<<< HEAD
-working_dir = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240303_sorting_test_2/'
-=======
-working_dir = '/home/marchandlab/github/jay/capstone/yujia/XenoFind/xenofind_test/240303_sorting_test_2/'
->>>>>>> 39120946bad39d3378af34a869982d9e7043c874
-raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #dataset to start performing trimming on 
-ref_fasta = '/home/marchandlab/github/jay/capstone/reference/xBSn_90mer_fake_randomer.fa'
+
+#working_dir = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240303_sorting_test_2/'
+#raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #dataset to start performing trimming on 
+#ref_fasta = '/home/marchandlab/github/jay/capstone/reference/xBSn_90mer_fake_randomer.fa'
 
 working_dir = os.path.expanduser(sys.argv[1])
 raw_dir = os.path.expanduser(sys.argv[2])
