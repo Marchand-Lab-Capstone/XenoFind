@@ -43,7 +43,3 @@ if lq_detect == True:
 	cmd = 'python xenofind.py low_qual -w '+working_dir+' -f '+raw_dir+' -r '+con_fasta
 	os.system(cmd)
 
-# Calls for method 3 
-if method_3 == True: 
-	cmd = ''
-	os.system(cmd)
