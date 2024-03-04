@@ -36,8 +36,9 @@ lq_detect = False #placeholder variables
 
 # Generate consensus fasta 
 if consensus == True: 
-		cmd = 'python xenofind.py consensus -w ' + working_dir+' -f '+ raw_dir+' -r '+placeholder_fasta
-		os.system(cmd)
+	cmd = 'python xenofind.py consensus -w ' + working_dir+' -f '+ raw_dir+' -r '+placeholder_fasta
+	os.system(cmd)
+
 # Low Quality Score Detection 
 if lq_detect == True: 
 	cmd = 'python xenofind.py low_qual -w '+working_dir+' -f '+raw_dir+' -r '+con_fasta
