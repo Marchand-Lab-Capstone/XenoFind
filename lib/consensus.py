@@ -16,7 +16,11 @@ clustering_VSEARCH = False
 cluster_filter = False
 medaka_consensus = False
 
+<<<<<<< HEAD
+working_dir = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240303_sorting_test_2/'
+=======
 working_dir = '/home/marchandlab/github/jay/capstone/yujia/XenoFind/xenofind_test/240303_sorting_test_2/'
+>>>>>>> 39120946bad39d3378af34a869982d9e7043c874
 raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #dataset to start performing trimming on 
 ref_fasta = '/home/marchandlab/github/jay/capstone/reference/xBSn_90mer_fake_randomer.fa'
 
@@ -125,7 +129,11 @@ if sort == True:
     def sort_fasta(input_fasta, output_fasta):
         records = list(SeqIO.parse(input_fasta, "fasta"))
         sorted_records = sorted(records, key=lambda x: len(x.seq)) #chatGPT first passs, change variable names
+<<<<<<< HEAD
+        SeqIO.write(sorted_records, output_fasta, "fasta", warp=0 )
+=======
         # SeqIO.write(sorted_records, output_fasta, "fasta")
+>>>>>>> 39120946bad39d3378af34a869982d9e7043c874
     
         with open(output_fasta, "w") as output_file:
             for record in sorted_records:
@@ -179,6 +187,7 @@ if cluster_filter == True:
 
     cluster_size_filter(os.path.join(processing_dir, 'clusters.fasta'), os.path.join(processing_dir, 'represented_seq.fasta'), min_cluster_seq)
     print('Xenovo [STATUS] - Represented Clusters outputted in', os.path.join(processing_dir, 'represented_seq.fasta'))
+
 #Step 6: Medaka Consensus Sequence Formation 
 if medaka_consensus == True: 
     print('Xenovo [STATUS] - Performing consensus sequence formation with Medaka')
