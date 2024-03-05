@@ -162,7 +162,7 @@ if cluster_filter == True:
         
         with open(output_fasta, "w") as output_file:
         for record in modified_records:
-            output_file.write(f">{record.id}\n{record.seq}\n
+            output_file.write(f">{record.id}\n{record.seq}\n")
 
     cluster_size_filter(os.path.join(processing_dir, 'cons.fasta'), os.path.join(processing_dir, 'represented_seq.fasta'), min_cluster_seq)
     print('Xenovo [STATUS] - Represented Clusters outputted in', os.path.join(processing_dir, 'represented_seq.fasta'))
