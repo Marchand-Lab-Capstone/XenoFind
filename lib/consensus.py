@@ -146,7 +146,7 @@ if clustering_VSEARCH == True:
 if cluster_filter == True: 
     print('Xenovo [STATUS] - Filtering clusters and choosing representative sequences')
 
-    #need to fix this function, take in a threshold for how many reads in a cluster and filter out, have minimum amount be variable so when diversity is introduced, threshholdshould be decreased 
+    #need to fix this function, take in a threshold for how many reads in a cluster and filter out, have minimum amount be variable so when diversity is introduced, threshhold should be decreased 
     def cluster_size_filter(input_fasta, output_fasta, threshold):
         modified_records = []
         cluster_number = 1
@@ -159,7 +159,10 @@ if cluster_filter == True:
                     record.description = ""
                     modified_records.append(record)
                     cluster_number += 1
-        SeqIO.write(modified_records, output_fasta, "fasta")
+        
+        with open(output_fasta, "w") as output_file:
+        for record in modified_records:
+            output_file.write(f">{record.id}\n{record.seq}\n
 
     cluster_size_filter(os.path.join(processing_dir, 'cons.fasta'), os.path.join(processing_dir, 'represented_seq.fasta'), min_cluster_seq)
     print('Xenovo [STATUS] - Represented Clusters outputted in', os.path.join(processing_dir, 'represented_seq.fasta'))
