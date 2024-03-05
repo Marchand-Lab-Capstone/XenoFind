@@ -16,21 +16,21 @@ from pathlib import Path
 ######################################################
 
 # Consensus Paths
-working_dir = '/home/marchandlab/github/jay/capstone/yujia/XenoFind/xenofind_test/240303_sorting_test_2/' #Input desired working/ file output directory here 
+working_dir = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240304_pipeline_test/' #Input desired working/ file output directory here 
 raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #Input either fast5 or pod5 containing directory here
 placeholder_fasta = '/home/marchandlab/github/jay/capstone/reference/xBSn_90mer_fake_randomer.fa' #Input a dummy fasta containing randomer regions and flank barcodes here
 
 # Detection Paths
-working_dir = '' #Input desired working/ file output directory here
-raw_dir = '' #Input either fast5 or pod5 containing directory here 
-con_fasta = '' #Input consensus fasta or canonical ground truth fasta here
+working_dir_detect = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240304_lq_pipeline_test/' #Input desired working/ file output directory here
+raw_dir_detect = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #Input either fast5 or pod5 containing directory here 
+con_fasta = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240304_pipeline_test/outputs/consensus.fasta' #Input consensus fasta or canonical ground truth fasta here
 ######################################################
 
 
 ######################################################
 
-consensus = True 
-lq_detect = False #placeholder variables 
+consensus = False
+lq_detect = True #placeholder variables 
 
 ######################################################
 
@@ -41,6 +41,6 @@ if consensus == True:
 
 # Low Quality Score Detection 
 if lq_detect == True: 
-	cmd = 'python xenofind.py low_qual -w '+working_dir+' -f '+raw_dir+' -r '+con_fasta
+	cmd = 'python xenofind.py low_qual -w '+working_dir_detect+' -f '+raw_dir_detect+' -r '+con_fasta
 	os.system(cmd)
 

@@ -6,24 +6,25 @@ import random
 import subprocess
 from Bio import SeqIO
 import pysam
+import sys
 from xf_tools  import *
 from xf_params import *
 
-basecall = False
-trim = False
-sort = False
-clustering_VSEARCH = False
-cluster_filter = True
+basecall = True
+trim = True
+sort = True
+clustering_VSEARCH = True
+cluster_filter = False
 medaka_consensus = True
 
 
-working_dir = '/home/marchandlab/github/jay/capstone/yujia/XenoFind/xenofind_test/240303_sorting_test_2/'
-raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #dataset to start performing trimming on 
-ref_fasta = '/home/marchandlab/github/jay/capstone/reference/xBSn_90mer_fake_randomer.fa'
+#working_dir = '/home/marchandlab/github/jay/capstone/yujia/XenoFind/xenofind_test/240303_sorting_test_2/'
+#raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #dataset to start performing trimming on 
+#ref_fasta = '/home/marchandlab/github/jay/capstone/reference/xBSn_90mer_fake_randomer.fa'
 
-#working_dir = os.path.expanduser(sys.argv[1])
-#raw_dir = os.path.expanduser(sys.argv[2])
-#ref_fasta = os.path.expanduser(sys.argv[3])
+working_dir = os.path.expanduser(sys.argv[1])
+raw_dir = os.path.expanduser(sys.argv[2])
+ref_fasta = os.path.expanduser(sys.argv[3])
 
 # Making directories 
 working_dir = check_make_dir(working_dir)
@@ -166,8 +167,8 @@ if cluster_filter == True:
 #Step 6: Medaka Consensus Sequence Formation 
 if medaka_consensus == True: 
     print('Xenovo [STATUS] - Performing consensus sequence formation with Medaka')
-    cmd = 'medaka_consensus -i ' + os.path.join(processing_dir, 'trimmed.fasta') + ' -d ' + os.path.join(processing_dir, 'represented_seq.fasta') + ' -o ' + output_dir + ' -m r1041_e82_400bps_hac_v4.2.0 -f -b 300' # used with cluster filter
-    #cmd = 'medaka_consensus -i ' + os.path.join(processing_dir, 'trimmed.fasta') + ' -d ' + os.path.join(processing_dir, 'cons.fasta') + ' -o ' + output_dir + ' -m r1041_e82_400bps_hac_v4.2.0 -f -b 300'
+    #cmd = 'medaka_consensus -i ' + os.path.join(processing_dir, 'trimmed.fasta') + ' -d ' + os.path.join(processing_dir, 'represented_seq.fasta') + ' -o ' + output_dir + ' -m r1041_e82_400bps_hac_v4.2.0 -f -b 300' # used with cluster filter
+    cmd = 'medaka_consensus -i ' + os.path.join(processing_dir, 'trimmed.fasta') + ' -d ' + os.path.join(processing_dir, 'cons.fasta') + ' -o ' + output_dir + ' -m r1041_e82_400bps_hac_v4.2.0 -f -b 300'
     os.system(cmd)
 
 

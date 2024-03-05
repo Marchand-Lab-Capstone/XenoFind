@@ -85,7 +85,7 @@ if args.subparsers == 'consensus':
         print('XenoFind [ERROR] - Consensus requires either a Pod5 or Fast5 directory. This file path is invalid. Check to ensure pod5/fast path is correct.')
         exit_flag = True 
 
-    if os.path.exists(os.path.expanduser(args.r))==False or os.path.exists(os.path.expanduser(args.r[1]))==False:
+    if os.path.exists(os.path.expanduser(args.r))==False:
         print('XenoFind [ERROR] - Consensus requires a dummy fasta to be inputted. This file path is invalid. Check to ensure that the fasta path is corect.')
         exit_flag = True 
 
@@ -110,7 +110,7 @@ if args.subparsers == 'low_qual':
 
 
     if exit_flag == False: 
-        cmd = 'python lib/zf_low_qual.py '+args.w+' '+args.f+' '+args.r
+        cmd = 'python lib/xf_low_qual.py '+args.w+' '+args.f+' '+args.r
         os.system(cmd)
     else: 
         print('XenoFind [ERROR] - At least one file path not properly set. Xemora basecaller exiting.')
