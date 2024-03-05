@@ -40,6 +40,73 @@ import consensus_refactor as crf
 EXTRA_DIRECTORIES = ['pod5','basecall','bam','fastq']
 MERGE_FILENAME = 'merged_reads'
 
+def get_working_directory(path=None):
+    response_val=None
+    
+    # if a path was passed
+    if (path not None):
+        
+        # Check the filestructure
+        file_checkup = check_filestructure(path)
+        
+        # if the directory passed is valid
+        if (file_checkup['is_valid']):
+            response_val = path
+        else:
+            os.make_dirs(path)
+            
+        # if an invalid directory, exit
+        else:
+            response_val = sys.exit()
+            
+    # if nothing pased, prompt
+    else:
+        path = input("Provide working directory (ends with a /): ")
+        file_checkup = check_filestructure(path)
+        # if the directory passed is valid
+        if (file_checkup['is_valid']):
+            
+            # check if each subfolder is in there, and if it isn't make it.
+            for folder in EXTRA_DIRECTORIES:
+                if (folder not in file_checkup['subfiles']):
+                    st = os.makedirs(path+folder)
+            # Set the response value to the passed filepath
+            response_val = path
+            
+        # if an invalid directory, exit
+        else:
+            response_val = sys.exit()
+        
+    return response_val
+        
+        
+def check_filestructure(path, t='d', ext='fa'):
+    is_valid = None
+    is_empty = None
+    subfiles = []
+
+    if t = 'd':
+        is_valid = os.path.isdir(path)
+        subfiles = os.path.listdir(path)
+        is_empty = (len(subfiles) == 0)
+        
+    elif t = 'f':
+        is_valid = (path.split('.')[-1] == ext)
+        
+    else:
+        is_valid = None
+    
+    out_dict = {'path':path,
+                'is_valid':is_valid,
+                'is_empty':is_empty,
+                'subfiles':subfiles}
+    
+    return out_dict
+        
+        
+    
+    
+
 def request_directories():
     '''
     request_directories is designed to prompt the user for the working directory,

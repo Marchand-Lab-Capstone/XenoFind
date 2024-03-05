@@ -1,5 +1,7 @@
 """
-consensus-refactor.py - Steps to make an AGTC referece file for later comparison to xenobases.
+xf_fastpod_handler.py - Used to import and condense fast5 files through the get_read_data() method.
+
+Formerly consensus_refactor.py - Steps to make an AGTC referece file for later comparison to xenobases.
 """
 
 # Import Statements:
@@ -143,12 +145,8 @@ def get_read_data(in_dir, out_dir, filename):
                 validuserinput = True
                 print("Ignoring merge.")
     
-    return files_to_merge
+    return os.path.exists(output_filename)
     
 ## END STEP 1 ##
 # Example use: get_read_data("../Data/sample_fast5/subset_fast5/", "../Data/sample_fast5/merged_folder/", "merged")
 
-## STEP 2: BASECALL THE MERGED POD5 FILE ##
-
-def basecall(merged_path):
-    return None

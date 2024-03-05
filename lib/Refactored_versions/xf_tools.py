@@ -64,7 +64,7 @@ def check_make_dir(directory):
     help users know what directory is being generated. 
     """
     directory = os.path.expanduser(directory)
-    if not os.path.isdir(directory):
+    if not os.path.exists(directory):
         os.makedirs(directory)
         print('Xemora [STATUS] - Required directory not found. Creating directory: '+directory)
     return directory
