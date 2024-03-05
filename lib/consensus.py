@@ -9,21 +9,21 @@ import pysam
 from xf_tools  import *
 from xf_params import *
 
-basecall = True
-trim = True
-sort = True
+basecall = False
+trim = False
+sort = False
 clustering_VSEARCH = False
-cluster_filter = False
-medaka_consensus = False
+cluster_filter = True
+medaka_consensus = True
 
 
-#working_dir = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240303_sorting_test_2/'
-#raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #dataset to start performing trimming on 
-#ref_fasta = '/home/marchandlab/github/jay/capstone/reference/xBSn_90mer_fake_randomer.fa'
+working_dir = '/home/marchandlab/github/jay/capstone/yujia/XenoFind/xenofind_test/240303_sorting_test_2/'
+raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #dataset to start performing trimming on 
+ref_fasta = '/home/marchandlab/github/jay/capstone/reference/xBSn_90mer_fake_randomer.fa'
 
-working_dir = os.path.expanduser(sys.argv[1])
-raw_dir = os.path.expanduser(sys.argv[2])
-ref_fasta = os.path.expanduser(sys.argv[3])
+#working_dir = os.path.expanduser(sys.argv[1])
+#raw_dir = os.path.expanduser(sys.argv[2])
+#ref_fasta = os.path.expanduser(sys.argv[3])
 
 # Making directories 
 working_dir = check_make_dir(working_dir)
@@ -39,8 +39,8 @@ output_dir = check_make_dir(os.path.join(working_dir, 'outputs/'))
 min_length = 70
 max_length = 300 #MAXximum length reads should be, filters out super long reads that are messing with cluster formation
 sample_cluser_size = 5000
-similarity_id = 0.90 #between 0 - 1, want this higher 
-min_cluster_seq = 2 #minimum number of reads that need to be in a cluster to be allowed for consensus formation
+similarity_id = 0.95 #between 0 - 1, want this higher 
+min_cluster_seq = 100 #minimum number of reads that need to be in a cluster to be allowed for consensus formation
 
 
 '''
@@ -126,12 +126,7 @@ if sort == True:
     def sort_fasta(input_fasta, output_fasta):
         records = list(SeqIO.parse(input_fasta, "fasta"))
         sorted_records = sorted(records, key=lambda x: len(x.seq)) #chatGPT first passs, change variable names
-<<<<<<< HEAD
-        SeqIO.write(sorted_records, output_fasta, "fasta", warp=0 )
-=======
-        # SeqIO.write(sorted_records, output_fasta, "fasta")
->>>>>>> 39120946bad39d3378af34a869982d9e7043c874
-    
+
         with open(output_fasta, "w") as output_file:
             for record in sorted_records:
                 output_file.write(f">{record.id}\n{record.seq}\n")
@@ -141,33 +136,16 @@ if sort == True:
 #Step 4: VSEARCH Clustering 
 if clustering_VSEARCH == True: 
     print('Xenovo [STATUS] - Clustering reads with VSEARCH')
-    # Input FASTA file and the number of sequences to select
 
-    def random_fasta_sample(input_fasta, output_fasta):
-        # Read the input FASTA file and store sequences in a list
-        with open(input_fasta, "r") as infile:
-            fasta_lines = infile.readlines()
-
-        #Create a list containing paired headers and sequences 
-        head_seq_pair = [fasta_lines[i] + fasta_lines[i+1] for i in range(0, len(fasta_lines), 2)]
-        
-        # Randomly select X sequences without replacement
-        selected_pairs = random.sample(head_seq_pair, sample_cluser_size)
-
-        # Write the selected sequences to an intermediate FASTA file
-        with open(output_fasta, "w") as outfile:
-            outfile.writelines(selected_pairs)
-    
-    #call function for first round of clustering
-    random_fasta_sample(os.path.join(processing_dir, 'filtered.fasta'), os.path.join(processing_dir, 'random_sample.fasta'))
-
-    cmd = 'vsearch --cluster_fast ' + os.path.join(processing_dir, 'random_sample.fasta') + ' --id ' + str(similarity_id) + ' --centroids ' + os.path.join(processing_dir, 'clusters.fasta') + ' --uc ' + os.path.join(processing_dir, 'cluster_info.uc') + ' --sizeout --clusterout_sort --consout ' + os.path.join(processing_dir, 'cons.fasta')
+    cmd = 'vsearch --cluster_fast ' + os.path.join(processing_dir, 'sorted.fasta') + ' --id ' + str(similarity_id) + ' --centroids ' + os.path.join(processing_dir, 'clusters.fasta') + ' --uc ' + os.path.join(processing_dir, 'cluster_info.uc') + ' --sizeout --clusterout_sort --consout ' + os.path.join(processing_dir, 'cons.fasta')
     os.system(cmd)
-
+    #cons.fasta made a consensus that was 98.34% similar to GT reference file
+    
 #Step 5: setting a threshold for amount of reads needed in a cluster for cluster to be considering for consensus sequence formation 
 if cluster_filter == True: 
     print('Xenovo [STATUS] - Filtering clusters and choosing representative sequences')
 
+    #need to fix this function, take in a threshold for how many reads in a cluster and filter out, have minimum amount be variable so when diversity is introduced, threshholdshould be decreased 
     def cluster_size_filter(input_fasta, output_fasta, threshold):
         modified_records = []
         cluster_number = 1
@@ -182,13 +160,14 @@ if cluster_filter == True:
                     cluster_number += 1
         SeqIO.write(modified_records, output_fasta, "fasta")
 
-    cluster_size_filter(os.path.join(processing_dir, 'clusters.fasta'), os.path.join(processing_dir, 'represented_seq.fasta'), min_cluster_seq)
+    cluster_size_filter(os.path.join(processing_dir, 'cons.fasta'), os.path.join(processing_dir, 'represented_seq.fasta'), min_cluster_seq)
     print('Xenovo [STATUS] - Represented Clusters outputted in', os.path.join(processing_dir, 'represented_seq.fasta'))
 
 #Step 6: Medaka Consensus Sequence Formation 
 if medaka_consensus == True: 
     print('Xenovo [STATUS] - Performing consensus sequence formation with Medaka')
-    cmd = 'medaka_consensus -i ' + os.path.join(processing_dir, 'filtered.fasta') + ' -d ' + os.path.join(processing_dir, 'represented_seq.fasta') + ' -o ' + output_dir + ' -m r1041_e82_400bps_hac_v4.2.0 -f -b 300'
+    cmd = 'medaka_consensus -i ' + os.path.join(processing_dir, 'trimmed.fasta') + ' -d ' + os.path.join(processing_dir, 'represented_seq.fasta') + ' -o ' + output_dir + ' -m r1041_e82_400bps_hac_v4.2.0 -f -b 300' # used with cluster filter
+    #cmd = 'medaka_consensus -i ' + os.path.join(processing_dir, 'trimmed.fasta') + ' -d ' + os.path.join(processing_dir, 'cons.fasta') + ' -o ' + output_dir + ' -m r1041_e82_400bps_hac_v4.2.0 -f -b 300'
     os.system(cmd)
 
 
