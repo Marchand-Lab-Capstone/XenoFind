@@ -34,6 +34,10 @@ fastq_dir = check_make_dir(os.path.join(processing_dir, 'fastq/'))
 NOTE: 
 WE CAN ADD A PART WHICH WILL AUTO INSTALL DORADO INTO THIS WORKING DIRECTORY AFTER THE FIRST TIME THE PROGRAM IS CALLED. MIGHT BE WORTH DOING
 '''
+
+basecall_pod = True
+analyze_fastq = True
+
 #Step 1: Generate or merge pod5 files if needed
 file_type = os.listdir(raw_dir)
 # Check if the directory is not empty
@@ -64,6 +68,8 @@ if basecall_pod == True:
     #Data filtering here maybe, leaving all data reads for now 
 if analyze_fastq == True: 
     
+    filter_primary_alignments(os.path.join(bc_dir, 'bc.bam'), os.path.join(bc_dir, 'primary.bam'))
+    #consider writing this function except with trimming first, could have a function that extracts the trimmmed read and trimmmed quality score region. 
     def extract_read_info(bam_file_path):
         """ 
         This function takes in the bam file generated and extracts the readID, basecalled sequence, start of reference sequence, and the quality score from the bamfile 
@@ -73,10 +79,19 @@ if analyze_fastq == True:
         with pysam.AlignmentFile(bam_file_path, "rb") as bamfile:
             for read in bamfile:
                 # Check if the read is mapped
+                if read is None:
+                    continue
                 if not read.is_unmapped:
-                    qual = read.query_qualities 
-                    qual = np.array(qual, dtype=int)
+                    print(read.query_name)
+                    print(read.query_sequence)
+                    qual = read.query_qualities
+                    print('this is qual prior to np.array', qual)
+                    qual = np.array(qual)
+                    print('this is qual post np.array', qual)
+                    print(qual[6])
                     avg_qual = np.mean(qual)
+                    print('average is', avg_qual)
+                    #Extracting the features into a list 
                     features = [
                     read.query_name,  # Query name of the read
                     read.query_sequence,  # Sequence basecalled
@@ -90,6 +105,7 @@ if analyze_fastq == True:
             return read_info
     read_info = extract_read_info(os.path.join(bc_dir, 'bc.bam'))
     
+    print(read_info)
 # Test if the every base pair gets its own quality score
 if len(read_info[0][1]) == len(read_info[0][3]):
     print('Yes, the length of the sequences matches the length of quality score string')
@@ -100,9 +116,5 @@ else:
     #print(read_info) #little more than 50% alignment to ground truth for single sequence context#little more than 50% alignment to ground truth for single sequence context
 
     #Predict XNA position using quality string analysis 
-    #Need to make it so reads are grouped by which sequence its aligned to (our current dataset is single sequence context)
-    def xna_guess(read_info):
-        """
-        This function will perform a statistical test on a per read basis 
-        """
-        q_score = read_info
+#def z-calc(mean_qs, base_qs, read_length):
+        
