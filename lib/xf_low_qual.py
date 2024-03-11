@@ -70,6 +70,8 @@ if basecall_pod == True:
 if analyze_fastq == True: 
     
     filter_primary_alignments(os.path.join(bc_dir, 'bc.bam'), os.path.join(bc_dir, 'primary.bam'))
+    
+    
     #consider writing this function except with trimming first, could have a function that extracts the trimmmed read and trimmmed quality score region. 
     def extract_read_info(bam_file_path):
         """ 
@@ -83,14 +85,15 @@ if analyze_fastq == True:
                 if read is None:
                     continue
                 if not read.is_unmapped:
-                    qual = read.query_qualities
+                    
+                    qual = read.query_alignment_qualities
                     qual = np.array(qual)
                     avg_qual = np.mean(qual)
                     
                     #Extracting the features into a list 
                     features = [
                     read.query_name,  # Query name of the read
-                    read.query_sequence,  # Sequence basecalled
+                    read.query_alignment_sequence,  # Sequence basecalled
                     read.reference_start,  # Position of the read relative to the reference
                     qual,  # Quality scores of the read (numerical)
                     avg_qual
@@ -102,7 +105,7 @@ if analyze_fastq == True:
     read_info = extract_read_info(os.path.join(bc_dir, 'primary.bam'))
     
     # Convert the list to a pandas DataFrame
-    columns = ["ReadID", "Sequence", "ReferenceStart", "QualityScores", "AverageQuality"]
+    columns = ["ReadID", "Sequence", "ReferenceStart","QualityScores", "AverageQuality"]
     df = pd.DataFrame(read_info, columns=columns)
     
     # Display the DataFrame
