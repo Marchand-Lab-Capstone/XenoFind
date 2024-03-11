@@ -4,9 +4,11 @@ import sys
 import pysam
 import numpy as np
 import pandas as pd
+import csv
 from pathlib import Path
 from xf_params import * 
 from xf_tools import *
+from scipy.stats import wilcoxon
 
 #Initialize
 #working_dir = os.path.expanduser(sys.argv[1]) #will be final impolemented version, will be testing in large scale script later 
@@ -38,6 +40,7 @@ WE CAN ADD A PART WHICH WILL AUTO INSTALL DORADO INTO THIS WORKING DIRECTORY AFT
 
 basecall_pod = True
 analyze_fastq = True
+xna_detect = True
 
 #Step 1: Generate or merge pod5 files if needed
 file_type = os.listdir(raw_dir)
@@ -119,4 +122,37 @@ if analyze_fastq == True:
 
     #Predict XNA position using quality string analysis 
 #def z-calc(mean_qs, base_qs, read_length):
+
+if xna_detect == True
+    
+    def statistical_test(read_info, output_csv_file):
+    """
+    Perform a statistical test on the mean quality score of each read and identify positions with significantly low quality scores.
+    Write the positions with significant low quality scores to a CSV file.
+    """
+        with open(output_csv_file, 'w', newline='') as csv_file:
+            csv_writer = csv.writer(csv_file)
+
+            # Write header
+            header = ['ReadID', 'StartReferencePosition', 'SignificantPositions']
+            csv_writer.writerow(header)
+
+            for features in read_info:
+                # Extract relevant information
+                read_name, _, start_position, quality_scores, average_quality_score = features
+
+                # Perform the Wilcoxon signed-rank test
+                _, p_values = wilcoxon(quality_scores - average_quality_score)
+
+                # Define a significance threshold (move to parameters later)
+                significance_threshold = 0.05
+
+                # Identify positions with significant low quality scores
+                significant_positions = [i + start_position for i, p in enumerate(p_values) if p < significance_threshold]
+
+                # Write to CSV file
+                csv_writer.writerow([read_name, start_position, significant_positions])
+
+    statistical_test(read_info, os.path.join(working_dir,'position_result.csv'))
+
         
