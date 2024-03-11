@@ -23,7 +23,7 @@ placeholder_fasta = '/home/marchandlab/github/jay/capstone/reference/xBSn_90mer_
 
 # Detection Paths
 working_dir_detect = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240309_lq_test/' #Input desired working/ file output directory here
-raw_dir_detect = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/10fast5' #Input either fast5 or pod5 containing directory here 
+raw_dir_detect = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #Input either fast5 or pod5 containing directory here 
 con_fasta = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240309_cluster_collapse/outputs/polished_consensus.fasta' #Input consensus fasta or canonical ground truth fasta here
 ######################################################
 

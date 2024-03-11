@@ -3,6 +3,7 @@ import glob
 import sys
 import pysam
 import numpy as np
+import pandas as pd
 from pathlib import Path
 from xf_params import * 
 from xf_tools import *
@@ -82,15 +83,10 @@ if analyze_fastq == True:
                 if read is None:
                     continue
                 if not read.is_unmapped:
-                    print(read.query_name)
-                    print(read.query_sequence)
                     qual = read.query_qualities
-                    print('this is qual prior to np.array', qual)
                     qual = np.array(qual)
-                    print('this is qual post np.array', qual)
-                    print(qual[6])
                     avg_qual = np.mean(qual)
-                    print('average is', avg_qual)
+                    
                     #Extracting the features into a list 
                     features = [
                     read.query_name,  # Query name of the read
@@ -102,16 +98,19 @@ if analyze_fastq == True:
                     read_info.append(features)
                 else:
                     print(f"Read {read.query_name} is unmapped and does not have a reference position.")
-            return read_info
-    read_info = extract_read_info(os.path.join(bc_dir, 'bc.bam'))
+        return read_info
+    read_info = extract_read_info(os.path.join(bc_dir, 'primary.bam'))
     
-    print(read_info)
-# Test if the every base pair gets its own quality score
-if len(read_info[0][1]) == len(read_info[0][3]):
-    print('Yes, the length of the sequences matches the length of quality score string')
+    # Convert the list to a pandas DataFrame
+    columns = ["ReadID", "Sequence", "ReferenceStart", "QualityScores", "AverageQuality"]
+    df = pd.DataFrame(read_info, columns=columns)
+    
+    # Display the DataFrame
+    print(df)
+    
+    df.to_csv(os.path.join(working_dir,'feature.csv'), index = False)
 
-else:
-    print('No, the length of the sequences and quality score doesnt match!')
+
     
     #print(read_info) #little more than 50% alignment to ground truth for single sequence context#little more than 50% alignment to ground truth for single sequence context
 
