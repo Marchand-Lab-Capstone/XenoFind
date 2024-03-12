@@ -17,7 +17,7 @@ This will contain the parameters used in any of the detection methods such as th
 ### xf_tools 
 This script contains all the reusable, general functions that can be called as needed (e.g., fast5 to pod5 conversion). This script is imported to most of the scripts in this program. 
 
-### consensus.py
+### xf_consensus.py
 This script takes in the fast5 files generated from Nanopore Sequencing and outputs a fasta file as the reference sequence for downstream possible location detection of the XNAs.
 
 ### xf_low_qual.py
@@ -25,7 +25,7 @@ This script outlines the first approach for identifying potential positions of X
 
 ## Internal Components/ Functions 
 
-### read_trim(consensus.py)
+### read_trim(xf_consensus.py)
 This function takes in the sam file generated from minimap2, trim the reads according to the length of the reference sequence and outputs the reads with approximately the same length in a fasta file. This is done by truncating reads the bases that are longer than the 'dummy' reference file where we have a length approximation of the dataset. The output of read_trim is a fasta file formatted as the following 
 
     >readID
@@ -40,14 +40,8 @@ Following the VSEARCH clustering, this function establishes a threshold and sele
 ### extract_read_info function (xf_low_qual.py)
 This function takes in the bam file generated during Dorado basecalling and iterates through it using pysam to extract the readID, basecalled sequence, start of reference sequence, and the per base quality score. It also calculates the per read quality score by taking the average of the per base quality scores for a given ead.
 
-Notes for things to add for xf_low_qual
-
-- need a function that will perform a statistical test on a per read level on each base to see if the low quality reads are significant. 
-- need a function to center the reads based on alignment to group low quality regions 
-- update the xna guess function for the specific statistical test we are going to use for grouped low quality region significance 
-
-### xna_guess function (xf_low_qual.py)
-This function performs a statistical test on a per base read to indentify low-quality scores, recenters and groups the reads to the reference sequence, and extracts the positions indicative of the XNA presence.
+### wilcoxon_significance (xf_low_qual.py)
+This function uses the built in wilcoxon test from scipy.stats to test the inputted features from extract_read_info, specificially the individual quality score to determine if a given score if significantly lower than the read level (average) quality score. 
 
 ### xfasta_gen (xf_low_qual.py)
 xfasta_gen will take in the regions analyzed from xna_guess and will add those significant low-quality score regions to the consensus fasta header in the estabalished 'xFasta' format from the Marchand Lab. The fasta file would be formatted as shown below.
