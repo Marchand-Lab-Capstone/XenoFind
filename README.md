@@ -13,9 +13,15 @@ Xenofind has two primary subcommands to call: consensus or low_qual.
 Consensus requires the following inputs: a desired working directory, a pod5 or fast5 dataset, and a temporary reference file containing the following structure. 
 
     Barcode (known) - Region of Interest (NNNNN in reference) - Barcode (known)
+Consensus formation is a mandatory preprocessing step for data with unidentified regions (the region of interest above). 
 To run consensus formation, call the following command in terminal 
 
     python xenofind.py consensus -w [working directory] -f [pod5 or fast5 directory] -r [temporary reference fasta]
+
+low_qual performs XNA detection by analyzing and performing statistical tests on a per base level and per consensus level.
+Regions that have several areas with low quality cores compared to the mean quality are logged as potential XNA positions. To call low quality score analysis, run the following command. 
+
+	python xenofind.py low_qual -w [working directory] -f [pod5 or fast5 directory] -r [consensus fasta from consensus]
 
 ### Tentative Objectives 
 
