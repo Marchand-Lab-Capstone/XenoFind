@@ -14,7 +14,7 @@ basecall = False
 trim = False
 sort = False
 clustering_VSEARCH = False
-cluster_filter = False
+#cluster_filter = False
 medaka_consensus = True
 
 
@@ -40,8 +40,6 @@ output_dir = check_make_dir(os.path.join(working_dir, 'outputs/'))
 min_length = 70
 max_length = 300 #MAXximum length reads should be, filters out super long reads that are messing with cluster formation
 sample_cluser_size = 5000
-similarity_id = 0.95 #between 0 - 1, want this higher 
-similarity_collapse = 0.90
 min_cluster_seq = 100 #minimum number of reads that need to be in a cluster to be allowed for consensus formation
 
 
@@ -138,12 +136,23 @@ if sort == True:
 #Step 4: VSEARCH Clustering 
 if clustering_VSEARCH == True: 
     print('Xenovo [STATUS] - Clustering reads with VSEARCH')
-
-    cmd = 'vsearch --cluster_fast ' + os.path.join(processing_dir, 'sorted.fasta') + ' --id ' + str(similarity_id) + ' --centroids ' + os.path.join(processing_dir, 'clusters.fasta') + ' --uc ' + os.path.join(processing_dir, 'cluster_info.uc') + ' --clusterout_sort --consout ' + os.path.join(processing_dir, 'cons.fasta')
+    
+    # first round of VSEARCH
+    cmd = 'vsearch --cluster_fast ' + os.path.join(processing_dir, 'sorted.fasta') + ' --id 0.85 --clusterout_sort --consout ' + os.path.join(processing_dir, 'vs_cons_85.fasta')
     os.system(cmd)
+    
+    # second round of VSEARCH
+    cmd = 'vsearch --cluster_fast ' + os.path.join(processing_dir, 'vs_cons_85.fasta') + ' --id 0.90 --clusterout_sort --consout ' + os.path.join(processing_dir, 'vs_cons_90.fasta')
+    os.system(cmd)
+    
+    # third round of VSEARCH
+    cmd = 'vsearch --cluster_fast ' + os.path.join(processing_dir, 'vs_cons_90.fasta') + ' --id 0.95 --clusterout_sort --consout ' + os.path.join(processing_dir, 'vs_cons_95.fasta')
+    os.system(cmd)
+    
     #cons.fasta made a consensus that was 98.34% similar to GT reference file
     
 #Step 5: setting a threshold for amount of reads needed in a cluster for cluster to be considering for consensus sequence formation 
+'''
 if cluster_filter == True: 
     print('Xenovo [STATUS] - Filtering clusters and choosing representative sequences')
 
@@ -162,15 +171,13 @@ if cluster_filter == True:
 
     cluster_size_filter(os.path.join(processing_dir, 'cons.fasta'), os.path.join(processing_dir, 'represented_seq.fasta'), min_cluster_seq)
     print('Xenovo [STATUS] - Represented Clusters outputted in', os.path.join(processing_dir, 'represented_seq.fasta'))
+'''
 
 #Step 6: Medaka Consensus Sequence Formation 
 if medaka_consensus == True: 
     print('Xenovo [STATUS] - Performing consensus sequence formation with Medaka')
-    cmd = 'medaka_consensus -i ' + os.path.join(processing_dir, 'trimmed.fasta') + ' -d ' + os.path.join(processing_dir, 'represented_seq.fasta') + ' -o ' + output_dir + ' -m r1041_e82_400bps_hac_v4.2.0 -f -b 300' # used with cluster filter
+    cmd = 'medaka_consensus -i ' + os.path.join(processing_dir, 'trimmed.fasta') + ' -d ' + os.path.join(processing_dir, 'vs_cons_95.fasta') + ' -o ' + output_dir + ' -m r1041_e82_400bps_hac_v4.2.0 -f -b 300' # used with cluster filter
     #cmd = 'medaka_consensus -i ' + os.path.join(processing_dir, 'trimmed.fasta') + ' -d ' + os.path.join(processing_dir, 'cons.fasta') + ' -o ' + output_dir + ' -m r1041_e82_400bps_hac_v4.2.0 -f -b 300'
     os.system(cmd)
     
-    #Secondary cluster 'formation' where singletons are collapsed into the primary cluster. The similarity ID for this set is reduced since we already have general sequences for dataset
-    #May require further testing with diversity to see if lowering threshold is okay
-    cmd = 'vsearch --cluster_fast ' + os.path.join(output_dir, 'consensus.fasta') + ' --id ' + str(similarity_collapse)  + ' --clusterout_sort --centroids ' + os.path.join(output_dir, 'polished_consensus.fasta')
-    os.system(cmd)
+    

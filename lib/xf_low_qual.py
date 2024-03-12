@@ -123,13 +123,13 @@ if analyze_fastq == True:
     #Predict XNA position using quality string analysis 
 #def z-calc(mean_qs, base_qs, read_length):
 
-if xna_detect == True
+if xna_detect == True:
     
     def statistical_test(read_info, output_csv_file):
-    """
-    Perform a statistical test on the mean quality score of each read and identify positions with significantly low quality scores.
-    Write the positions with significant low quality scores to a CSV file.
-    """
+        """
+        Perform a statistical test on the mean quality score of each read and identify positions with significantly low quality scores.
+        Write the positions with significant low quality scores to a CSV file.
+        """
         with open(output_csv_file, 'w', newline='') as csv_file:
             csv_writer = csv.writer(csv_file)
 
