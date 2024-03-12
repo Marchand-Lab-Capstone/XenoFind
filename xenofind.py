@@ -33,14 +33,12 @@ parser = argparse.ArgumentParser(
 ______________________________________________________________________________
 
 
-********** Xemora : An XNA sequencing neural network trainer *********
-
-Xemora is a tool pipeline used for nanopore sequencing of alternative basepairs (XNAs) that latches onto Remora 2.0 (ONT). This toolkit incorporates ONT-workflows to preprocess fast5, pod5, fastq, bam, and bed files for training a remora model. XNA sequence handling is done using the xFASTA format. Therefore, FASTA reference inputs should contain XNA bases in sequence lines. Models for basecalling can be trained on specific set of sequences (rather than entire sequence space). For optimal implementation, Xemora should be trained on at least two datasets, with and without the XNA substitutions. Xemora models can be exported and used as remora models for guppy, dorado, or bonito basecalling. Alternatively, Xemora can handle reference-based XNA identification directly. The general pipeline consists of two steps: 1) Training xemora on a reference set of reads with and without XNAs 2) basecalling using the trained model. 
+********** XenoFind: an XNA / modified base position detector *********
 
 
 Xenofind command groups (additional help available within each command group):
-	train		[Train] a xemora model on a set of input fast5 reads, localized to reference fasta containing XNAs. 
-	basecall	[Basecall] a fast5 reads around XNA using a previously trained xemora model. 
+	consensus Generate a consensus sequence in the form of a fasta file. 
+	low_qual Detect modification positions based on the per base level quality score mapped to the consensus
          '''))
 
 
@@ -50,14 +48,14 @@ subparsers = parser.add_subparsers(dest='subparsers')
 
 #Consensus Formation
 parser_train = subparsers.add_parser('consensus', help='[-w working_dir] [-f raw_dir] [-r placeholder_fasta]')
-parser_train.add_argument('-w',metavar = '[working_dir]', type=str,required = True, help='Path to output directory for storing output intermediates, temp files, and models.')
+parser_train.add_argument('-w',metavar = '[working_dir]', type=str,required = True, help='Path to output directory for storing outputs and intermediates')
 parser_train.add_argument('-f',metavar ='[raw_dir]', type=str,required = True, help='Path to input directories containing multi-fast5 or pod5 folder')
 parser_train.add_argument('-r',metavar = '[placeholder_fasta]', type=str, required = True, help='Path to FASTA (.fa, .fasta) file of sequence or sequences with barcodes for alignment and randomer placeholders for consensus formation. ')
 
 
 #Low Quality XNA Detection
 parser_basecall = subparsers.add_parser('low_qual', help='[-w working_dir] [-f raw_dir] [-r consensus_fasta] ')
-parser_basecall.add_argument('-w',metavar = '[working_dir]', type=str,required = True, help='Path to output directory for storing output intermediates and basecall results.')
+parser_basecall.add_argument('-w',metavar = '[working_dir]', type=str,required = True, help='Path to output directory for storing outputs and intermediates')
 parser_basecall.add_argument('-f',metavar ='[raw_dir]', type=str,required = True, help='Path to input directories containing multi-fast5 folders of XNA-containing sequence.')
 parser_basecall.add_argument('-r',metavar = '[con_fasta]', type=str, required = True, help='Path to FASTA (.fa, .fasta) file of sequence or sequences with XNAs (e.g. BSPZKXJV). Should be same sequence context as xemora model training.')
 
