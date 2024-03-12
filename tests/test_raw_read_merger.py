@@ -1,3 +1,11 @@
+"""
+test_raw_read_merger.py
+J. Sumabat, N. Lai, S. Peck, Y. Huang, 3/12/2024
+
+test_raw_read_merger.py contains testing classes and cases for the methods within
+raw_read_merger.py.
+"""
+
 import unittest
 import sys
 sys.path.append('../lib/consensus_formation')

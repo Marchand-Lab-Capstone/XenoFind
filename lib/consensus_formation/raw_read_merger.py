@@ -1,3 +1,17 @@
+"""
+raw_read_merger.py
+J. Sumabat, N. Lai, S. Peck, Y. Huang, 3/12/2024
+
+raw_read_merger.py contains methods used for taking a directory of either fast5 or pod5 files,
+and then merging them into a singular pod5 file. 
+
+merge_reads_command() - generate the merge command dependant on the OS and filetype.
+validate_read_directory() - check that the passed read directory actually exists.
+validate_target_directory() - check if a passed directory exists. 
+generate_merged_pod5() - use a directory of reads to generate the merged pod5, agnostic of filetype
+"""
+
+
 import os
 import platform
 SYS = platform.system()
