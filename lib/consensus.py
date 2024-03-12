@@ -17,11 +17,6 @@ clustering_VSEARCH = False
 #cluster_filter = False
 medaka_consensus = True
 
-
-#working_dir = '/home/marchandlab/github/jay/capstone/yujia/XenoFind/xenofind_test/240303_sorting_test_2/'
-#raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #dataset to start performing trimming on 
-#ref_fasta = '/home/marchandlab/github/jay/capstone/reference/xBSn_90mer_fake_randomer.fa'
-
 working_dir = os.path.expanduser(sys.argv[1])
 raw_dir = os.path.expanduser(sys.argv[2])
 ref_fasta = os.path.expanduser(sys.argv[3])
@@ -42,11 +37,6 @@ max_length = 300 #MAXximum length reads should be, filters out super long reads 
 sample_cluser_size = 5000
 min_cluster_seq = 100 #minimum number of reads that need to be in a cluster to be allowed for consensus formation
 
-
-'''
-referenc in theory should be [constant region] - variable region (NNNN) - [constant region] 
-want to trim constant regions out maybe? 
-'''
 #Step 0: Generate or merge pod5 files if needed
 file_type = os.listdir(raw_dir)
 # Check if the directory is not empty
@@ -58,22 +48,19 @@ if file_type:
         if os.path.isfile(os.path.join(pod_dir,os.path.basename(raw_dir))+'.pod5')==False:
             pod5_merge(get_pod5_subdir(raw_dir), os.path.join(pod_dir,os.path.basename(raw_dir))+'.pod5')
         else:
-            print('Xenovo [STATUS] - POD5 files merged. Skipping merge')
+            print('XenoFind [STATUS] - POD5 files merged. Skipping merge')
     else:
         if os.path.isfile(os.path.join(pod_dir,os.path.basename(raw_dir))+'.pod5')==False:
             cod5_to_fast5(get_fast5_subdir(raw_dir), os.path.join(pod_dir,os.path.basename(raw_dir))+'.pod5')
         else: 
-            print('Xemora [STATUS] - Converted POD5 file for modified base found. Skipping POD5 coversion')
+            print('XenoFind [STATUS] - Converted POD5 file for modified base found. Skipping POD5 coversion')
 else:
-    print('Xenovo [ERROR] - Fast5/POD5 directory empty, please check input directory')
+    print('XenoFind [ERROR] - Fast5/POD5 directory empty, please check input directory')
     sys.exit()
 
 #Step 1: Basecalling
 if basecall == True:
-    #think about ways to get 100% alignmet compared to reference file
-    #cmd=os.path.expanduser(basecaller_path)+' -i '+pod_dir+' -s '+fastq_dir+' -c '+guppy_config_file+' -x auto --bam_out --index --moves_out  -a '+os.path.join(ref_dir,'x'+os.path.basename(ref_fasta)) #Guppy basecalling with alignment
-    #cmd=os.path.expanduser(basecaller_path)+' -i '+pod_dir+' -s '+ fastq_dir+' -c '+guppy_config_file+' -x auto --bam_out --index'
-    print('Xenovo [STATUS] - Performing basecalling using Dorado')
+    print('XenoFind [STATUS] - Performing basecalling using Dorado')
     #cmd = os.path.expanduser(basecaller_path)+ ' basecaller hac  --no-trim  ' + pod_dir + ' > '+os.path.join(bc_dir, 'bc.bam') + ' --reference ' + ref_fasta #can probably do this in a bam file as well 
     cmd = os.path.expanduser(basecaller_path)+ ' basecaller hac  --no-trim  --emit-fastq ' + pod_dir + ' > '+os.path.join(bc_dir, 'bc.fq')
     os.system(cmd)
@@ -82,10 +69,7 @@ if basecall == True:
     os.system(cmd)
     
 #Step 2: Read Trimming and fasta generation
-if trim == True: 
-    #Reads are trimmed to have all sequences be approximately the same length, will make error analysis be constant as  the ends would not be significatly adding to error 
-    #Trim fastq files maybe? 
-    
+if trim == True:     
     #CIGAR parser function 
     def read_trim(sam_file_path, fasta_output):
         """
@@ -135,7 +119,7 @@ if sort == True:
     
 #Step 4: VSEARCH Clustering 
 if clustering_VSEARCH == True: 
-    print('Xenovo [STATUS] - Clustering reads with VSEARCH')
+    print('XenoFind [STATUS] - Clustering reads with VSEARCH')
     
     # first round of VSEARCH
     cmd = 'vsearch --cluster_fast ' + os.path.join(processing_dir, 'sorted.fasta') + ' --id 0.85 --clusterout_sort --consout ' + os.path.join(processing_dir, 'vs_cons_85.fasta')
@@ -175,9 +159,8 @@ if cluster_filter == True:
 
 #Step 6: Medaka Consensus Sequence Formation 
 if medaka_consensus == True: 
-    print('Xenovo [STATUS] - Performing consensus sequence formation with Medaka')
+    print('XenoFind [STATUS] - Performing consensus sequence formation with Medaka')
     cmd = 'medaka_consensus -i ' + os.path.join(processing_dir, 'trimmed.fasta') + ' -d ' + os.path.join(processing_dir, 'vs_cons_95.fasta') + ' -o ' + output_dir + ' -m r1041_e82_400bps_hac_v4.2.0 -f -b 300' # used with cluster filter
-    #cmd = 'medaka_consensus -i ' + os.path.join(processing_dir, 'trimmed.fasta') + ' -d ' + os.path.join(processing_dir, 'cons.fasta') + ' -o ' + output_dir + ' -m r1041_e82_400bps_hac_v4.2.0 -f -b 300'
     os.system(cmd)
     
     
