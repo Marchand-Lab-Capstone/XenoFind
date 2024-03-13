@@ -10,10 +10,10 @@ import sys
 from xf_tools  import *
 from xf_params import *
 
-basecall = False
-trim = False
-sort = False
-clustering_VSEARCH = False
+basecall = True
+trim = True
+sort = True
+clustering_VSEARCH = True
 #cluster_filter = False
 medaka_consensus = True
 
@@ -163,38 +163,44 @@ if medaka_consensus == True:
     cmd = 'medaka_consensus -i ' + os.path.join(processing_dir, 'trimmed.fasta') + ' -d ' + os.path.join(processing_dir, 'vs_cons_95.fasta') + ' -o ' + output_dir + ' -m r1041_e82_400bps_hac_v4.2.0 -f -b 300' # used with cluster filter
     os.system(cmd)
     
+
     def extract_n_indexes(n_fasta_file):
         """
         Extract the indexes j and k for each sequence in the fasta file with N regions.
-        j: the index just before the first N (0 indexed)
-        k: the index of the first N (0 indexed)
+        j: the index of the first N (0 indexed)
+        k: the index of the last N (0 indexed)
         """
         n_indexes = []
         for record in SeqIO.parse(n_fasta_file, "fasta"):
             sequence_str = str(record.seq)
             first_n_index = sequence_str.find('N')
+            last_n_index = sequence_str.rfind('N')
             if first_n_index != -1:
-                # Index just before the first N and index of the first N
-                j = first_n_index - 1
-                k = first_n_index
+                j = first_n_index
+                k = last_n_index
             else:
                 j = k = None
             n_indexes.append((j, k))
         return n_indexes
 
-    def rename_consensus_headers(consensus_fasta_file, n_indexes, output_file):
+
+    def rename_consensus_headers(consensus_fasta_file, j, k, output_file):
         """
-        Rename the headers in the consensus FASTA file based on the provided N indexes.
+        Rename the headers in the consensus FASTA file based on the provided first and last N indexes.
+        All headers will be renamed using the same j and k values.
         """
         with open(output_file, 'w') as outfile:
             for i, record in enumerate(SeqIO.parse(consensus_fasta_file, "fasta"), start=1):
-                if i-1 < len(n_indexes):
-                    j, k = n_indexes[i-1]
-                    record.description = f"consensus {i}- BC 1: {j}, BC 2: {k}"
-                    record.id = f"consensus_{i}"
-                    SeqIO.write(record, outfile, "fasta")
-                else:
-                    print(f"No N index information for consensus {i}. Skipping.")
+                record.description = f"consensus {i}- BC 1: {j}, BC 2: {k}"
+                record.id = f"consensus_{i}"
+                SeqIO.write(record, outfile, "fasta")
 
     n_positions = extract_n_indexes(ref_fasta)
-    rename_consensus_headers(os.path.join(output_dir, 'consensus.fasta'), n_positions, os.path.join(output_dir,'labelled_consensus.fasta'))
+    
+    print('XenoFind [STATUS] - Renaming Consensus Sequences')
+    if n_positions:
+        j, k = n_positions[0]  # This assumes the same j, k are used for all. Adjust as needed.
+        rename_consensus_headers(os.path.join(output_dir, 'consensus.fasta'), j, k , os.path.join(output_dir,'labelled_consensus.fasta'))
+    else:
+        print("No N positions found.")
+
