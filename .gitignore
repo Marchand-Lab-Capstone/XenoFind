@@ -1,6 +1,5 @@
 <<<<<<< HEAD
 
-*.fast5
 *.gz
 *.tar
 =======
@@ -264,7 +263,6 @@ Data/sample_fast5/subset_fast5/APH167_a204cb54_df11909c_93.fast5
 Data/sample_fast5/subset_fast5/APH167_a204cb54_df11909c_94.fast5
 Data/sample_fast5/subset_fast5/APH167_a204cb54_df11909c_95.fast5
 >>>>>>> main
-*.pod5
 lib/Refactored_versions/dorado-0.5.3-win64/bin/caffe2_nvrtc.dll
 lib/Refactored_versions/dorado-0.5.3-win64/bin/cublas64_11.dll
 lib/Refactored_versions/dorado-0.5.3-win64/bin/cublasLt64_11.dll
