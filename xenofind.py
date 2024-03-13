@@ -81,7 +81,7 @@ if args.subparsers == 'consensus':
 
 
     if exit_flag == False: 
-        cmd = 'python lib/xf_consensus.py '+args.w+' '+args.f+' '+args.r
+        cmd = 'python lib/consensus_formation/consensus_methods.py '+args.w+' '+args.f+' '+args.r
         os.system(cmd)
     else: 
         print('XenoFind [ERROR] - At least one file path not properly set. XenoFind exiting.')
@@ -100,7 +100,7 @@ if args.subparsers == 'low_qual':
 
 
     if exit_flag == False: 
-        cmd = 'python lib/xf_low_qual.py '+args.w+' '+args.f+' '+args.r
+        cmd = 'python lib/xf_prelims/xf_low_qual.py '+args.w+' '+args.f+' '+args.r
         os.system(cmd)
     else: 
         print('XenoFind [ERROR] - At least one file path not properly set. Xemora basecaller exiting.')
