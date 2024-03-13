@@ -39,7 +39,8 @@ def basecall_command(basecaller_path, pod5_path, out_path, out_name):
     a command string.
     """
     # Currently only supports Dorado
-    cmd = "{} basecaller hac --no-trip --emit-fastq {} > {}{}.fq".format(basecaller_path, pod5_path, out_path, out_name)
+    cmd = "{} basecaller hac --no-trim --emit-fastq {} > {}{}.fq".format(basecaller_path, pod5_path, out_path, out_name)
+    print('[Basecalling]: Command Generated: "{}"'.format(cmd))
     return cmd
 
 
@@ -57,6 +58,8 @@ def map_to_reference(mapper_path, reference_path, basecall_path, out_path, out_n
     """
     # Currently only supports minimap2
     cmd = "{} -ax map-ont --score-N 0 --MD --min-dp-score 10 {} {} > {}{}.sam".format(mapper_path, reference_path, basecall_path, out_path, out_name)
+
+    print('[Mapping]: Command Generated: "{}"'.format(cmd))
     return cmd
 
 
@@ -76,23 +79,33 @@ def read_trim(sam_path):
     output_list = []
     
     # open the alignment sam using pysam, open the fasta path as a fasta file
-    with pysam.AlignmentFile(sam_file_path, 'r') as samfile:
+    with pysam.AlignmentFile(sam_path, 'r') as samfile:
+ 
+        # Set up variables for #unmapped reads & #outside length
+        num_unmapped = 0
+        num_outside = 0
         
         # for each read in the samfile,
         for read in samfile.fetch():
-            
+
             # Check that the read is mapped
             if (not read.is_unmapped):
-                
+
                 # Get the reference sequence length and the alignment length
                 reference_length = samfile.get_reference_length(read.reference_name)
-                aligned_length = read.reference
-                
+                aligned_length = read.reference_length
+
                 # if the aligned length is greater or equal to 95% of the reference length,
                 if aligned_length >= reference_length * .95:
                     
                     # append it to the output.
-                    output_list.append(f">{read.query_name}\n{read.query_alignment_sequence}\n")
+                    output_list.append(f">{read.query_name}\n{read.query_alignment_sequence}")
+                else:
+                    num_outside += 1
+
+            else:
+                num_unmapped += 1
+    print("[Trimming]: {} unmapped reads, {} short reads removed.".format(num_unmapped, num_outside))
     
     # return the output list
     return output_list
@@ -119,9 +132,14 @@ def sort_fasta(fasta_path):
     
     # create an empty list to hold the records to be output.
     output_records = []
+
+    for record in sorted_records:
+        output_records.append(">{}\n{}".format(record.id, record.seq))
+
+    print("[Sorting]: {} records resorted.".format(len(output_records)))
     
     # return the sorted_records list
-    return sorted_records
+    return output_records
 
 
 def vsearch_command(vsearch_path, fasta_path, out_path, out_name, sim_id):
@@ -140,13 +158,10 @@ def vsearch_command(vsearch_path, fasta_path, out_path, out_name, sim_id):
     command to perform vsearch with given directories as a string.
     """
     
-    # Generate output files for the clusterfile and clusterinfo.
-    clusterfile = out_path + 'clusters.fasta'
-    clusterinfo = out_path + 'cluster_info.uc'
-    
     # Generate the command.
-    cmd = "{} --cluster_fast {} --id --centroids {} --uc {} --clusterout_sort --consout {}{}.fasta".format(vsearch_path, fasta_path, sim_id, clusterfile, clusterinfo, out_path, out_name)
-    
+    cmd = "{} --cluster_fast {} --id {} --clusterout_sort --consout {}{}.fasta".format(vsearch_path, fasta_path, sim_id, out_path, out_name)
+
+    print('[Vsearching]: Command Generated: "{}"'.format(cmd))
     return cmd
             
     
@@ -182,7 +197,7 @@ def filter_cluster_size(fasta_path, threshold=100):
             if size > threshold:
                 
                 # add it to the filtered records.
-                filtered_records.append(f">{record.id}\n{record.seq}")
+                filtered_records.append(">{}\n{}".format(record.id, record.seq))
     
     return filtered_records
     
@@ -204,15 +219,20 @@ def write_to_fasta(out_path, out_name, list_data):
     """
     # create the output filename.
     out_file = out_path + out_name + ".fasta"
+
+    if os.path.exists(out_file):
+        os.remove(out_file)
     
     # open the output file in write mode.
     with open(out_file, 'w') as output_file:
-        
-        # write each value in the fasta to a new line. 
-        output_file.write("\n".join(list_data))
+
+        for datum in list_data:
+            # write each value in the fasta to a new line. 
+            output_file.write("{}\n".format(datum))
+        print("[Writing Fasta]: {} lines written to {}".format(len(list_data), out_file))
         
     # return the output filepath.
-    return output
+    return out_file
         
 
 def medaka_consensus_command(medaka_path, trim_fasta, filtered_fasta, out_path):
@@ -230,7 +250,7 @@ def medaka_consensus_command(medaka_path, trim_fasta, filtered_fasta, out_path):
 
     # Generate the command.
     cmd = "{} -i {} -d {} -o {} -m r1041_e82_400bps_hac_v4.2.0 -f -b 300".format(medaka_path, trim_fasta, filtered_fasta, out_path)
-    
+    print('[Consensus Forming]: Command Generated: "{}"'.format(cmd))
     return cmd
 
 
@@ -243,9 +263,9 @@ def first_consensus(working_dir, reads, barcode_fasta):
     
     # Defualt filenames:
     p5_fname = "merged"
-    dorado_path = "dorado" # Should be variable 
+    dorado_path = "dorado" # Should be variable, this assumes dorado is in user's PATH
     basecall_fname = 'basecall' # fq file
-    minimap2_path = 'minimap2' # should be variable
+    minimap2_path = 'minimap2' # should be variable, this assumes dorado is in user's PATH
     aligned_bc_fname = 'bc_aligned' # SAM file
     trimmed_fname = 'trimmed' # Fasta 
     sorted_fname = 'sorted' # Fasta
@@ -265,38 +285,45 @@ def first_consensus(working_dir, reads, barcode_fasta):
     #             xf_consensus_output 5
     directories_list = setup.setup_directory_system(working_dir)
 
-    # Using RRM, generate the pod5 from the data directory
-    rrm.generate_merged_pod5(reads,
-                             directories_list[3],
-                             p5_fname)
-
     #File path string for the merged pod5
-    merged_pod5_path = directories_list[3] + fname + '.pod5'
+    merged_pod5_path = directories_list[3] + p5_fname + '.pod5'
+    
+    if not (os.path.exists(merged_pod5_path)):
+        # Using RRM, generate the pod5 from the data directory
+        rrm.generate_merged_pod5(reads,
+                                 directories_list[3],
+                                 p5_fname)
 
-    #-------Basecalling and Sorting ---------#
-    # Generate the dorado basecall command 
-    bccmd = basecall_command(dorado_path,
-                             merged_pod5_path,
-                             directories_list[1],
-                             basecall_fname)
-    # Run the basecall command
-    st = os.system(bccmd)
+    #-------Basecalling and Sorting ---------
+
 
     # Filepath string for the basecalled fq 
-    basecalled_path = directories_list[1] + basecall_name + '.fq'
+    basecalled_path = directories_list[1] + basecall_fname + '.fq'
+    
+    if not (os.path.exists(basecalled_path)):
+    # Generate the dorado basecall command 
+        bccmd = basecall_command(dorado_path,
+                                 merged_pod5_path,
+                                 directories_list[1],
+                                 basecall_fname)
+        # Run the basecall command
+        st = os.system(bccmd)
 
+    # ensure the barcode is absolute.
+    barcode_fasta = str(os.path.abspath(barcode_fasta))
+    
     # use minimap2 to align the basecalled to the basecalled fq
     map2refcmd = map_to_reference(minimap2_path,
                                   barcode_fasta,
                                   basecalled_path,
                                   directories_list[1],
-                                  aligned_bc_name)
+                                  aligned_bc_fname)
     # Run the minimap2 command
     st = os.system(map2refcmd)
 
     #--------Trimming and Sorting Steps----------#
     # Filepath string for the sam file.
-    samfile_path = directories_list[1] + aligned_bc_name + '.sam'
+    samfile_path = directories_list[1] + aligned_bc_fname + '.sam'
 
     # trim down the samfile to a trimmed fasta using default of 95% margin
     read_trims_list = read_trim(samfile_path)

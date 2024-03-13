@@ -1,0 +1,10 @@
+Hi!
+Seems like you may want to run some tests.
+Unfortunately, due to not being able to upload empty folders to github (as far as I am aware),
+there is no way to properly run test_raw_read_merger adequately. Rest assured, it works,
+as evidenced by the tests in test_consensus_methods.py running properly. 
+The same can be said for Test_Setup_Methods.py, which does not have a GHOST directory to work with.
+Hopefully we can find a way to remedy this in the future. But for now, happy xenohunting!
+
+-Sebastian Peck
+3/13/2024

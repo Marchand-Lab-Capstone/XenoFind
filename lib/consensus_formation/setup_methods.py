@@ -52,7 +52,7 @@ def setup_directory_system(working_directory):
     bcdir = check_make_dir(working_directory + "basecall_directory/")
     fadir = check_make_dir(working_directory + "fasta_directory/")
     p5dir = check_make_dir(working_directory + "merged_pod5/")
-    rconsdir = check_make_dir(working_directory + "rough_consensus_ouput/")
+    rconsdir = check_make_dir(working_directory + "rough_consensus_output/")
     xfconsdir = check_make_dir(working_directory + "xf_consensus_output/")
     
     return [wdir, bcdir, fadir, p5dir, rconsdir, xfconsdir]
