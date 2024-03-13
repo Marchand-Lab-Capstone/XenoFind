@@ -127,46 +127,59 @@ if analyze_fastq == True:
 if xna_detect == True:
     print('XenoFind [STATUS] - Detecing the possible XNA positions')
 
-    def wilcoxon_significance_test(input_tsv_file, output_tsv_file):
+    def analyze_read_kmers(read_quality_scores, k=3):
+        """
+        Analyze k-mers within a read to calculate p-values for segments compared to the read's overall average quality.
+        This function associates p-values with individual nucleotides within k-mers.
+        """
+        overall_avg = np.mean(read_quality_scores)  # Overall average quality score of the read
+        p_value_array = np.ones(len(read_quality_scores)) * np.nan  # Initialize p-values array with NaN
+
+        #replicated_mean = np.full(k,overall_avg)
+
+        # Generate k-mers, perform t-tests, and update p-values array
+        for i in range(len(read_quality_scores) - k + 1):
+            kmer = read_quality_scores[i:i+k]
+
+            #diff = kmer - replicated_mean
+
+            _, p_value = ttest_1samp(kmer,overall_avg, alternative='less')  # wilcoxon comparing k-mer avg to read avg
+            
+
+            # Update p-values for nucleotides in the current k-mer
+            for j in range(i, i+k):
+                if np.isnan(p_value_array[j]):
+                    p_value_array[j] = p_value
+                else:
+                    # Average the p-value with existing values
+                    p_value_array[j] = np.nanmean([p_value_array[j], p_value])
+
+        return p_value_array
+
+    def identify_significant_nucleotides(input_tsv_file, output_tsv_file, k=3, significance_threshold=0.05):
+        
         """
         Perform a statistical test on the mean quality score of each read and identify positions with significantly low quality scores.
         Write the positions with significant low quality scores to a CSV file.
         """
-        df = pd.read_csv(input_tsv_file, sep='\t')
-        df['QualityScores'] = df['QualityScores'].apply(lambda x: x if isinstance(x, list) else eval(x) if isinstance(x, str) else [x])
+
+        df = pd.read_csv(input_tsv_file, sep='\t', converters={'QualityScores': eval})
 
         with open(output_tsv_file, 'w', newline='') as tsv_file:
             tsv_writer = csv.writer(tsv_file, delimiter = '\t')
 
             # Write header
-            header = ['ReadID', 'SignificantPositions']
+            header = ['ReadID', 'NucleotidePositions','Pvalue']
             tsv_writer.writerow(header)
 
-            for index in range(len(df)):
-                
-                read_significant_positions = []
-                average_quality = df['AverageQuality'][index]
+            for _, row in df.iterrows():
 
-                for qs in df['QualityScores'][index]:
+                p_values = analyze_read_kmers(row['QualityScores'], k=k)
+                    
+                # Identify significant nucleotides based on the averaged p-values
+                significant_positions = np.where(p_values <= significance_threshold)[0] + 1 + row['ReferenceStart']   # 1-indexed positions
+                print('XenoFind [STATUS] - Writing the possible XNA positions into file')
+                tsv_writer.writerow([row['ReadID'], significant_positions, p_values])  # Write significant positions and their p-values
 
-                    _, p_value = wilcoxon(df['QualityScores'][index][qs], average_quality) # Perform the Wilcoxon signed-rank test
-                    #_, p_value = ttest_1samp(df['QualityScores'][index][qs], average_quality)
-                    print('p_value is', p_value)
-                    print(df['QualityScores'][index][qs])
-                    print('average quality is', average_quality)
-
-                    # Define a significance threshold (move to parameters later)
-                    significance_threshold = 0.5
-
-                    if p_value < significance_threshold:
-                        read_significant_positions.append(df['ReferenceStart'][index] + 1 + qs) # add the significant positions to list
-                    else:
-                        continue
-               
-                # Write to CSV file
-                tsv_writer.writerow([df['ReadID'][index], read_significant_positions])
-
-        return output_tsv_file
-           
-
-    wilcoxon_significance_test(os.path.join(working_dir,'feature.tsv'), os.path.join(working_dir,'position_result.tsv'))
+    # have reference sequences added later
+    identify_significant_nucleotides(os.path.join(working_dir,'feature.tsv'), os.path.join(working_dir,'position_result_test.tsv'))
