@@ -5,6 +5,8 @@ import pysam
 import numpy as np
 import pandas as pd
 import csv
+import re
+from Bio import SeqIO
 from pathlib import Path
 from xf_params import * 
 from xf_tools import *
@@ -127,21 +129,39 @@ if analyze_fastq == True:
 if xna_detect == True:
     print('XenoFind [STATUS] - Detecing the possible XNA positions')
 
-    def analyze_read_kmers(read_quality_scores, k=3):
+    
+    def analyze_read_kmers(ref_fasta, read_quality_scores, k=3):
         """
         Analyze k-mers within a read to calculate p-values for segments compared to the read's overall average quality.
         This function associates p-values with individual nucleotides within k-mers.
         """
+        positions = {"BC1": None, "BC2": None}
+        # Iterate over each sequence record in the FASTA file
+        for seq_record in SeqIO.parse(ref_fasta, "fasta"):
+            # Accessing the header of the sequence record
+            header = seq_record.description
+
+            # Using regular expression to extract positions from the header
+            match = re.search(r'BC 1: (\d+), BC 2: (\d+)', header)
+            if match:
+                positions["BC1"] = int(match.group(1))
+                positions["BC2"] = int(match.group(2))
+                break
+
+        bc1_position = positions["BC1"]
+        bc2_position = positions["BC2"]
+
+        print(bc1_position, bc2_position)
+
         overall_avg = np.mean(read_quality_scores)  # Overall average quality score of the read
         p_value_array = np.ones(len(read_quality_scores)) * np.nan  # Initialize p-values array with NaN
 
-        #replicated_mean = np.full(k,overall_avg)
+        start_position = max(0, bc1_position - 5)
+        end_position = min(len(read_quality_scores), bc2_position + 5)
 
         # Generate k-mers, perform t-tests, and update p-values array
-        for i in range(len(read_quality_scores) - k + 1):
+        for i in range(start_position, end_position - k + 1):
             kmer = read_quality_scores[i:i+k]
-
-            #diff = kmer - replicated_mean
 
             _, p_value = ttest_1samp(kmer,overall_avg, alternative='less')  # wilcoxon comparing k-mer avg to read avg
             
@@ -174,7 +194,7 @@ if xna_detect == True:
 
             for _, row in df.iterrows():
 
-                p_values = analyze_read_kmers(row['QualityScores'], k=k)
+                p_values = analyze_read_kmers(ref_fasta, row['QualityScores'], k=k)
                     
                 # Identify significant nucleotides based on the averaged p-values
                 significant_positions = np.where(p_values <= significance_threshold)[0] + 1 + row['ReferenceStart']   # 1-indexed positions
@@ -183,3 +203,4 @@ if xna_detect == True:
 
     # have reference sequences added later
     identify_significant_nucleotides(os.path.join(working_dir,'feature.tsv'), os.path.join(working_dir,'position_result_test.tsv'))
+    
