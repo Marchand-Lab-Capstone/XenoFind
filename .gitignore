@@ -1,6 +1,5 @@
 <<<<<<< HEAD
 
-*.fast5
 *.gz
 *.tar
 =======
@@ -264,7 +263,6 @@ Data/sample_fast5/subset_fast5/APH167_a204cb54_df11909c_93.fast5
 Data/sample_fast5/subset_fast5/APH167_a204cb54_df11909c_94.fast5
 Data/sample_fast5/subset_fast5/APH167_a204cb54_df11909c_95.fast5
 >>>>>>> main
-*.pod5
 lib/Refactored_versions/dorado-0.5.3-win64/bin/caffe2_nvrtc.dll
 lib/Refactored_versions/dorado-0.5.3-win64/bin/cublas64_11.dll
 lib/Refactored_versions/dorado-0.5.3-win64/bin/cublasLt64_11.dll
@@ -303,33 +301,3 @@ lib/Refactored_versions/dorado-0.5.3-win64/bin/zlib.dll
 lib/Refactored_versions/dorado-0.5.3-win64/bin/zlib1.dll
 lib/Refactored_versions/dorado-0.5.3-win64/bin/zlibwapi.dll
 lib/Refactored_versions/dorado-0.5.3-win64/bin/zstd.dll
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/config.toml
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/9.linear.weight.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/9.linear.bias.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/8.rnn.weight_ih_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/8.rnn.weight_hh_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/8.rnn.bias_ih_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/8.rnn.bias_hh_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/7.rnn.weight_ih_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/7.rnn.weight_hh_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/7.rnn.bias_ih_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/7.rnn.bias_hh_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/6.rnn.weight_ih_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/6.rnn.weight_hh_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/6.rnn.bias_ih_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/6.rnn.bias_hh_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/5.rnn.weight_ih_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/5.rnn.weight_hh_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/5.rnn.bias_ih_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/5.rnn.bias_hh_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/4.rnn.weight_ih_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/4.rnn.weight_hh_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/4.rnn.bias_ih_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/4.rnn.bias_hh_l0.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/2.conv.weight.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/2.conv.bias.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/10.linear.weight.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/1.conv.weight.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/1.conv.bias.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/0.conv.weight.tensor
-lib/Refactored_versions/.temp_dorado_model-ccb7eee26e1fc2c9/dna_r10.4.1_e8.2_400bps_hac@v4.1.0/0.conv.bias.tensor
