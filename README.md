@@ -4,6 +4,17 @@
 
 XenoFind is a modified/synthetic base detection pipeline stemming from Chem E 546/547 in collaboration with the Marchand Group at the University of Washington. XenoFind was motivated by the lack of de novo basecalling pipelines for unnatural base-pairing xenonucleic acid (ubpXNAs or XNAs)  and aims to bridge the gap between canonical & modified basecalling. The purpose of this pipeline is to identify regions within DNA where non-standard bases may be present and output that information in bioinformatic relevant file formats to be used in downstream analysis. 
 
+## Libraries
+
+Within lib on the Main branch, there are currently two directories.
+consensus_formation - contains the python tools for forming a preliminary consensus.
+		      In order to adequately run, use "python consensus_methods.py".
+		      This assumes that dorado, minimao2, vsearch, and medaka are all extant and
+		      within your path.
+
+xf_prelims - contains original drafts of the current tools and methods for xenofind. May or may
+not be functional. 
+
 ## Dependencies 
 
 ## XenoFind command groups 
