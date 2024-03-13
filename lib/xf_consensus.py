@@ -121,41 +121,42 @@ if sort == True:
 if clustering_VSEARCH == True: 
     print('XenoFind [STATUS] - Clustering reads with VSEARCH')
     
-    # first round of VSEARCH
-    cmd = 'vsearch --cluster_fast ' + os.path.join(processing_dir, 'sorted.fasta') + ' --id 0.85 --clusterout_sort --consout ' + os.path.join(processing_dir, 'vs_cons_85.fasta')
-    os.system(cmd)
-    
-    # second round of VSEARCH
-    cmd = 'vsearch --cluster_fast ' + os.path.join(processing_dir, 'vs_cons_85.fasta') + ' --id 0.90 --clusterout_sort --consout ' + os.path.join(processing_dir, 'vs_cons_90.fasta')
-    os.system(cmd)
-    
-    # third round of VSEARCH
-    cmd = 'vsearch --cluster_fast ' + os.path.join(processing_dir, 'vs_cons_90.fasta') + ' --id 0.95 --clusterout_sort --consout ' + os.path.join(processing_dir, 'vs_cons_95.fasta')
-    os.system(cmd)
-    
-    #cons.fasta made a consensus that was 98.34% similar to GT reference file
-    
-#Step 5: setting a threshold for amount of reads needed in a cluster for cluster to be considering for consensus sequence formation 
-'''
-if cluster_filter == True: 
-    print('Xenovo [STATUS] - Filtering clusters and choosing representative sequences')
-
-    #need to fix this function, take in a threshold for how many reads in a cluster and filter out, have minimum amount be variable so when diversity is introduced, threshhold should be decreased 
-    def cluster_size_filter(input_fasta, output_fasta, threshold):
+    def cluster_size_filter(input_fasta, output_fasta, threshold =1):
+        """
+        cluster size filter takes in a fasta file outputted from vsearch and looks for the motif seq=, this function will remove any singletons present in the file so clustering keeps only the best clusters 
+        """
         filtered_records = []
         for record in SeqIO.parse(input_fasta, "fasta"):
             parts = record.description.split(';')
-            if len(parts) > 1 and parts[1].startswith('seqs='):
-                size = int(parts[1].split('=')[1])
+            if len(parts) > 1 and parts[-1].startswith('seqs='):
+                size = int(parts[-1].split('=')[-1])
                 if size > threshold:
                     filtered_records.append(f">{record.id}\n{record.seq}")
         with open(output_fasta, "w") as output_file:
             output_file.write("\n".join(filtered_records))
         return output_fasta
+        
+    # first round of VSEARCH
+    
+    #First round is already sorted 
+    # reminder to make a directory for all these sub files in the processing directory, it is getting messy in there, something like vsearch loops 
+    cmd = 'vsearch --cluster_fast ' + os.path.join(processing_dir, 'sorted.fasta') + ' --id 0.85 --clusterout_sort --consout ' + os.path.join(processing_dir, 'vs_cons_85.fasta')
+    os.system(cmd)
+    sort_fasta(os.path.join(processing_dir, 'vs_cons_85.fasta'), os.path.join(processing_dir, 'vs_cons_85_sorted.fasta'))
+    cluster_size_filter(os.path.join(processing_dir, 'vs_cons_85_sorted.fasta'), os.path.join(processing_dir, 'vs_cons_85_filtered.fasta'))
+    
+    # second round of VSEARCH
+    cmd = 'vsearch --cluster_fast ' + os.path.join(processing_dir, 'vs_cons_85_filtered.fasta') + ' --id 0.90 --clusterout_sort --consout ' + os.path.join(processing_dir, 'vs_cons_90.fasta')
+    os.system(cmd)
+    sort_fasta(os.path.join(processing_dir, 'vs_cons_90.fasta'), os.path.join(processing_dir, 'vs_cons_90_sorted.fasta'))
+    cluster_size_filter(os.path.join(processing_dir, 'vs_cons_90_sorted.fasta'), os.path.join(processing_dir, 'vs_cons_90_filtered.fasta'))
 
-    cluster_size_filter(os.path.join(processing_dir, 'cons.fasta'), os.path.join(processing_dir, 'represented_seq.fasta'), min_cluster_seq)
-    print('Xenovo [STATUS] - Represented Clusters outputted in', os.path.join(processing_dir, 'represented_seq.fasta'))
-'''
+    # third round of VSEARCH
+    cmd = 'vsearch --cluster_fast ' + os.path.join(processing_dir, 'vs_cons_90_filtered.fasta') + ' --id 0.95 --clusterout_sort --consout ' + os.path.join(processing_dir, 'vs_cons_95.fasta')
+    os.system(cmd)
+
+        
+    #cons.fasta made a consensus that was 98.34% similar to GT reference file
 
 #Step 6: Medaka Consensus Sequence Formation 
 if medaka_consensus == True: 
@@ -191,7 +192,7 @@ if medaka_consensus == True:
         """
         with open(output_file, 'w') as outfile:
             for i, record in enumerate(SeqIO.parse(consensus_fasta_file, "fasta"), start=1):
-                record.description = f"consensus {i}- BC 1: {j}, BC 2: {k}"
+                record.description = f" - BC 1: {j}, BC 2: {k}"
                 record.id = f"consensus_{i}"
                 SeqIO.write(record, outfile, "fasta")
 
