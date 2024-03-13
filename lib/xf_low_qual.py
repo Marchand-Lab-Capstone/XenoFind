@@ -8,7 +8,7 @@ import csv
 from pathlib import Path
 from xf_params import * 
 from xf_tools import *
-from scipy.stats import wilcoxon
+from scipy.stats import wilcoxon, ttest_1samp
 
 #Initialize
 #working_dir = os.path.expanduser(sys.argv[1]) #will be final impolemented version, will be testing in large scale script later 
@@ -38,8 +38,8 @@ NOTE:
 WE CAN ADD A PART WHICH WILL AUTO INSTALL DORADO INTO THIS WORKING DIRECTORY AFTER THE FIRST TIME THE PROGRAM IS CALLED. MIGHT BE WORTH DOING
 '''
 
-basecall_pod = True
-analyze_fastq = True
+basecall_pod = False
+analyze_fastq = False
 xna_detect = True
 
 #Step 1: Generate or merge pod5 files if needed
@@ -71,6 +71,7 @@ if basecall_pod == True:
 
     #Data filtering here maybe, leaving all data reads for now 
 if analyze_fastq == True: 
+    print('XenoFind [STATUS] - Analyzing fastq file generated from Dorado')
     
     filter_primary_alignments(os.path.join(bc_dir, 'bc.bam'), os.path.join(bc_dir, 'primary.bam'))
     
@@ -92,7 +93,8 @@ if analyze_fastq == True:
                     qual = read.query_alignment_qualities
                     qual = np.array(qual)
                     avg_qual = np.mean(qual)
-                    
+                    qual = list(qual)
+
                     #Extracting the features into a list 
                     features = [
                     read.query_name,  # Query name of the read
@@ -104,6 +106,7 @@ if analyze_fastq == True:
                     read_info.append(features)
                 else:
                     print(f"Read {read.query_name} is unmapped and does not have a reference position.")
+
         return read_info
     read_info = extract_read_info(os.path.join(bc_dir, 'primary.bam'))
     
@@ -111,10 +114,8 @@ if analyze_fastq == True:
     columns = ["ReadID", "Sequence", "ReferenceStart","QualityScores", "AverageQuality"]
     df = pd.DataFrame(read_info, columns=columns)
     
-    # Display the DataFrame
-    print(df)
     
-    df.to_csv(os.path.join(working_dir,'feature.csv'), index = False)
+    df.to_csv(os.path.join(working_dir,'feature.tsv'), sep='\t', index = False)
 
 
     
@@ -124,35 +125,48 @@ if analyze_fastq == True:
 #def z-calc(mean_qs, base_qs, read_length):
 
 if xna_detect == True:
-    
-    def statistical_test(read_info, output_csv_file):
+    print('XenoFind [STATUS] - Detecing the possible XNA positions')
+
+    def wilcoxon_significance_test(input_tsv_file, output_tsv_file):
         """
         Perform a statistical test on the mean quality score of each read and identify positions with significantly low quality scores.
         Write the positions with significant low quality scores to a CSV file.
         """
-        with open(output_csv_file, 'w', newline='') as csv_file:
-            csv_writer = csv.writer(csv_file)
+        df = pd.read_csv(input_tsv_file, sep='\t')
+        df['QualityScores'] = df['QualityScores'].apply(lambda x: x if isinstance(x, list) else eval(x) if isinstance(x, str) else [x])
+
+        with open(output_tsv_file, 'w', newline='') as tsv_file:
+            tsv_writer = csv.writer(tsv_file, delimiter = '\t')
 
             # Write header
-            header = ['ReadID', 'StartReferencePosition', 'SignificantPositions']
-            csv_writer.writerow(header)
+            header = ['ReadID', 'SignificantPositions']
+            tsv_writer.writerow(header)
 
-            for features in read_info:
-                # Extract relevant information
-                read_name, _, start_position, quality_scores, average_quality_score = features
+            for index in range(len(df)):
+                
+                read_significant_positions = []
+                average_quality = df['AverageQuality'][index]
 
-                # Perform the Wilcoxon signed-rank test
-                _, p_values = wilcoxon(quality_scores - average_quality_score)
+                for qs in df['QualityScores'][index]:
 
-                # Define a significance threshold (move to parameters later)
-                significance_threshold = 0.05
+                    _, p_value = wilcoxon(df['QualityScores'][index][qs], average_quality) # Perform the Wilcoxon signed-rank test
+                    #_, p_value = ttest_1samp(df['QualityScores'][index][qs], average_quality)
+                    print('p_value is', p_value)
+                    print(df['QualityScores'][index][qs])
+                    print('average quality is', average_quality)
 
-                # Identify positions with significant low quality scores
-                significant_positions = [i + start_position for i, p in enumerate(p_values) if p < significance_threshold]
+                    # Define a significance threshold (move to parameters later)
+                    significance_threshold = 0.5
 
+                    if p_value < significance_threshold:
+                        read_significant_positions.append(df['ReferenceStart'][index] + 1 + qs) # add the significant positions to list
+                    else:
+                        continue
+               
                 # Write to CSV file
-                csv_writer.writerow([read_name, start_position, significant_positions])
+                tsv_writer.writerow([df['ReadID'][index], read_significant_positions])
 
-    statistical_test(read_info, os.path.join(working_dir,'position_result.csv'))
+        return output_tsv_file
+           
 
-        
+    wilcoxon_significance_test(os.path.join(working_dir,'feature.tsv'), os.path.join(working_dir,'position_result.tsv'))
