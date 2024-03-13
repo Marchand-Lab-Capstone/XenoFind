@@ -89,8 +89,8 @@ chunk_num = '500000'
 #Guppy Base caller configuration
 
 #Path to guppy basecaller
-#basecaller_path = '~/dorado-0.5.3-linux-x64/bin/dorado' #update to latest version tesing right now 
-basecaller_path = '~/dorado-0.5.3-osx-arm64/bin/dorado'
+basecaller_path = '~/dorado-0.5.3-linux-x64/bin/dorado' #update to latest version tesing right now 
+#basecaller_path = '~/dorado-0.5.3-osx-arm64/bin/dorado'
 
 #GPU enabled 
 device_type = 'cuda:all' 
