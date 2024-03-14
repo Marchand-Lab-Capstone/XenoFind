@@ -112,5 +112,21 @@ class TestFirstConsensus(unittest.TestCase):
         self.assertEqual(method_call, expected)
 
 
+class TestExtractNIndexes(self):
+
+    def test_outtype(self):
+        fastafile = "../data/reference_fasta/xBSn_90mer_fake_randomer.fa"
+        method_call = type(cm.extract_n_indexes(fastafile))
+        expected = type([(1, 2)])
+        self.assertEqual(method_call, expected)
+
+
+class TestRenameConsensusHeaders(self):
+
+    def test_output_exists(self):
+        method_call = cm.rename_consensus_headers('../data/working_dir/rough_consensus_output/consensus.fasta', 1, 2, '../data/working_dir/rough_consensus_output/labeled_consensus.fasta')
+        expected = str(os.path.abspath('../data/working_dir/rough_consensus_output/labeled_consensus.fasta'))
+        self.assertEqual(method_call, expected)
+
 if __name__ == '__main__':
     unittest.main()
