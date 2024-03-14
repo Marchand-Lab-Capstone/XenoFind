@@ -2,7 +2,7 @@
 
 ## About 
 
-XenoFind is a modified/synthetic base detection pipeline stemming from Chem E 546/547 in collaboration with the Marchand Group at the University of Washington. XenoFind was motivated by the lack of de novo basecalling pipelines for unnatural base-pairing xenonucleic acid (ubpXNAs or XNAs)  and aims to bridge the gap between canonical & modified basecalling. The purpose of this pipeline is to identify regions within DNA where non-standard bases may be present and output that information in bioinformatic relevant file formats to be used in downstream analysis. 
+XenoFind is a modified/synthetic base detection pipeline stemming from Chem E 546/547 in collaboration with the Marchand Group at the University of Washington. XenoFind was motivated by the lack of de novo basecalling pipelines for unnatural base-pairing xenonucleic acid (ubpXNAs or XNAs)  and aims to bridge the gap between canonical & modified basecalling. The purpose of this pipeline is to identify regions within DNA where non-standard bases may be present and output that information in bioinformatic relevant file formats to be used in downstream analysis.  
 
 ## Libraries
 
@@ -17,6 +17,13 @@ not be functional.
 
 ## Dependencies 
 
+XenoFind was built and test on Ubuntu 20.04. This application relies on several bioinformatics packages (Samtools, Minimap2, VSEARCH, etc.) as well as various standard python packages. 
+In addition, XenoFind requires users to have the basecaller [dorado](https://github.com/nanoporetech/dorado) installed in a user's home directory. 
+This can be achieved with the folllowing commands: 
+
+	cd 
+ 	wget -qO- https://github.com/nanoporetech/dorado | tar xvz
+ 
 ## XenoFind command groups 
 
 Xenofind has two primary subcommands to call: consensus or low_qual. 
@@ -34,14 +41,14 @@ low_qual performs XNA detection by analyzing and performing statistical tests on
 	python xenofind.py low_qual -w [working directory] -f [pod5 or fast5 directory] -r [consensus fasta from consensus]
 
 
-### Winter Objectives 
+### Winter Objective
 
-Overall Objective: Benchmark and compare various modified base detection strategies
+• [Completed] Literature review for current state-of-the-field modified base detection strategies that can be applied to XNA world
 
-• Literature review for current state-of-the-field modified base detection strategies that can be applied to XNA world
+• [Completed] Get familiar with bioinformatics packages and file types 
 
-• Develop pipelines to extract features from nanopore signal data formats (such as .FAST5, .POD5)
+• [Completed] Become comfortable editing, manipulating, and switching between different bioinformatics datatypes
 
-• Create a consensus reference file using the nanopore sequencing data starting with a placeholder reference, only containing a known barcode region and an unknown region of interest. 
+• [Completed] Create a consensus reference file using the Nanopore sequencing data starting with a placeholder reference, only containing a known barcode region and an unknown region of interest. 
 
-• Detect candidate XNA position using extracted quality scores and statistical methods. Identify these positions in the header of the consensus fasta file. 
+• [Incomplete] Stretch Goal: Detect candidate XNA position using extracted quality scores and statistical methods. Identify these positions in the header of the consensus fasta file. 
