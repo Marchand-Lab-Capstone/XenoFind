@@ -33,7 +33,7 @@ import setup_methods as setup
 
 def basecall_command(basecaller_path, pod5_path, out_path, out_name):
     """
-    Basecall_command generates a command to basecall based on dorado.
+    Basecall_command generates a command to run the basecaller dorado.
     
     Parameters:
     basecaller_path: path to the basecaller, as str
@@ -151,7 +151,7 @@ def sort_fasta(fasta_path):
 def vsearch_command(vsearch_path, fasta_path, out_path, out_name, sim_id):
     """
     vsearch_command takes in a fasta path, a similarity value, an output_path, and an output filename,
-    and generates a command to perform clustering on the fasta file.
+    and generates a command to perform clustering/ rough consensus formation on the fasta file.
     
     Parameters:
     vsearch_path: path to vsearch as a string.
@@ -244,8 +244,7 @@ def write_to_fasta(out_path, out_name, list_data):
 def medaka_consensus_command(medaka_path, trim_fasta, filtered_fasta, out_path):
     """
     medaka_consensus_command takes in a filepath for medaka, a trimmed fasta file,
-    a filtered fasta, an output filepath, and then creates a consensus
-    from that fasta file.
+    a filtered cluster/consensus fasta, an output filepath, and then polishes/forms a consensus fasta.
     
     Parameters:
     medaka_path: path, as str, to medaka_consensus
