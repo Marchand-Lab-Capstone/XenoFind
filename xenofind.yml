@@ -1,4 +1,4 @@
-name: xenovo
+name: xenofind
 channels:
   - defaults
   - anaconda
@@ -162,4 +162,3 @@ dependencies:
       - werkzeug==3.0.1
       - wrapt==1.16.0
       - wurlitzer==3.0.3
-prefix: /home/marchandlab/miniconda3/envs/xenovo
