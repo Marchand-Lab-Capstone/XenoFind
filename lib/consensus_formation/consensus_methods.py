@@ -471,7 +471,38 @@ def first_consensus(working_dir, reads, barcode_fasta):
     j, k = n_positions[0]
     
     # return the path to the polished fasta.
-    return rename_consensus_headers(medak_cons_path, j, k , lab_cons_path)
+    renamed_consensus = rename_consensus_headers(medak_cons_path, j, k , lab_cons_path)
+
+
+
+    #-------Consensus Basecalling ---------
+        # This section is to generate alignment with the consensus file so that we have a basecalled, and aligned, consensus file.
+
+    # Filepath string for the basecalled fq 
+    basecalled_path_2 = directories_list[4] + 'basecall_consensus.fq'
+    
+    if not (os.path.exists(basecalled_path_2)):
+    # Generate the dorado basecall command 
+        bccmd_2 = basecall_command(dorado_path,
+                                 merged_pod5_path,
+                                 directories_list[4],
+                                 'basecall_consensus')
+        # Run the basecall command
+        st = os.system(bccmd_2)
+
+    # ensure the barcode is absolute.
+    barcode_fasta = str(os.path.abspath(barcode_fasta))
+    
+    # use minimap2 to align the basecalled to the basecalled fq
+    map2refcmd_2 = map_to_reference(minimap2_path,
+                                  barcode_fasta,
+                                  basecalled_path_2,
+                                  directories_list[4],
+                                  'bc_consensus_aligned')
+    # Run the minimap2 command
+    st = os.system(map2refcmd_2)
+    
+    return map2refcmd_2
 
 
 def main():
