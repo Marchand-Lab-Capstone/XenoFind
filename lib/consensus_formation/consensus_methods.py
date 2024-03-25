@@ -63,12 +63,82 @@ def map_to_reference(mapper_path, reference_path, basecall_path, out_path, out_n
     out_name: name the output sam file will be given, as str
     """
     # Currently only supports minimap2
-    cmd = "{} -ax map-ont --score-N 0 --MD --min-dp-score 10 {} {} > {}{}.sam".format(mapper_path, reference_path, basecall_path, out_path, out_name)
+    cmd = "{} -ax map-ont --score-N 0 --MD --min-dp-score 10 {} {} > {}{}.sam".format(mapper_path, reference_path, basecall_path, out_path, out_name) #probably doesn't need minimap2 as a separate path
 
     print('[Mapping]: Command Generated: "{}"'.format(cmd))
     return cmd
 
+def filter_primary_alignments(sam_path):
+    """
+    strand_decouple takes in a fasta file generated from minimap2 and separates 
+    it on forward and reverse strand reads using samtools. This function will 
+    also generate a primary 
+    
+    Parameters: 
+    sam_path: path to the sam file as a string,
+    
+    Returns: 
+    primary only sam file 
+    
+    NOTE: NEED TO EDIT THIS FUNCTION INTO TWO FUNCTIONS, GENERATE PRIMARY SAM FILE PATH STRING AND RUN IT IN THE FIRST PASS FUNCTION. SECOND FUNCTION TO GENERATE THE FORWARD AND REVERSE STRINGS
+    """
+    
+    # doing in function primary only alignment
+    
+    # Generating the index file for the sam file to index using pysam 
+    cmd = 'samtools index ' + sam_path #creates index file for BAM
+    os.system(cmd)
+    
+    # Extracting the sam path directory so the filtered version is written in the 
+    # ame directory
+    directory = os.path.dirname(sam_path)
+    output_sam = os.path.join(directory, 'primary_alignments.sam')
 
+
+    # Using pysam to only keep primary aligned reads 
+    with pysam.AlignmentFile(input_sam, "r") as infile, \
+         pysam.AlignmentFile(output_sam, "w", header=infile.header) as outfile:
+
+        for read in infile:
+            if not read.is_secondary and not read.is_supplementary and not read.is_unmapped:
+                outfile.write(read)
+                
+        print('XenoFind [STATUS] - Primary Only SAM file generated, now generating ')
+        return output_sam
+def strand_decouple(primary_sam_path, forward_out_path, reverse_out_path):
+    """
+    strand_decouple takes in a fasta file generated from minimap2 and separates 
+    it on forward and reverse strand reads using samtools. This function will 
+    also generate a primary 
+    
+    Parameters: 
+    sam_path: path to the sam file as a string,
+    
+    Returns: 
+    forward and reverse strand  sam files as a string. ALso generates these files
+    in a directory. 
+    
+    NOTE: NEED TO EDIT THIS FUNCTION INTO TWO FUNCTIONS, GENERATE PRIMARY SAM FILE PATH STRING AND RUN IT IN THE FIRST PASS FUNCTION. SECOND FUNCTION TO GENERATE THE FORWARD AND REVERSE STRINGS
+    """
+    #This section actually generates the forward and reverse only reads 
+    # Open the input SAM file for reading
+    with pysam.AlignmentFile(output_sam, "r") as infile:
+
+        # Open two files for writing: one for forward strand reads, another for reverse strand reads
+        with pysam.AlignmentFile(forward_out_path, "w", header=infile.header) as outfile_forward, \
+             pysam.AlignmentFile(reverse_out_path, "w", header=infile.header) as outfile_reverse:
+
+            # Iterate through reads in the input file
+            for read in infile:
+                # Check if the read is mapped to the reverse strand
+                if read.is_reverse:
+                    # Write the read to the reverse strand reads file
+                    outfile_reverse.write(read)
+                else:
+                    # Otherwise, write the read to the forward strand reads file
+                    outfile_forward.write(read)
+        return forward_out_path, reverse_out_path #maybe dont need to return these but will leave this here for now 
+        
 def read_trim(sam_path):
     """
     read_trim takes in a samfile and returns a list of the reads
@@ -207,7 +277,22 @@ def filter_cluster_size(fasta_path, threshold=1):
     
     return filtered_records
     
+def mpm2_cluster_aligner(cluster_path, trimmed_fasta):
+    """
+    mm2_cluster_aligner takes in a cluster fasta from VSEARCH as well as the 
+    original trimmed data set to set proper weights for each of the clusters. 
+    For every read a cluster that [primary] aligned to the cluster, the clusters 
+    weight will increase by 1 (e.g., 3 reads aligned to that cluster means it 
+    would have a weight of 3). This weight will be represented in the next 
+    round of VSEARCH by multiplying that clusters sequence by its weight 
+    prior to VSEARCH. 
     
+    Parameters 
+    clusters_path: path to a VSEARCH cluster fasta file 
+    trimmed_fasta: path to trimmed version of the dataset 
+    """
+    #NOTES FOR SELF: should probably have it generate the minimap2 string and not run it??? 
+    #other note: since sam file is outputted, can use one of the methods above to filter it, then use the length of the sam file (assuming no headers are outputted) to get the weight of the particular cluster 
 def write_to_fasta(out_path, out_name, list_data):
     """
     write_to_fasta takes in an output path and file name, as well as a list
@@ -408,6 +493,9 @@ def first_consensus(working_dir, reads, barcode_fasta):
 
     #--------Vsearch Steps-------------#
     # Generate and use vsearch on the fasta, 3 rounds from 85 to 95%.
+    '''
+    Ask Sebastian where primary aligned filtering went
+    '''
     for i in range(3):
 
         # Get the degree to be estimated by loop iteration
