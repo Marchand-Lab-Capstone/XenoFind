@@ -482,7 +482,7 @@ def first_consensus(working_dir, reads, barcode_fasta):
     basecalled_path_2 = directories_list[4] + 'basecall_consensus.fq'
     
     if not (os.path.exists(basecalled_path_2)):
-    # Generate the dorado basecall command 
+    # Generate the dorado basecall command  #do we use dorado aligner? Use dorado aligner rather than minimap2. 
         bccmd_2 = basecall_command(dorado_path,
                                  merged_pod5_path,
                                  directories_list[4],
