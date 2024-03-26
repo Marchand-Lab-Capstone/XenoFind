@@ -105,11 +105,13 @@ def filter_primary_alignments(sam_path):
                 
         print('XenoFind [STATUS] - Primary Only SAM file generated, now generating ')
         return output_sam
-def strand_decouple(primary_sam_path, forward_out_path, reverse_out_path):
+        
+        
+#def strand_decouple(primary_sam_path, forward_out_path, reverse_out_path): #hae outpaths be GENERATED
+def strand_decouple(primary_sam_path):
     """
     strand_decouple takes in a fasta file generated from minimap2 and separates 
-    it on forward and reverse strand reads using samtools. This function will 
-    also generate a primary 
+    it by forward and reverse strand reads using samtools. 
     
     Parameters: 
     sam_path: path to the sam file as a string,
@@ -120,6 +122,8 @@ def strand_decouple(primary_sam_path, forward_out_path, reverse_out_path):
     
     NOTE: NEED TO EDIT THIS FUNCTION INTO TWO FUNCTIONS, GENERATE PRIMARY SAM FILE PATH STRING AND RUN IT IN THE FIRST PASS FUNCTION. SECOND FUNCTION TO GENERATE THE FORWARD AND REVERSE STRINGS
     """
+    forward_out_path = os.path.join(os.path.dirname(primary_sam_path), 'forward.sam')
+    reverse_out_path = os.path.join(os.path.dirname(primary_sam_path), 'reverse.sam')
     #This section actually generates the forward and reverse only reads 
     # Open the input SAM file for reading
     with pysam.AlignmentFile(output_sam, "r") as infile:
@@ -277,7 +281,7 @@ def filter_cluster_size(fasta_path, threshold=1):
     
     return filtered_records
     
-def mpm2_cluster_aligner(cluster_path, trimmed_fasta):
+def mmm2_cluster_aligner(cluster_path, trimmed_fasta):
     """
     mm2_cluster_aligner takes in a cluster fasta from VSEARCH as well as the 
     original trimmed data set to set proper weights for each of the clusters. 
@@ -293,6 +297,10 @@ def mpm2_cluster_aligner(cluster_path, trimmed_fasta):
     """
     #NOTES FOR SELF: should probably have it generate the minimap2 string and not run it??? 
     #other note: since sam file is outputted, can use one of the methods above to filter it, then use the length of the sam file (assuming no headers are outputted) to get the weight of the particular cluster 
+    cmd = "{} -ax map-ont --score-N 0 --MD --min-dp-score 10 {} {} > {}{}.sam".format(mapper_path, reference_path, basecall_path, out_path, out_name) #probably doesn't need minimap2 as a separate path
+    print('[Mapping]: Command Generated: "{}"'.format(cmd))
+    return cmd
+
 def write_to_fasta(out_path, out_name, list_data):
     """
     write_to_fasta takes in an output path and file name, as well as a list
@@ -521,7 +529,7 @@ def first_consensus(working_dir, reads, barcode_fasta):
                                 degree/100)
 
         # run the command.
-        st = os.system(vscmd)
+        st = os.system(vscmd) #asking why os.system is being assigned to a variable
 
 
         # from this vsearch, sort it. 
