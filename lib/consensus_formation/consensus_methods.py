@@ -57,7 +57,7 @@ def map_to_reference(mapper_path, reference_path, basecall_path, out_path, out_n
     
     Parameters:
     mapper_path: path to minimap2 as str
-    reference_path: path to reference fasta (typically the barcodes) as str
+    reference_path: path to reference fasta as str
     basecall_path: path to basecalled .fq file, as str
     out_path: path to the output directory, as str
     out_name: name the output sam file will be given, as str
@@ -280,27 +280,61 @@ def filter_cluster_size(fasta_path, threshold=1):
                 filtered_records.append(">{}\n{}".format(record.id, record.seq))
     
     return filtered_records
-    
-def mmm2_cluster_aligner(cluster_path, trimmed_fasta):
+
+def mmm2_cluster_aligner(mapper_path, reference_path, trimmed_reads, out_path, out_name):
     """
     mm2_cluster_aligner takes in a cluster fasta from VSEARCH as well as the 
-    original trimmed data set to set proper weights for each of the clusters. 
-    For every read a cluster that [primary] aligned to the cluster, the clusters 
-    weight will increase by 1 (e.g., 3 reads aligned to that cluster means it 
-    would have a weight of 3). This weight will be represented in the next 
-    round of VSEARCH by multiplying that clusters sequence by its weight 
-    prior to VSEARCH. 
+    original trimmed data set and performs realignment on the data using 
+    minimap2
     
-    Parameters 
-    clusters_path: path to a VSEARCH cluster fasta file 
-    trimmed_fasta: path to trimmed version of the dataset 
+    Parameters:
+    mapper_path: path to minimap2 as str
+    reference_path: path to cluster/consensus reference fasta
+    trimmed_reads: path to basecalled and trimmed reads in fasta format
+    out_path: path to the output directory, as str
+    out_name: name the output sam file will be given, as str
+    
+    Returns:
+    cmd: command with apppropriate minimap2 parameters and inputs
     """
     #NOTES FOR SELF: should probably have it generate the minimap2 string and not run it??? 
     #other note: since sam file is outputted, can use one of the methods above to filter it, then use the length of the sam file (assuming no headers are outputted) to get the weight of the particular cluster 
-    cmd = "{} -ax map-ont --score-N 0 --MD --min-dp-score 10 {} {} > {}{}.sam".format(mapper_path, reference_path, basecall_path, out_path, out_name) #probably doesn't need minimap2 as a separate path
+    cmd = "{} -ax map-ont --MD {} {} > {}{}.sam".format(mapper_path, reference_path, trimmed_reads, out_path, out_name) #probably doesn't need minimap2 as a separate path
     print('[Mapping]: Command Generated: "{}"'.format(cmd))
     return cmd
 
+def weight_generation(aligned_sam_path): 
+    """
+    weight_generation takes in an aligned sam (primary reads only) and returns 
+    a list / dictionary (CHOOSE) containing the references (clusters) from
+    VSEARCH and the associated weight with that cluster (number of primary 
+    aligned reads). 
+    
+    Parameters: 
+    aligned_sam_path: filepath to inputted sam file generated from mm2_cluster_aligner
+    
+    Returns: 
+    reference_counts: dictionary containing the different reference sequence names and the amount of reads that aligned to it
+    """
+    # Open the SAM file
+    with pysam.AlignmentFile(sam_file_path, "r") as samfile:
+        # Initialize a dictionary to hold the count of reads per reference sequence
+        reference_counts = {}
+        
+        # Iterate over each read in the SAM file
+        for read in samfile:
+            if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:  # Check if the read is mapped to a reference sequence
+                ref_name = samfile.get_reference_name(read.reference_id)  # Get the reference sequence name
+                
+                if ref_name in reference_counts:
+                    # If the reference sequence is already in the dictionary, increment the count
+                    reference_counts[ref_name] += 1
+                else:
+                    # If it's the first time we see this reference sequence, initialize its count to 1
+                    reference_counts[ref_name] = 1
+                    
+    return reference_counts #in main function, probably where weight calculation would get done or write a new function that generates the weight fasta file 
+    
 def write_to_fasta(out_path, out_name, list_data):
     """
     write_to_fasta takes in an output path and file name, as well as a list
@@ -422,9 +456,10 @@ def first_consensus(working_dir, reads, barcode_fasta):
     
     # Defualt filenames:
     p5_fname = "merged"
-    dorado_path = "dorado" # Should be variable, this assumes dorado is in user's PATH
+    #dorado_path = "dorado" # Should be variable, this assumes dorado is in user's PATH
+    dorado_path = ' ~/dorado-0.5.3-linux-x64/bin/dorado' # assumes dorado is in user's home directory, make it a variable somewhere maybe
     basecall_fname = 'basecall' # fq file
-    minimap2_path = 'minimap2' # should be variable, this assumes dorado is in user's PATH
+    minimap2_path = 'minimap2' #called from conda environment
     aligned_bc_fname = 'bc_aligned' # SAM file
     trimmed_fname = 'trimmed' # Fasta 
     sorted_fname = 'sorted' # Fasta
