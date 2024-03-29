@@ -142,7 +142,7 @@ def strand_decouple(primary_sam_path):
                     # Otherwise, write the read to the forward strand reads file
                     outfile_forward.write(read)
         return forward_out_path, reverse_out_path #maybe dont need to return these but will leave this here for now 
-        
+
 def read_trim(sam_path):
     """
     read_trim takes in a samfile and returns a list of the reads
@@ -334,7 +334,25 @@ def weight_generation(aligned_sam_path):
                     reference_counts[ref_name] = 1
                     
     return reference_counts #in main function, probably where weight calculation would get done or write a new function that generates the weight fasta file 
+
+def weighted_fasta_gen(cluster_fasta, reference_counts):
+    """
+    weighted_fasta_gen will take a cluster fasta outputted from VSEARCH
+     as well as a dictionary containing the reference 
+    sequences in that sam file (clusters outputted from VSEARCH) and the number 
+    of reads aligned to that particular reference sequence. It will generate 
+    a fasta file with the same reference sequence except multiplied by the number 
+    of reads that aligned to perfor weight cluster formation downstream. 
     
+    Parameters: 
+    cluster_fasta: used to extract the actual sequence of the reference 
+    reference_counts: dictionary containing the names of the reference sequences (should be the same names in cluster_fasta) as well as the number of reads that aligned to that cluster after minimap2
+    
+    Returns:
+    weighted_fasta_file_path: fasta file containing the same reference sequences as cluster_fasta except multiplied by the number of counts from reference_counts 
+    """
+    return weighted_fasta_file_path
+
 def write_to_fasta(out_path, out_name, list_data):
     """
     write_to_fasta takes in an output path and file name, as well as a list
@@ -384,7 +402,6 @@ def medaka_consensus_command(medaka_path, trim_fasta, filtered_fasta, out_path):
     cmd = "{} -i {} -d {} -o {} -m r1041_e82_400bps_hac_v4.2.0 -f -b 300".format(medaka_path, trim_fasta, filtered_fasta, out_path)
     print('[Consensus Forming]: Command Generated: "{}"'.format(cmd))
     return cmd
-
 
 def extract_n_indexes(n_fasta_file):
     """
@@ -446,175 +463,3 @@ def rename_consensus_headers(consensus_fasta_file, j, k, output_file):
 
     return str(os.path.abspath(output_file))
 
-
-def first_consensus(working_dir, reads, barcode_fasta):
-    """
-    first_consensus takes in working directory, reads, and a barcode fasta,
-    and runs the steps needed to generate a first-pass consensus with no
-    xenobases.
-    """
-    
-    # Defualt filenames:
-    p5_fname = "merged"
-    #dorado_path = "dorado" # Should be variable, this assumes dorado is in user's PATH
-    dorado_path = ' ~/dorado-0.5.3-linux-x64/bin/dorado' # assumes dorado is in user's home directory, make it a variable somewhere maybe
-    basecall_fname = 'basecall' # fq file
-    minimap2_path = 'minimap2' #called from conda environment
-    aligned_bc_fname = 'bc_aligned' # SAM file
-    trimmed_fname = 'trimmed' # Fasta 
-    sorted_fname = 'sorted' # Fasta
-    vsearch_path = 'vsearch' # should be variable
-    vs_cons_fname = 'cons' # Fasta
-    filtered_fname = 'represented_seq' # Fasta
-    medaka_path = 'medaka_consensus' # should be variable
-    polished_fname = 'polished_consensus' # Fasta
-
-    # Get the barcode indexes using extract_n_indexes
-    n_positions = extract_n_indexes(barcode_fasta)
-
-
-    #----------Setup----------------------#
-    # Set up the working directory 0
-    #             basecall_directory, 1
-    #             fasta_directory, 2
-    #             merged_pod5, 3
-    #             rough_consensus_output, 4
-    #             xf_consensus_output 5
-    directories_list = setup.setup_directory_system(working_dir)
-
-    #File path string for the merged pod5
-    merged_pod5_path = directories_list[3] + p5_fname + '.pod5'
-    
-    if not (os.path.exists(merged_pod5_path)):
-        # Using RRM, generate the pod5 from the data directory
-        rrm.generate_merged_pod5(reads,
-                                 directories_list[3],
-                                 p5_fname)
-
-    #-------Basecalling and Sorting ---------
-
-
-    # Filepath string for the basecalled fq 
-    basecalled_path = directories_list[1] + basecall_fname + '.fq'
-    
-    if not (os.path.exists(basecalled_path)):
-    # Generate the dorado basecall command 
-        bccmd = basecall_command(dorado_path,
-                                 merged_pod5_path,
-                                 directories_list[1],
-                                 basecall_fname)
-        # Run the basecall command
-        st = os.system(bccmd)
-
-    # ensure the barcode is absolute.
-    barcode_fasta = str(os.path.abspath(barcode_fasta))
-    
-    # use minimap2 to align the basecalled to the basecalled fq
-    map2refcmd = map_to_reference(minimap2_path,
-                                  barcode_fasta,
-                                  basecalled_path,
-                                  directories_list[1],
-                                  aligned_bc_fname)
-    # Run the minimap2 command
-    st = os.system(map2refcmd)
-
-    #--------Trimming and Sorting Steps----------#
-    # Filepath string for the sam file.
-    samfile_path = directories_list[1] + aligned_bc_fname + '.sam'
-
-    # trim down the samfile to a trimmed fasta using default of 95% margin
-    read_trims_list = read_trim(samfile_path)
-    trimmed_fasta_path = write_to_fasta(directories_list[2],
-                                        trimmed_fname,
-                                        read_trims_list)
-
-    # Sort the trimmed fasta, write it out.
-    sorted_records_list = sort_fasta(trimmed_fasta_path)
-    sorted_fasta_path = write_to_fasta(directories_list[2],
-                                       sorted_fname,
-                                       sorted_records_list)
-
-    #--------Vsearch Steps-------------#
-    # Generate and use vsearch on the fasta, 3 rounds from 85 to 95%.
-    '''
-    Ask Sebastian where primary aligned filtering went
-    '''
-    for i in range(3):
-
-        # Get the degree to be estimated by loop iteration
-        degree = 85 + i*5
-
-        # Get a string version of the degree
-        strdeg = str(degree)
-
-        # Get the previous path of the data, default is sorted_fasta_path.
-        prevpath = sorted_fasta_path
-
-        # If the iteration is not zero, 
-        if (i != 0):
-
-            # The previous path is actually dependant on previous degree.
-            prevpath = directories_list[2] + 'filtered{}'.format(degree-5) + '.fasta'
-
-        # generate the vsearch command with the current degree and previous path
-        vscmd = vsearch_command(vsearch_path,
-                                prevpath,
-                                directories_list[2],
-                                vs_cons_fname+strdeg,
-                                degree/100)
-
-        # run the command.
-        st = os.system(vscmd) #asking why os.system is being assigned to a variable
-
-
-        # from this vsearch, sort it. 
-        subsearch_sort = sort_fasta(directories_list[2] + vs_cons_fname + strdeg + '.fasta')
-
-        # Output the sorted one to fasta.
-        subsearch_sorted_fasta_path = write_to_fasta(directories_list[2],
-                                                     'subsort'+strdeg,
-                                                      subsearch_sort)
-        if (i!=2):
-            # Output the subsearch cluster 
-            subsearch_cluster = filter_cluster_size(directories_list[2] + 'subsort{}.fasta'.format(strdeg))
-    
-            # Write it to a fasta.
-            clustered_fasta_path = write_to_fasta(directories_list[2],
-                                                 'filtered' +strdeg,
-                                                  subsearch_cluster)
-    
-    # filepath string for the final vsearch-sort-filter fasta
-    vsearch_cons_path = directories_list[2] + 'subsort95'+ '.fasta'
-
-    #--------------Run Medaka ---------------------#
-    # Generate the medaka command to perform consensus
-    mdkacmd = medaka_consensus_command(medaka_path,
-                                          trimmed_fasta_path,
-                                          vsearch_cons_path,
-                                          directories_list[4])
-    st = os.system(mdkacmd)
-
-    # filepath string for the medaka consensus:
-    medak_cons_path = directories_list[4] + 'consensus.fasta'
-    lab_cons_path = directories_list[4] + 'labeled_consensus.fasta'
-
-    # use rename_consensus_headers to assign the adequate headers to the consensus sequence
-    j, k = n_positions[0]
-    
-    # return the path to the polished fasta.
-    return rename_consensus_headers(medak_cons_path, j, k , lab_cons_path)
-
-
-def main():
-    in_w_dir = input("Please provide working directory path: ")
-    in_r_dir = input("Please provide read directory path: ")
-    in_f_dir = input("Please provide reference fasta directory path: ")
-    
-    consensus_path = first_consensus(in_w_dir, in_r_dir, in_f_dir)
-    
-    print("Consensus fasta located at: {}").format(consensus_path)
-    
-    
-if __name__ == '__main__':
-    main()
-    

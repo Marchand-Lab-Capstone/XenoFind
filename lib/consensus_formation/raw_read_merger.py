@@ -31,7 +31,7 @@ def merge_reads_command(reads_dir, filetype, target_dir_path, file_name):
     if SYS == 'Windows':
         os_command = '--recursive {}'.format(reads_dir)
     else:
-        os_command = '{}*.{}'.format(reads_dir, filetype)
+        os_command = '{}/*.{}'.format(reads_dir, filetype) #need to account for when users enter their file path as A/B/C/ <-- last slash included
         
     cmd = "pod5 {} --force-overwrite {} -o {}".format(subcommand, os_command, output_filename)
 
