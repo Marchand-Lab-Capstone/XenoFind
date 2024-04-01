@@ -5,6 +5,7 @@ import sys
 import raw_read_merger as rrm
 import setup_methods as setup
 import consensus_methods as cs
+from .. import xf_params # <-- -this is one directory up, figure this out yujia 
 
 
 def bc_align(working_dir, reads, barcoded_fasta):
@@ -42,19 +43,24 @@ def bc_align(working_dir, reads, barcoded_fasta):
     #----------Setup----------------------#
     # Set up the working directory 0
     #             basecall_directory, 1
-    #             fasta_directory, 2
-    #             merged_pod5, 3
-    #             rough_consensus_output, 4
-    #             xf_consensus_output 5
+    #             forward_reads_directory, 2
+    #             forward_reads_fasta_directory, 3
+    #             reverse_reads_directory, 4
+    #             reverse_reads_fasta_directory, 5
+    #             all_reads_directory, 6
+    #             all_reads_fasta_directory, 7
+    #             merged_pod5, 8
+    #             rough_consensus_output, 9
+    #             xf_consensus_output 10
     directories_list = setup.setup_directory_system(working_dir)
 
     #File path string for the merged pod5
-    merged_pod5_path = directories_list[3] + p5_fname + '.pod5'
-    
+    merged_pod5_path = directories_list[8] + p5_fname + '.pod5'
+    # add a parameter at top that takes in forced for all the functions 
     if not (os.path.exists(merged_pod5_path)):
         # Using RRM, generate the pod5 from the data directory
         rrm.generate_merged_pod5(reads,
-                                 directories_list[3],
+                                 directories_list[8],
                                  p5_fname)
 
     #-------Basecalling and Sorting ---------
@@ -64,7 +70,7 @@ def bc_align(working_dir, reads, barcoded_fasta):
     basecalled_path = directories_list[1] + basecall_fname + '.fq'
     
     #Make this toggleable if data needs to be rebasecalled 
-    if not (os.path.exists(basecalled_path)):
+    if not (os.path.exists(basecalled_path)) or basecall_pod == True:
     # Generate the dorado basecall command 
         print('Xenofind [STATUS] - Basecalling using Dorado')
         bccmd = cs.basecall_command(dorado_path,
@@ -80,6 +86,8 @@ def bc_align(working_dir, reads, barcoded_fasta):
     barcoded_fasta = str(os.path.abspath(barcoded_fasta))
     
     # use minimap2 to align the basecalled to the basecalled fq
+    
+    #add another conditional here to stop or force minimap2 alignment 
     map2refcmd = cs.map_to_reference(minimap2_path,
                                   barcoded_fasta,
                                   basecalled_path,
@@ -101,8 +109,6 @@ def decouple(sam_file_path):
     Returns: 
     forward and reverse strand  sam files as a string. ALso generates these files
     in a directory. 
-    
-    NOTE: NEED TO EDIT THIS FUNCTION INTO TWO FUNCTIONS, GENERATE PRIMARY SAM FILE PATH STRING AND RUN IT IN THE FIRST PASS FUNCTION. SECOND FUNCTION TO GENERATE THE FORWARD AND REVERSE STRINGS
     """
     forward_out_path = os.path.join(os.path.dirname(sam_file_path), 'forward.sam')
     reverse_out_path = os.path.join(os.path.dirname(sam_file_path), 'reverse.sam')
@@ -123,7 +129,7 @@ def decouple(sam_file_path):
                 elif read.is_forward and not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
                     # Otherwise, write the read to the forward strand reads file
                     outfile_forward.write(read)
-    return forward_out_path, reverse_out_path #maybe dont need to return these but will leave this here for now 
+    return forward_out_path, reverse_out_path 
     
 
 def consensus_generation(working_dir, sam_file_path):
@@ -159,6 +165,7 @@ def consensus_generation(working_dir, sam_file_path):
     sorted_fasta_path = cs.write_to_fasta(directories_list[2],
                                        sorted_fname,
                                        sorted_records_list)
+    #NOTE: ADD DATA  VIS IN BETWEEN EACH ROUND OF VSEARCH
 '''
     #--------Vsearch Steps-------------#
     # Generate and use vsearch on the fasta, 3 rounds from 85 to 95%.

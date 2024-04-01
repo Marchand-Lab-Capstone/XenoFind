@@ -351,6 +351,20 @@ def weighted_fasta_gen(cluster_fasta, reference_counts):
     Returns:
     weighted_fasta_file_path: fasta file containing the same reference sequences as cluster_fasta except multiplied by the number of counts from reference_counts 
     """
+    weighted_fasta_file_path = "weighted.fasta"
+    
+    with open(weighted_fasta_file_path, "w") as output_file:
+        #write into the weighted fasta file
+        for record in SeqIO.parse(cluster_fasta, "fasta"):
+            reference_name = record.id
+            # find the reference name in the cluster fasta
+            
+            if reference_name in reference_counts:
+                count = reference_counts[reference_name]
+                weighted_sequence = record.seq * count
+                # multiply the reference sequence by the number of reads that aligned to it
+                
+                output_file.write(f">{reference_name}_weighted_{count}\n{weighted_sequence}\n")
     return weighted_fasta_file_path
 
 def write_to_fasta(out_path, out_name, list_data):
