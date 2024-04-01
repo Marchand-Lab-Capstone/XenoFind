@@ -45,7 +45,7 @@ def basecall_command(basecaller_path, pod5_path, out_path, out_name):
     a command string.
     """
     # Currently only supports Dorado
-    cmd = "{} basecaller hac --no-trim --emit-fastq {} > {}{}.fq".format(basecaller_path, pod5_path, out_path, out_name)
+    cmd = "{} basecaller hac --no-trim --emit-moves --emit-fastq {} > {}{}.fq".format(basecaller_path, pod5_path, out_path, out_name)
     print('[Basecalling]: Command Generated: "{}"'.format(cmd))
     return cmd
 
@@ -491,7 +491,7 @@ def first_consensus(working_dir, reads, barcode_fasta):
         st = os.system(bccmd_2)
 
     # ensure the barcode is absolute.
-    barcode_fasta = str(os.path.abspath(barcode_fasta))
+    barcode_fasta = str(os.path.abspath("../../data/reference_fasta/xBSn_90mer_xr_train.fa"))
     
     # use minimap2 to align the basecalled to the basecalled fq
     map2refcmd_2 = map_to_reference(minimap2_path,
