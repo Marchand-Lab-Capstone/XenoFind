@@ -27,6 +27,7 @@ rename_consensus_headers() - renames the headers of a medaka consensus file to h
 from Bio import SeqIO
 import os
 import pysam
+import subprocess
 import raw_read_merger as rrm
 import setup_methods as setup
 
@@ -68,50 +69,56 @@ def map_to_reference(mapper_path, reference_path, basecall_path, out_path, out_n
     print('[Mapping]: Command Generated: "{}"'.format(cmd))
     return cmd
 
-def filter_primary_alignments(sam_path):
+def sam_to_bam(input_sam, out_path, out_name):
     """
-    strand_decouple takes in a fasta file generated from minimap2 and separates 
-    it on forward and reverse strand reads using samtools. This function will 
-    also generate a primary 
+    sam_to_bam is a function that takes in a sam file generated from minimap2 
+    and generates a samtools command that can be run using os.system to 
+    generated a bam file containing the sam information 
     
     Parameters: 
-    sam_path: path to the sam file as a string,
+    input_sam: file path way to generated sam file as a string 
+    out_path: file path where bam file should be generated 
+    out_name: desired name of the bam file 
+    """
+    cmd = 'samtools view -bho {}{}.bam {}'.format(out_path, out_name, input_sam)
+    bam_path = '{}{}.bam'.format(out_path, out_name)
+    return cmd, bam_path
+    
+
+def filter_primary_alignments(bam_path):
+    """
+    Filters a BAM file to retain only primary alignments and outputs the result
+    to a new BAM file named 'primary_alignments.bam' in the same directory as
+    the input file.
+    
+    Parameters: 
+    bam_path: path to the BAM file as a string.
     
     Returns: 
-    primary only sam file 
-    
-    NOTE: NEED TO EDIT THIS FUNCTION INTO TWO FUNCTIONS, GENERATE PRIMARY SAM FILE PATH STRING AND RUN IT IN THE FIRST PASS FUNCTION. SECOND FUNCTION TO GENERATE THE FORWARD AND REVERSE STRINGS
+    Path to the filtered BAM file containing only primary alignments.
     """
     
-    # doing in function primary only alignment
+    # Generating the output BAM file path
+    directory = os.path.dirname(bam_path)
+    output_bam = os.path.join(directory, 'primary_alignments.bam')
     
-    # Generating the index file for the sam file to index using pysam 
-    cmd = 'samtools index ' + sam_path #creates index file for BAM
-    os.system(cmd)
-    
-    # Extracting the sam path directory so the filtered version is written in the 
-    # ame directory
-    directory = os.path.dirname(sam_path)
-    output_sam = os.path.join(directory, 'primary_alignments.sam')
-
-
-    # Using pysam to only keep primary aligned reads 
-    with pysam.AlignmentFile(input_sam, "r") as infile, \
-         pysam.AlignmentFile(output_sam, "w", header=infile.header) as outfile:
+    # Using pysam to filter for primary alignments
+    with pysam.AlignmentFile(bam_path, "rb") as infile, \
+         pysam.AlignmentFile(output_bam, "wb", header=infile.header) as outfile:
 
         for read in infile:
             if not read.is_secondary and not read.is_supplementary and not read.is_unmapped:
                 outfile.write(read)
                 
-        print('XenoFind [STATUS] - Primary Only SAM file generated, now generating ')
-        return output_sam
-        
+    print('XenoFind [STATUS] - Primary Only BAM file generated.')
+
+    return output_bam
         
 #def strand_decouple(primary_sam_path, forward_out_path, reverse_out_path): #hae outpaths be GENERATED
-def strand_decouple(primary_sam_path):
+def strand_decouple(primary_bampath):
     """
-    strand_decouple takes in a fasta file generated from minimap2 and separates 
-    it by forward and reverse strand reads using samtools. 
+    strand_decouple takes in a bam file generated & converted using minimap2 and samtools 
+    and separates it by forward and reverse strand reads using samtools. 
     
     Parameters: 
     sam_path: path to the sam file as a string,
@@ -143,51 +150,60 @@ def strand_decouple(primary_sam_path):
                     outfile_forward.write(read)
         return forward_out_path, reverse_out_path #maybe dont need to return these but will leave this here for now 
 
-def read_trim(sam_path):
+def read_trim(bam_path):
     """
-    read_trim takes in a samfile and returns a list of the reads
-    in that sam file, with the query name and alignment sequence,
+    read_trim takes in a BAM file, sorts and indexes it, then returns a list of the reads
+    in that BAM file, with the query name and alignment sequence,
     so long as they are mapped and >=95% of the reference length.
     
     Parameters:
-    sam_path: path to the sam file in question as a string.
+    bam_path: path to the BAM file in question as a string.
     
     Returns:
     list of queries and alignments as a string.
     """
-    # Sam path is the basecalled to reference
     output_list = []
+
+    # Generate paths for sorted and indexed bam
+    sorted_bam_path = bam_path + ".sorted.bam"
     
-    # open the alignment sam using pysam, open the fasta path as a fasta file
-    with pysam.AlignmentFile(sam_path, 'r') as samfile:
- 
-        # Set up variables for #unmapped reads & #outside length
+    # Sorting the bam file
+    sort_cmd = f'samtools sort {bam_path} -o {sorted_bam_path}'
+    subprocess.run(sort_cmd, shell=True, check=True)
+    
+    # Indexing the sorted bam file
+    index_cmd = f'samtools index {sorted_bam_path}'
+    subprocess.run(index_cmd, shell=True, check=True)
+    
+    # Open the sorted and indexed bam using pysam
+    with pysam.AlignmentFile(sorted_bam_path, 'rb') as bamfile:
         num_unmapped = 0
         num_outside = 0
         
-        # for each read in the samfile,
-        for read in samfile.fetch():
-
+        # for each read in the bamfile,
+        for read in bamfile.fetch():
             # Check that the read is mapped
-            if (not read.is_unmapped):
-
+            if not read.is_unmapped:
                 # Get the reference sequence length and the alignment length
-                reference_length = samfile.get_reference_length(read.reference_name)
+                reference_length = bamfile.get_reference_length(read.reference_name)
                 aligned_length = read.reference_length
 
                 # if the aligned length is greater or equal to 95% of the reference length,
-                if aligned_length >= reference_length * .95:
-                    
-                    # append it to the output.
+                if aligned_length >= reference_length * 0.95:
+                    # Append it to the output.
                     output_list.append(f">{read.query_name}\n{read.query_alignment_sequence}")
                 else:
                     num_outside += 1
-
             else:
                 num_unmapped += 1
-    print("[Trimming]: {} unmapped reads, {} short reads removed.".format(num_unmapped, num_outside))
+
+    print(f"[Trimming]: {num_unmapped} unmapped reads, {num_outside} short reads removed.")
     
-    # return the output list
+    # Remove the sorted and indexed BAM file after processing
+    os.remove(sorted_bam_path)
+    # Also remove the BAM index file
+    os.remove(sorted_bam_path + ".bai")
+    
     return output_list
 
 
@@ -240,9 +256,9 @@ def vsearch_command(vsearch_path, fasta_path, out_path, out_name, sim_id):
     
     # Generate the command.
     cmd = "{} --cluster_fast {} --id {} --clusterout_sort --consout {}{}.fasta".format(vsearch_path, fasta_path, sim_id, out_path, out_name)
-
+    cluster_path = "{}{}.fasta".format(out_path, out_name)
     print('[Vsearching]: Command Generated: "{}"'.format(cmd))
-    return cmd
+    return cmd, cluster_path
             
     
 def filter_cluster_size(fasta_path, threshold=1):
@@ -281,7 +297,7 @@ def filter_cluster_size(fasta_path, threshold=1):
     
     return filtered_records
 
-def mmm2_cluster_aligner(mapper_path, reference_path, trimmed_reads, out_path, out_name):
+def mm2_cluster_aligner(mapper_path, reference_path, trimmed_reads, out_path, out_name):
     """
     mm2_cluster_aligner takes in a cluster fasta from VSEARCH as well as the 
     original trimmed data set and performs realignment on the data using 
@@ -300,31 +316,34 @@ def mmm2_cluster_aligner(mapper_path, reference_path, trimmed_reads, out_path, o
     #NOTES FOR SELF: should probably have it generate the minimap2 string and not run it??? 
     #other note: since sam file is outputted, can use one of the methods above to filter it, then use the length of the sam file (assuming no headers are outputted) to get the weight of the particular cluster 
     cmd = "{} -ax map-ont --MD {} {} > {}{}.sam".format(mapper_path, reference_path, trimmed_reads, out_path, out_name) #probably doesn't need minimap2 as a separate path
+    sam_path = "{}{}.sam".format(out_path, out_name)
+    
     print('[Mapping]: Command Generated: "{}"'.format(cmd))
-    return cmd
+    return cmd, sam_path
 
-def weight_generation(aligned_sam_path): 
+def weight_generation(aligned_bam_path):
     """
-    weight_generation takes in an aligned sam (primary reads only) and returns 
-    a list / dictionary (CHOOSE) containing the references (clusters) from
-    VSEARCH and the associated weight with that cluster (number of primary 
-    aligned reads). 
+    Takes in an aligned BAM (primary reads only) and returns a dictionary containing 
+    the references (clusters) from VSEARCH and the associated count of primary 
+    aligned reads.
     
     Parameters: 
-    aligned_sam_path: filepath to inputted sam file generated from mm2_cluster_aligner
+    aligned_bam_path: File path to inputted BAM file generated from mm2_cluster_aligner.
     
     Returns: 
-    reference_counts: dictionary containing the different reference sequence names and the amount of reads that aligned to it
+    reference_counts: Dictionary containing the different reference sequence names 
+    and the count of reads that aligned to each.
     """
-    # Open the SAM file
-    with pysam.AlignmentFile(sam_file_path, "r") as samfile:
+    # Open the BAM file for reading ("rb" mode)
+    with pysam.AlignmentFile(aligned_bam_path, "rb") as bamfile:
         # Initialize a dictionary to hold the count of reads per reference sequence
         reference_counts = {}
         
-        # Iterate over each read in the SAM file
-        for read in samfile:
-            if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:  # Check if the read is mapped to a reference sequence
-                ref_name = samfile.get_reference_name(read.reference_id)  # Get the reference sequence name
+        # Iterate over each read in the BAM file
+        for read in bamfile:
+            # Check if the read is mapped and is a primary alignment (not secondary/supplementary)
+            if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
+                ref_name = bamfile.get_reference_name(read.reference_id)  # Get the reference sequence name
                 
                 if ref_name in reference_counts:
                     # If the reference sequence is already in the dictionary, increment the count
@@ -333,7 +352,7 @@ def weight_generation(aligned_sam_path):
                     # If it's the first time we see this reference sequence, initialize its count to 1
                     reference_counts[ref_name] = 1
                     
-    return reference_counts #in main function, probably where weight calculation would get done or write a new function that generates the weight fasta file 
+    return reference_counts
 
 def weighted_fasta_gen(cluster_fasta, reference_counts):
     """
@@ -351,20 +370,22 @@ def weighted_fasta_gen(cluster_fasta, reference_counts):
     Returns:
     weighted_fasta_file_path: fasta file containing the same reference sequences as cluster_fasta except multiplied by the number of counts from reference_counts 
     """
-    weighted_fasta_file_path = "weighted.fasta"
+    weighted_fasta_file_path = os.path.join(os.path.dirname(cluster_fasta), 'weighted.fasta')
     
     with open(weighted_fasta_file_path, "w") as output_file:
         #write into the weighted fasta file
         for record in SeqIO.parse(cluster_fasta, "fasta"):
             reference_name = record.id
+            sequence = str(record.seq)
             # find the reference name in the cluster fasta
             
             if reference_name in reference_counts:
                 count = reference_counts[reference_name]
-                weighted_sequence = record.seq * count
-                # multiply the reference sequence by the number of reads that aligned to it
+                i = 0
+                for i in range(count):
+                 # multiply the reference sequence by the number of reads that aligned to it
+                    output_file.write(f">{reference_name}_weighted_{i+1}\n{sequence}\n")
                 
-                output_file.write(f">{reference_name}_weighted_{count}\n{weighted_sequence}\n")
     return weighted_fasta_file_path
 
 def write_to_fasta(out_path, out_name, list_data):

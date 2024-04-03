@@ -20,7 +20,7 @@ import argparse, textwrap
 import os 
 import sys 
 from lib.xf_prelims.xf_tools import *
-from lib.xf_prelims.xf_params import *
+from lib.xf_params import *
 
 
 parser = argparse.ArgumentParser(

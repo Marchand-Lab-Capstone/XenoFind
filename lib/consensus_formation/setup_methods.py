@@ -59,10 +59,12 @@ def setup_directory_system(working_directory):
     fadir_fwd = check_make_dir(forward_dir + "fasta_directory/")
     reverse_dir = check_make_dir(working_directory + 'reverse_reads/')
     fadir_rev = check_make_dir(reverse_dir + 'fasta_directory/')
-    total_dir = check_make_dir(working_directory + 'total_reads')
-    fadir_all = check_make_dir(total_dir + 'fasta_directory/')
+    total_dir = check_make_dir(working_directory + 'total_reads/')
+    fadir_tot = check_make_dir(total_dir + 'fasta_directory/')
     p5dir = check_make_dir(working_directory + "merged_pod5/")
-    rconsdir = check_make_dir(working_directory + "rough_consensus_output/")
+    vsearch_dir_fwd = check_make_dir(forward_dir + "vsearch_processing/")
+    vsearch_dir_rev = check_make_dir(reverse_dir + "vsearch_processing/")
+    vsearch_dir_tot = check_make_dir(total_dir + "vsearch_processing/")
     xfconsdir = check_make_dir(working_directory + "xf_consensus_output/")
     
-    return [wdir, bcdir, forward_dir, fadir_fwd, reverse_dir, fadir_rev, total_dir, fadir_all, p5dir, rconsdir, xfconsdir]
+    return [wdir, bcdir, forward_dir, fadir_fwd, reverse_dir, fadir_rev, total_dir, fadir_tot, p5dir, vsearch_dir_fwd, vsearch_dir_rev, vsearch_dir_tot, xfconsdir]

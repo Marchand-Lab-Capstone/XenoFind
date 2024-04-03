@@ -15,41 +15,11 @@ Updated: 11/28/23
 ##Analysis instructions 
 
 #Re-basecall pod5 file. Required if new reference files are being used. 
-basecall_pod = True
+basecall_pod = False
 
 #Perform Quality Score Analysis 
 analyze_fastq = True
 ############################################################
-
-
-############################################################
-##Model Training and Basecalling Parameters
-
-#kmer table 
-#kmer_table_path = 'models/remora/4mer_9.4.1.csv'
-kmer_table_path = 'models/remora/9mer_10.4.1.csv'
-
-#ml model (ConvLSTM_w_ref.py or Conv_w_ref.py')
-ml_model_path = 'models/ConvLSTM_w_ref.py'
-
-#Modified base in Fasta sequence you wish to train model or use model to basecall
-mod_base = 'B'
-
-#Most similar substituted canonical base you will be comparing against 
-can_base = 'A'
-
-#Extent of Kmer content (-,+) to store for model training
-kmer_context ='4 4' 
-
-#Extent of chunk context (centered around modified base) 
-chunk_context = '50 50' 
-
-#Proportion of reads to use for validation 
-val_proportion = '0.2'
-
-#Number of chunks for training (in thousands: e.g.: '200' = 200,000 chunks) 
-chunk_num = '500000'
-
 
 
 
