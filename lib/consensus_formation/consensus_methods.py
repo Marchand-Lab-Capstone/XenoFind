@@ -85,7 +85,7 @@ def sam_to_bam(input_sam, out_path, out_name):
     return cmd, bam_path
     
 
-def filter_primary_alignments(bam_path):
+def filter_primary_alignments(bam_path, out_name): #can edit this function to take in an input file name 
     """
     Filters a BAM file to retain only primary alignments and outputs the result
     to a new BAM file named 'primary_alignments.bam' in the same directory as
@@ -100,7 +100,7 @@ def filter_primary_alignments(bam_path):
     
     # Generating the output BAM file path
     directory = os.path.dirname(bam_path)
-    output_bam = os.path.join(directory, 'primary_alignments.bam')
+    output_bam = os.path.join(directory, '{}.bam'.format(out_name))
     
     # Using pysam to filter for primary alignments
     with pysam.AlignmentFile(bam_path, "rb") as infile, \
@@ -354,7 +354,7 @@ def weight_generation(aligned_bam_path):
                     
     return reference_counts
 
-def weighted_fasta_gen(cluster_fasta, reference_counts):
+def weighted_fasta_gen(cluster_fasta, reference_counts, out_name):
     """
     weighted_fasta_gen will take a cluster fasta outputted from VSEARCH
      as well as a dictionary containing the reference 
@@ -370,7 +370,7 @@ def weighted_fasta_gen(cluster_fasta, reference_counts):
     Returns:
     weighted_fasta_file_path: fasta file containing the same reference sequences as cluster_fasta except multiplied by the number of counts from reference_counts 
     """
-    weighted_fasta_file_path = os.path.join(os.path.dirname(cluster_fasta), 'weighted.fasta')
+    weighted_fasta_file_path = os.path.join(os.path.dirname(cluster_fasta), '{}.fasta'.format(out_name))
     
     with open(weighted_fasta_file_path, "w") as output_file:
         #write into the weighted fasta file
