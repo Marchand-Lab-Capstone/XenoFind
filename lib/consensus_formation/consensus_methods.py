@@ -421,7 +421,7 @@ def write_to_fasta(out_path, out_name, list_data):
     return out_file
         
 
-def medaka_consensus_command(medaka_path, trim_fasta, filtered_fasta, out_path):
+def medaka_consensus_command(medaka_path, trim_fasta, cluster_fasta, out_path):
     """
     medaka_consensus_command takes in a filepath for medaka, a trimmed fasta file,
     a filtered cluster/consensus fasta, an output filepath, and then polishes/forms a consensus fasta.
@@ -434,7 +434,7 @@ def medaka_consensus_command(medaka_path, trim_fasta, filtered_fasta, out_path):
     """
 
     # Generate the command.
-    cmd = "{} -i {} -d {} -o {} -m r1041_e82_400bps_hac_v4.2.0 -f -b 300".format(medaka_path, trim_fasta, filtered_fasta, out_path)
+    cmd = "{} -i {} -d {} -o {} -m r1041_e82_400bps_hac_v4.2.0 -f -b 300".format(medaka_path, trim_fasta, filtered_fasta, out_path) #note, allow specific model selection
     print('[Consensus Forming]: Command Generated: "{}"'.format(cmd))
     return cmd
 

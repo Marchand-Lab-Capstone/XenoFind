@@ -20,13 +20,26 @@ basecall_pod = True
 #Perform Quality Score Analysis 
 analyze_fastq = True
 ############################################################
+##Consensus Parameters
 
+#Number of Weighted VSEARCH Rounds to Perform
+vsearch_iterations = 3
 
 
 ############################################################
 #Dorado Base caller configuration
 
 #Path to guppy basecaller
-#basecaller_path = '~/dorado-0.5.3-linux-x64/bin/dorado' #update to latest version tesing right now 
-basecaller_path = '~/dorado-0.6.0-linux-x64/bin/dorado'
+basecaller_path = '~/dorado-0.6.0-linux-x64/bin/dorado' #consider adding Guppy compatibility 
+
+#Dorado Model Parameters
+
+#Let Dorado automatically choose a model 
+auto_model = True 
+
+#Model type dorado will search the best fit for 
+auto_model_type = 'hac' 
+
+#If manual model selection is desired
+dorado_model = '' 
 

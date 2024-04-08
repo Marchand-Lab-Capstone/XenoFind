@@ -182,16 +182,19 @@ def consensus_generation(working_dir, bam_file_path, direction):
     if direction == 'forward': #forward directory isnt calling anything right now, need to fix 
         fasta_index = 3 
         vsearch_index = 9
+        output_index = 14
         prefix = 'forward'
         #insert a new required index here as necessary
     elif direction == 'reverse':
         fasta_index = 5
         vsearch_index = 10
+        output_index = 15
         prefix = 'reverse'
         #insert a new required index here as necessary
     else: 
         fasta_index = 7
         vsearch_index = 11
+        output_index = 13
         prefix = 'total'
         #insert a new required index here as necessary
 
@@ -222,7 +225,7 @@ def consensus_generation(working_dir, bam_file_path, direction):
     # run the vsearch command
     st = os.system(vsearch_cmd)
     
-    for i in range(3):
+    for i in range(xfp.vsearch_iterations):
         '''
         TO DO: remove hard coding here, make sure to keep each iteration of the consensus fastas
         Use NCBI Multiple Sequence Aligner to visualy check how each cluster is doing with each iteration 
@@ -263,12 +266,20 @@ def consensus_generation(working_dir, bam_file_path, direction):
         st = os.system(vsearch_cmd)
         print(f'The {i+1} Rounds of consensus generation is complete')
 
-'''
+    #Calling Medaka to perform polishing
+    medaka_cmd = cs.medaka_consensus_command(medaka, trimmed_fasta_path,
+                                          cluster_path, directories_list[output_index]
+    
+    st = os.system(medaka_cmd)
+
+    #Setting starting and ending indexes for randomers 
     j, k = n_positions[0]
 
-
+    medaka_cons_path = directories_list[output_index] + 'consensus.fasta'
+    lab_cons_path = directoriees_list[ouput_index] + 'labeled_consensus.fasta'
+    
     # return the path to the polished fasta.
-    return cs.rename_consensus_headers(medak_cons_path, j, k , lab_cons_path)
+    return cs.rename_consensus_headers(medaka_cons_path, j, k , lab_cons_path)
 '''
 
 def main():
