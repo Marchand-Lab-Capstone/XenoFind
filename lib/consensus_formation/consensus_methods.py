@@ -46,7 +46,7 @@ def basecall_command(basecaller_path, pod5_path, out_path, out_name):
     a command string.
     """
     # Currently only supports Dorado
-    cmd = "{} basecaller hac --no-trim --emit-fastq {} > {}{}.fq".format(basecaller_path, pod5_path, out_path, out_name)
+    cmd = "{} basecaller hac --no-trim --emit-moves --emit-fastq {} > {}{}.fq".format(basecaller_path, pod5_path, out_path, out_name)
     print('[Basecalling]: Command Generated: "{}"'.format(cmd))
     return cmd
 
