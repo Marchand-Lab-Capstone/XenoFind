@@ -22,6 +22,12 @@ analyze_fastq = True
 ############################################################
 ##Consensus Parameters
 
+#Starting similarity ID, initial similarity ID prior to doing VSEARCH iterations
+starting_similarity = 0.80
+
+#Increment, how much to increase the similarity ID by during VSEARCH iterations
+similarity_increment = 0.05
+
 #Number of Weighted VSEARCH Rounds to Perform
 vsearch_iterations = 3
 
