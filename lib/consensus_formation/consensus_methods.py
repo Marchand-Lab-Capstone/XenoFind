@@ -27,6 +27,7 @@ rename_consensus_headers() - renames the headers of a medaka consensus file to h
 from Bio import SeqIO
 import os
 import pysam
+import subprocess
 import raw_read_merger as rrm
 import setup_methods as setup
 
@@ -57,63 +58,152 @@ def map_to_reference(mapper_path, reference_path, basecall_path, out_path, out_n
     
     Parameters:
     mapper_path: path to minimap2 as str
-    reference_path: path to reference fasta (typically the barcodes) as str
+    reference_path: path to reference fasta as str
     basecall_path: path to basecalled .fq file, as str
     out_path: path to the output directory, as str
     out_name: name the output sam file will be given, as str
     """
     # Currently only supports minimap2
-    cmd = "{} -ax map-ont --score-N 0 --MD --min-dp-score 10 {} {} > {}{}.sam".format(mapper_path, reference_path, basecall_path, out_path, out_name)
+    cmd = "{} -ax map-ont --score-N 0 --MD --min-dp-score 10 {} {} > {}{}.sam".format(mapper_path, reference_path, basecall_path, out_path, out_name) #probably doesn't need minimap2 as a separate path
 
     print('[Mapping]: Command Generated: "{}"'.format(cmd))
     return cmd
 
-
-def read_trim(sam_path):
+def sam_to_bam(input_sam, out_path, out_name):
     """
-    read_trim takes in a samfile and returns a list of the reads
-    in that sam file, with the query name and alignment sequence,
+    sam_to_bam is a function that takes in a sam file generated from minimap2 
+    and generates a samtools command that can be run using os.system to 
+    generated a bam file containing the sam information 
+    
+    Parameters: 
+    input_sam: file path way to generated sam file as a string 
+    out_path: file path where bam file should be generated 
+    out_name: desired name of the bam file 
+    """
+    cmd = 'samtools view -bho {}{}.bam {}'.format(out_path, out_name, input_sam)
+    bam_path = '{}{}.bam'.format(out_path, out_name)
+    return cmd, bam_path
+    
+
+def filter_primary_alignments(bam_path, out_name): #can edit this function to take in an input file name 
+    """
+    Filters a BAM file to retain only primary alignments and outputs the result
+    to a new BAM file named 'primary_alignments.bam' in the same directory as
+    the input file.
+    
+    Parameters: 
+    bam_path: path to the BAM file as a string.
+    
+    Returns: 
+    Path to the filtered BAM file containing only primary alignments.
+    """
+    
+    # Generating the output BAM file path
+    directory = os.path.dirname(bam_path)
+    output_bam = os.path.join(directory, '{}.bam'.format(out_name))
+    
+    # Using pysam to filter for primary alignments
+    with pysam.AlignmentFile(bam_path, "rb") as infile, \
+         pysam.AlignmentFile(output_bam, "wb", header=infile.header) as outfile:
+
+        for read in infile:
+            if not read.is_secondary and not read.is_supplementary and not read.is_unmapped:
+                outfile.write(read)
+                
+    print('XenoFind [STATUS] - Primary Only BAM file generated.')
+
+    return output_bam
+        
+#def strand_decouple(primary_sam_path, forward_out_path, reverse_out_path): #hae outpaths be GENERATED
+def strand_decouple(primary_bampath):
+    """
+    strand_decouple takes in a bam file generated & converted using minimap2 and samtools 
+    and separates it by forward and reverse strand reads using samtools. 
+    
+    Parameters: 
+    sam_path: path to the sam file as a string,
+    
+    Returns: 
+    forward and reverse strand  sam files as a string. ALso generates these files
+    in a directory. 
+    
+    NOTE: NEED TO EDIT THIS FUNCTION INTO TWO FUNCTIONS, GENERATE PRIMARY SAM FILE PATH STRING AND RUN IT IN THE FIRST PASS FUNCTION. SECOND FUNCTION TO GENERATE THE FORWARD AND REVERSE STRINGS
+    """
+    forward_out_path = os.path.join(os.path.dirname(primary_sam_path), 'forward.sam')
+    reverse_out_path = os.path.join(os.path.dirname(primary_sam_path), 'reverse.sam')
+    #This section actually generates the forward and reverse only reads 
+    # Open the input SAM file for reading
+    with pysam.AlignmentFile(output_sam, "r") as infile:
+
+        # Open two files for writing: one for forward strand reads, another for reverse strand reads
+        with pysam.AlignmentFile(forward_out_path, "w", header=infile.header) as outfile_forward, \
+             pysam.AlignmentFile(reverse_out_path, "w", header=infile.header) as outfile_reverse:
+
+            # Iterate through reads in the input file
+            for read in infile:
+                # Check if the read is mapped to the reverse strand
+                if read.is_reverse:
+                    # Write the read to the reverse strand reads file
+                    outfile_reverse.write(read)
+                else:
+                    # Otherwise, write the read to the forward strand reads file
+                    outfile_forward.write(read)
+        return forward_out_path, reverse_out_path #maybe dont need to return these but will leave this here for now 
+
+def read_trim(bam_path):
+    """
+    read_trim takes in a BAM file, sorts and indexes it, then returns a list of the reads
+    in that BAM file, with the query name and alignment sequence,
     so long as they are mapped and >=95% of the reference length.
     
     Parameters:
-    sam_path: path to the sam file in question as a string.
+    bam_path: path to the BAM file in question as a string.
     
     Returns:
     list of queries and alignments as a string.
     """
-    # Sam path is the basecalled to reference
     output_list = []
+
+    # Generate paths for sorted and indexed bam
+    sorted_bam_path = bam_path + ".sorted.bam"
     
-    # open the alignment sam using pysam, open the fasta path as a fasta file
-    with pysam.AlignmentFile(sam_path, 'r') as samfile:
- 
-        # Set up variables for #unmapped reads & #outside length
+    # Sorting the bam file
+    sort_cmd = f'samtools sort {bam_path} -o {sorted_bam_path}'
+    subprocess.run(sort_cmd, shell=True, check=True)
+    
+    # Indexing the sorted bam file
+    index_cmd = f'samtools index {sorted_bam_path}'
+    subprocess.run(index_cmd, shell=True, check=True)
+    
+    # Open the sorted and indexed bam using pysam
+    with pysam.AlignmentFile(sorted_bam_path, 'rb') as bamfile:
         num_unmapped = 0
         num_outside = 0
         
-        # for each read in the samfile,
-        for read in samfile.fetch():
-
+        # for each read in the bamfile,
+        for read in bamfile.fetch():
             # Check that the read is mapped
-            if (not read.is_unmapped):
-
+            if not read.is_unmapped:
                 # Get the reference sequence length and the alignment length
-                reference_length = samfile.get_reference_length(read.reference_name)
+                reference_length = bamfile.get_reference_length(read.reference_name)
                 aligned_length = read.reference_length
 
                 # if the aligned length is greater or equal to 95% of the reference length,
-                if aligned_length >= reference_length * .95:
-                    
-                    # append it to the output.
+                if aligned_length >= reference_length * 0.95:
+                    # Append it to the output.
                     output_list.append(f">{read.query_name}\n{read.query_alignment_sequence}")
                 else:
                     num_outside += 1
-
             else:
                 num_unmapped += 1
-    print("[Trimming]: {} unmapped reads, {} short reads removed.".format(num_unmapped, num_outside))
+
+    print(f"[Trimming]: {num_unmapped} unmapped reads, {num_outside} short reads removed.")
     
-    # return the output list
+    # Remove the sorted and indexed BAM file after processing
+    os.remove(sorted_bam_path)
+    # Also remove the BAM index file
+    os.remove(sorted_bam_path + ".bai")
+    
     return output_list
 
 
@@ -166,9 +256,9 @@ def vsearch_command(vsearch_path, fasta_path, out_path, out_name, sim_id):
     
     # Generate the command.
     cmd = "{} --cluster_fast {} --id {} --clusterout_sort --consout {}{}.fasta".format(vsearch_path, fasta_path, sim_id, out_path, out_name)
-
+    cluster_path = "{}{}.fasta".format(out_path, out_name)
     print('[Vsearching]: Command Generated: "{}"'.format(cmd))
-    return cmd
+    return cmd, cluster_path
             
     
 def filter_cluster_size(fasta_path, threshold=1):
@@ -206,8 +296,98 @@ def filter_cluster_size(fasta_path, threshold=1):
                 filtered_records.append(">{}\n{}".format(record.id, record.seq))
     
     return filtered_records
+
+def mm2_cluster_aligner(mapper_path, reference_path, trimmed_reads, out_path, out_name):
+    """
+    mm2_cluster_aligner takes in a cluster fasta from VSEARCH as well as the 
+    original trimmed data set and performs realignment on the data using 
+    minimap2
     
+    Parameters:
+    mapper_path: path to minimap2 as str
+    reference_path: path to cluster/consensus reference fasta
+    trimmed_reads: path to basecalled and trimmed reads in fasta format
+    out_path: path to the output directory, as str
+    out_name: name the output sam file will be given, as str
     
+    Returns:
+    cmd: command with apppropriate minimap2 parameters and inputs
+    """
+    #NOTES FOR SELF: should probably have it generate the minimap2 string and not run it??? 
+    #other note: since sam file is outputted, can use one of the methods above to filter it, then use the length of the sam file (assuming no headers are outputted) to get the weight of the particular cluster 
+    cmd = "{} -ax map-ont --MD {} {} > {}{}.sam".format(mapper_path, reference_path, trimmed_reads, out_path, out_name) #probably doesn't need minimap2 as a separate path
+    sam_path = "{}{}.sam".format(out_path, out_name)
+    
+    print('[Mapping]: Command Generated: "{}"'.format(cmd))
+    return cmd, sam_path
+
+def weight_generation(aligned_bam_path):
+    """
+    Takes in an aligned BAM (primary reads only) and returns a dictionary containing 
+    the references (clusters) from VSEARCH and the associated count of primary 
+    aligned reads.
+    
+    Parameters: 
+    aligned_bam_path: File path to inputted BAM file generated from mm2_cluster_aligner.
+    
+    Returns: 
+    reference_counts: Dictionary containing the different reference sequence names 
+    and the count of reads that aligned to each.
+    """
+    # Open the BAM file for reading ("rb" mode)
+    with pysam.AlignmentFile(aligned_bam_path, "rb") as bamfile:
+        # Initialize a dictionary to hold the count of reads per reference sequence
+        reference_counts = {}
+        
+        # Iterate over each read in the BAM file
+        for read in bamfile:
+            # Check if the read is mapped and is a primary alignment (not secondary/supplementary)
+            if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
+                ref_name = bamfile.get_reference_name(read.reference_id)  # Get the reference sequence name
+                
+                if ref_name in reference_counts:
+                    # If the reference sequence is already in the dictionary, increment the count
+                    reference_counts[ref_name] += 1
+                else:
+                    # If it's the first time we see this reference sequence, initialize its count to 1
+                    reference_counts[ref_name] = 1
+                    
+    return reference_counts
+
+def weighted_fasta_gen(cluster_fasta, reference_counts, out_name):
+    """
+    weighted_fasta_gen will take a cluster fasta outputted from VSEARCH
+     as well as a dictionary containing the reference 
+    sequences in that sam file (clusters outputted from VSEARCH) and the number 
+    of reads aligned to that particular reference sequence. It will generate 
+    a fasta file with the same reference sequence except multiplied by the number 
+    of reads that aligned to perfor weight cluster formation downstream. 
+    
+    Parameters: 
+    cluster_fasta: used to extract the actual sequence of the reference 
+    reference_counts: dictionary containing the names of the reference sequences (should be the same names in cluster_fasta) as well as the number of reads that aligned to that cluster after minimap2
+    
+    Returns:
+    weighted_fasta_file_path: fasta file containing the same reference sequences as cluster_fasta except multiplied by the number of counts from reference_counts 
+    """
+    weighted_fasta_file_path = os.path.join(os.path.dirname(cluster_fasta), '{}.fasta'.format(out_name))
+    
+    with open(weighted_fasta_file_path, "w") as output_file:
+        #write into the weighted fasta file
+        for record in SeqIO.parse(cluster_fasta, "fasta"):
+            reference_name = record.id
+            sequence = str(record.seq)
+            # find the reference name in the cluster fasta
+            
+            if reference_name in reference_counts:
+                count = reference_counts[reference_name]
+                i = 0
+                for i in range(count):
+                 # multiply the reference sequence by the number of reads that aligned to it
+                    output_file.write(f">{reference_name}_weighted_{i+1}\n{sequence}\n")
+                
+    return weighted_fasta_file_path
+
 def write_to_fasta(out_path, out_name, list_data):
     """
     write_to_fasta takes in an output path and file name, as well as a list
@@ -241,7 +421,7 @@ def write_to_fasta(out_path, out_name, list_data):
     return out_file
         
 
-def medaka_consensus_command(medaka_path, trim_fasta, filtered_fasta, out_path):
+def medaka_consensus_command(medaka_path, trim_fasta, cluster_fasta, out_path):
     """
     medaka_consensus_command takes in a filepath for medaka, a trimmed fasta file,
     a filtered cluster/consensus fasta, an output filepath, and then polishes/forms a consensus fasta.
@@ -254,10 +434,9 @@ def medaka_consensus_command(medaka_path, trim_fasta, filtered_fasta, out_path):
     """
 
     # Generate the command.
-    cmd = "{} -i {} -d {} -o {} -m r1041_e82_400bps_hac_v4.2.0 -f -b 300".format(medaka_path, trim_fasta, filtered_fasta, out_path)
+    cmd = "{} -i {} -d {} -o {} -m r1041_e82_400bps_hac_v4.2.0 -f -b 300".format(medaka_path, trim_fasta, filtered_fasta, out_path) #note, allow specific model selection
     print('[Consensus Forming]: Command Generated: "{}"'.format(cmd))
     return cmd
-
 
 def extract_n_indexes(n_fasta_file):
     """
@@ -319,202 +498,3 @@ def rename_consensus_headers(consensus_fasta_file, j, k, output_file):
 
     return str(os.path.abspath(output_file))
 
-
-def first_consensus(working_dir, reads, barcode_fasta):
-    """
-    first_consensus takes in working directory, reads, and a barcode fasta,
-    and runs the steps needed to generate a first-pass consensus with no
-    xenobases.
-    """
-    
-    # Defualt filenames:
-    p5_fname = "merged"
-    dorado_path = "dorado" # Should be variable, this assumes dorado is in user's PATH
-    basecall_fname = 'basecall' # fq file
-    minimap2_path = 'minimap2' # should be variable, this assumes dorado is in user's PATH
-    aligned_bc_fname = 'bc_aligned' # SAM file
-    trimmed_fname = 'trimmed' # Fasta 
-    sorted_fname = 'sorted' # Fasta
-    vsearch_path = 'vsearch' # should be variable
-    vs_cons_fname = 'cons' # Fasta
-    filtered_fname = 'represented_seq' # Fasta
-    medaka_path = 'medaka_consensus' # should be variable
-    polished_fname = 'polished_consensus' # Fasta
-
-    # Get the barcode indexes using extract_n_indexes
-    n_positions = extract_n_indexes(barcode_fasta)
-
-
-    #----------Setup----------------------#
-    # Set up the working directory 0
-    #             basecall_directory, 1
-    #             fasta_directory, 2
-    #             merged_pod5, 3
-    #             rough_consensus_output, 4
-    #             xf_consensus_output 5
-    directories_list = setup.setup_directory_system(working_dir)
-
-    #File path string for the merged pod5
-    merged_pod5_path = directories_list[3] + p5_fname + '.pod5'
-    
-    if not (os.path.exists(merged_pod5_path)):
-        # Using RRM, generate the pod5 from the data directory
-        rrm.generate_merged_pod5(reads,
-                                 directories_list[3],
-                                 p5_fname)
-
-    #-------Basecalling and Sorting ---------
-
-
-    # Filepath string for the basecalled fq 
-    basecalled_path = directories_list[1] + basecall_fname + '.fq'
-    
-    if not (os.path.exists(basecalled_path)):
-    # Generate the dorado basecall command 
-        bccmd = basecall_command(dorado_path,
-                                 merged_pod5_path,
-                                 directories_list[1],
-                                 basecall_fname)
-        # Run the basecall command
-        st = os.system(bccmd)
-
-    # ensure the barcode is absolute.
-    barcode_fasta = str(os.path.abspath(barcode_fasta))
-    
-    # use minimap2 to align the basecalled to the basecalled fq
-    map2refcmd = map_to_reference(minimap2_path,
-                                  barcode_fasta,
-                                  basecalled_path,
-                                  directories_list[1],
-                                  aligned_bc_fname)
-    # Run the minimap2 command
-    st = os.system(map2refcmd)
-
-    #--------Trimming and Sorting Steps----------#
-    # Filepath string for the sam file.
-    samfile_path = directories_list[1] + aligned_bc_fname + '.sam'
-
-    # trim down the samfile to a trimmed fasta using default of 95% margin
-    read_trims_list = read_trim(samfile_path)
-    trimmed_fasta_path = write_to_fasta(directories_list[2],
-                                        trimmed_fname,
-                                        read_trims_list)
-
-    # Sort the trimmed fasta, write it out.
-    sorted_records_list = sort_fasta(trimmed_fasta_path)
-    sorted_fasta_path = write_to_fasta(directories_list[2],
-                                       sorted_fname,
-                                       sorted_records_list)
-
-    #--------Vsearch Steps-------------#
-    # Generate and use vsearch on the fasta, 3 rounds from 85 to 95%.
-    for i in range(3):
-
-        # Get the degree to be estimated by loop iteration
-        degree = 85 + i*5
-
-        # Get a string version of the degree
-        strdeg = str(degree)
-
-        # Get the previous path of the data, default is sorted_fasta_path.
-        prevpath = sorted_fasta_path
-
-        # If the iteration is not zero, 
-        if (i != 0):
-
-            # The previous path is actually dependant on previous degree.
-            prevpath = directories_list[2] + 'filtered{}'.format(degree-5) + '.fasta'
-
-        # generate the vsearch command with the current degree and previous path
-        vscmd = vsearch_command(vsearch_path,
-                                prevpath,
-                                directories_list[2],
-                                vs_cons_fname+strdeg,
-                                degree/100)
-
-        # run the command.
-        st = os.system(vscmd)
-
-
-        # from this vsearch, sort it. 
-        subsearch_sort = sort_fasta(directories_list[2] + vs_cons_fname + strdeg + '.fasta')
-
-        # Output the sorted one to fasta.
-        subsearch_sorted_fasta_path = write_to_fasta(directories_list[2],
-                                                     'subsort'+strdeg,
-                                                      subsearch_sort)
-        if (i!=2):
-            # Output the subsearch cluster 
-            subsearch_cluster = filter_cluster_size(directories_list[2] + 'subsort{}.fasta'.format(strdeg))
-    
-            # Write it to a fasta.
-            clustered_fasta_path = write_to_fasta(directories_list[2],
-                                                 'filtered' +strdeg,
-                                                  subsearch_cluster)
-    
-    # filepath string for the final vsearch-sort-filter fasta
-    vsearch_cons_path = directories_list[2] + 'subsort95'+ '.fasta'
-
-    #--------------Run Medaka ---------------------#
-    # Generate the medaka command to perform consensus
-    mdkacmd = medaka_consensus_command(medaka_path,
-                                          trimmed_fasta_path,
-                                          vsearch_cons_path,
-                                          directories_list[4])
-    st = os.system(mdkacmd)
-
-    # filepath string for the medaka consensus:
-    medak_cons_path = directories_list[4] + 'consensus.fasta'
-    lab_cons_path = directories_list[4] + 'labeled_consensus.fasta'
-
-    # use rename_consensus_headers to assign the adequate headers to the consensus sequence
-    j, k = n_positions[0]
-    
-    # return the path to the polished fasta.
-    renamed_consensus = rename_consensus_headers(medak_cons_path, j, k , lab_cons_path)
-
-
-
-    #-------Consensus Basecalling ---------
-        # This section is to generate alignment with the consensus file so that we have a basecalled, and aligned, consensus file.
-
-    # Filepath string for the basecalled fq 
-    basecalled_path_2 = directories_list[4] + 'basecall_consensus.fq'
-    
-    if not (os.path.exists(basecalled_path_2)):
-    # Generate the dorado basecall command  #do we use dorado aligner? Use dorado aligner rather than minimap2. 
-        bccmd_2 = basecall_command(dorado_path,
-                                 merged_pod5_path,
-                                 directories_list[4],
-                                 'basecall_consensus')
-        # Run the basecall command
-        st = os.system(bccmd_2)
-
-    # ensure the barcode is absolute.
-    barcode_fasta = str(os.path.abspath("../../data/reads_large/230725_PZ_lib_v4_r10/fasta/ref_libv2_PZ_CxDx-.fa"))
-    
-    # use minimap2 to align the basecalled to the basecalled fq
-    map2refcmd_2 = map_to_reference(minimap2_path,
-                                  barcode_fasta,
-                                  basecalled_path_2,
-                                  directories_list[4],
-                                  'bc_consensus_aligned')
-    # Run the minimap2 command
-    st = os.system(map2refcmd_2)
-    
-    return map2refcmd_2
-
-
-def main():
-    in_w_dir = input("Please provide working directory path: ")
-    in_r_dir = input("Please provide read directory path: ")
-    in_f_dir = input("Please provide reference fasta directory path: ")
-    
-    consensus_path = first_consensus(in_w_dir, in_r_dir, in_f_dir)
-    
-    print("Consensus fasta located at: {}").format(consensus_path)
-    
-    
-if __name__ == '__main__':
-    main()
-    

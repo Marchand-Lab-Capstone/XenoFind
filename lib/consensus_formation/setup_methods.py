@@ -39,9 +39,14 @@ def setup_directory_system(working_directory):
     Parameters: 
     working_directory: a str representing a directory to do all the processes in
     
-    Returns: a 6-value list with the paths for the following:
+    Returns: a 11-value list with the paths for the following:
              basecall_directory,
-             fasta_directory,
+             forward_reads_directory,
+             forward_reads_fasta_directory,
+             reverse_reads_directory,
+             reverse_reads_fasta_directory,
+             all_reads_directory,
+             all_reads_fasta_directory,
              merged_pod5,
              rough_consensus_output,
              xf_consensus_output
@@ -50,9 +55,18 @@ def setup_directory_system(working_directory):
     # Use Check_make_dir to generate or validate the existing directories.
     wdir = check_make_dir(working_directory)
     bcdir = check_make_dir(working_directory + "basecall_directory/")
-    fadir = check_make_dir(working_directory + "fasta_directory/")
+    forward_dir = check_make_dir(working_directory + 'forward_reads/')
+    fadir_fwd = check_make_dir(forward_dir + "fasta_directory/")
+    reverse_dir = check_make_dir(working_directory + 'reverse_reads/')
+    fadir_rev = check_make_dir(reverse_dir + 'fasta_directory/')
+    total_dir = check_make_dir(working_directory + 'total_reads/')
+    fadir_tot = check_make_dir(total_dir + 'fasta_directory/')
     p5dir = check_make_dir(working_directory + "merged_pod5/")
-    rconsdir = check_make_dir(working_directory + "rough_consensus_output/")
+    vsearch_dir_fwd = check_make_dir(forward_dir + "vsearch_processing/")
+    vsearch_dir_rev = check_make_dir(reverse_dir + "vsearch_processing/")
+    vsearch_dir_tot = check_make_dir(total_dir + "vsearch_processing/")
     xfconsdir = check_make_dir(working_directory + "xf_consensus_output/")
-    
-    return [wdir, bcdir, fadir, p5dir, rconsdir, xfconsdir]
+    xfconsdir_all = check_make_dir(xfconsdir + "total_reads")
+    xfconsdir_fwd = check_make_dir(xfconsdir + "forward_reads")
+    xfconsdir_rev = check_make_dir(xfconsdir + "reverse_reads")
+    return [wdir, bcdir, forward_dir, fadir_fwd, reverse_dir, fadir_rev, total_dir, fadir_tot, p5dir, vsearch_dir_fwd, vsearch_dir_rev, vsearch_dir_tot, xfconsdir, xfconsdir_all, xfconsdir_fwd, xfcondsdir_rev]
