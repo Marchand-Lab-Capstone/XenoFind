@@ -491,7 +491,7 @@ def first_consensus(working_dir, reads, barcode_fasta):
         st = os.system(bccmd_2)
 
     # ensure the barcode is absolute.
-    barcode_fasta = str(os.path.abspath("../../data/reference_fasta/xBSn_90mer_xr_train.fa"))
+    barcode_fasta = str(os.path.abspath("../../data/reads_large/230725_PZ_lib_v4_r10/fasta/ref_libv2_PZ_CxDx-.fa"))
     
     # use minimap2 to align the basecalled to the basecalled fq
     map2refcmd_2 = map_to_reference(minimap2_path,
