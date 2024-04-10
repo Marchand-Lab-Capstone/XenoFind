@@ -434,13 +434,13 @@ def medaka_consensus_command(medaka_path, trim_fasta, cluster_fasta, out_path):
     """
 
     # Generate the command.
-    cmd = "{} -i {} -d {} -o {} -m r1041_e82_400bps_hac_v4.2.0 -f -b 300".format(medaka_path, trim_fasta, filtered_fasta, out_path) #note, allow specific model selection
+    cmd = "{} -i {} -d {} -o {} -m r1041_e82_400bps_hac_v4.2.0 -f -b 300".format(medaka_path, trim_fasta, cluster_fasta, out_path) #note, allow specific model selection
     print('[Consensus Forming]: Command Generated: "{}"'.format(cmd))
     return cmd
 
 def extract_n_indexes(n_fasta_file):
     """
-    extract_n_indexes Extracts the indexes j and k for each sequence in a barcode fasta
+    extract_n_indexes Extracts the indexes j and k for each sequence in a barcoded fasta
     file with unknown regions.
     j: the index of the first N (0 indexed)
     k: the index of the last N (0 indexed)

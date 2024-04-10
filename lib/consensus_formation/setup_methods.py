@@ -69,4 +69,4 @@ def setup_directory_system(working_directory):
     xfconsdir_all = check_make_dir(xfconsdir + "total_reads")
     xfconsdir_fwd = check_make_dir(xfconsdir + "forward_reads")
     xfconsdir_rev = check_make_dir(xfconsdir + "reverse_reads")
-    return [wdir, bcdir, forward_dir, fadir_fwd, reverse_dir, fadir_rev, total_dir, fadir_tot, p5dir, vsearch_dir_fwd, vsearch_dir_rev, vsearch_dir_tot, xfconsdir, xfconsdir_all, xfconsdir_fwd, xfcondsdir_rev]
+    return [wdir, bcdir, forward_dir, fadir_fwd, reverse_dir, fadir_rev, total_dir, fadir_tot, p5dir, vsearch_dir_fwd, vsearch_dir_rev, vsearch_dir_tot, xfconsdir, xfconsdir_all, xfconsdir_fwd, xfconsdir_rev]

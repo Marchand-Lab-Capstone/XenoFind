@@ -31,7 +31,8 @@ similarity_increment = 0.05
 #Number of Weighted VSEARCH Rounds to Perform
 vsearch_iterations = 3
 
-
+##Find Parameters 
+shannon_entropy_graphs = False 
 ############################################################
 #Dorado Base caller configuration
 

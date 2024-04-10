@@ -94,7 +94,7 @@ def bc_align(working_dir, reads, barcoded_fasta):
     
     # use minimap2 to align the basecalled to the basecalled fq
     
-    #add another conditional here to stop or force minimap2 alignment <--- still needs to be done 
+    #add another conditional here to stop or force minimap2 alignment <--- still needs to be done #<---- this needs to be fixed, remove secondary alignments maybe
     map2ref_cmd = cs.map_to_reference(minimap2_path,
                                   barcoded_fasta,
                                   basecalled_path,
@@ -113,7 +113,7 @@ def bc_align(working_dir, reads, barcoded_fasta):
     #filter the bam file with primiary aligned reads
     filtered_bam_file_path = cs.filter_primary_alignments(bam_file_path, 'primary_read_filtered.bam')
     
-    return filtered_bam_file_path
+    return filtered_bam_file_path, n_positions
 
 def decouple(bam_file_path):
     """
@@ -150,7 +150,7 @@ def decouple(bam_file_path):
     
     return forward_out_path, reverse_out_path
     
-def consensus_generation(working_dir, bam_file_path, direction):
+def consensus_generation(working_dir, bam_file_path, direction, n_indices):
 
     #Default File names 
     trimmed_fname = 'trimmed' # Fasta 
@@ -268,20 +268,19 @@ def consensus_generation(working_dir, bam_file_path, direction):
         print(f'The {i+1} Rounds of consensus generation is complete')
 
     #Calling Medaka to perform polishing
-    medaka_cmd = cs.medaka_consensus_command(medaka, trimmed_fasta_path,
-                                          cluster_path, directories_list[output_index]
+    medaka_cmd = cs.medaka_consensus_command(medaka_path, trimmed_fasta_path, #<---- this needs to be fixed
+                                          cluster_path, directories_list[output_index])
     
     st = os.system(medaka_cmd)
 
     #Setting starting and ending indexes for randomers 
-    j, k = n_positions[0]
+    j, k = n_indices[0]
 
     medaka_cons_path = directories_list[output_index] + 'consensus.fasta'
-    lab_cons_path = directoriees_list[ouput_index] + 'labeled_consensus.fasta'
-    
-    # return the path to the polished fasta.
-    return cs.rename_consensus_headers(medaka_cons_path, j, k , lab_cons_path)
-'''
+    lab_cons_path = directories_list[output_index] + 'labeled_consensus.fasta'
+
+    #return the path to the polished fasta.
+    return cs.rename_consensus_headers(medaka_cons_path, j, k , lab_cons_path) #<----double check this return statement 
 
 def main():
     #in_w_dir = input("Please provide working directory path: ")
@@ -292,29 +291,23 @@ def main():
     in_r_dir = sys.argv[2]
     in_f_dir = sys.argv[3]
     
-    alignment_path = bc_align(in_w_dir, in_r_dir, in_f_dir)
+    alignment_path, n_indices = bc_align(in_w_dir, in_r_dir, in_f_dir)
     forward_alignments, reverse_alignments = decouple(alignment_path)
     print('Xenofind [STATUS] - Forward and Reverse strands decoupled')
     
     print('Xenofind [STATUS] - Preparing to create consensus fastas')
      
-    consensus_generation(in_w_dir, alignment_path, 'all') #full dataset
+    total_consensus_fasta = consensus_generation(in_w_dir, alignment_path, 'all', n_indices) #full dataset
     print('Xenofind [STATUS] - Generated consensus fasta for all reads') 
-    consensus_generation(in_w_dir, forward_alignments, 'forward')
+    fwd_consensus_fasta = consensus_generation(in_w_dir, forward_alignments, 'forward', n_indices)
     print('Xenofind [STATUS] - Generated consensus fasta for forward reads')
-    consensus_generation(in_w_dir, reverse_alignments, 'reverse')
+    rev_conensus_fasta = consensus_generation(in_w_dir, reverse_alignments, 'reverse', n_indices)
     print('Xenofind [STATUS] - Generated consensus fasta for reverse reads') 
     
     """
     set 'consensus_generation' above to a variable to return consensus pathway
     """
-    #MAJOR NOTE CURRENTLY CODE CANNOT GENERATE FILES WITH DIFFERENT FILE NAMES SINCE IT USES DEFAULT FILE PATH NAMES IN VSEARCH CONSIDERING CREATING INDIVIDAL DIRECTORIES FOR ALL 3
-    
-    #All reads 
-    #functioncall 1 
-    
-    #forward 
-    # function call 2 
-    
+
+
 if __name__ == '__main__':
     main()

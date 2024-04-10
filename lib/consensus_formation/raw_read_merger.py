@@ -26,7 +26,7 @@ def merge_reads_command(reads_dir, filetype, target_dir_path, file_name):
     if filetype == 'fast5':
         subcommand = 'convert fast5'
     elif filetype == 'pod5':
-        subcommand = ''
+        subcommand = 'merge'
     
     if SYS == 'Windows':
         os_command = '--recursive {}'.format(reads_dir)
