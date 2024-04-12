@@ -113,42 +113,6 @@ def filter_primary_alignments(bam_path, out_name): #can edit this function to ta
 
     return output_bam
         
-#def strand_decouple(primary_sam_path, forward_out_path, reverse_out_path): #hae outpaths be GENERATED
-def strand_decouple(primary_bampath):
-    """
-    strand_decouple takes in a bam file generated & converted using minimap2 and samtools 
-    and separates it by forward and reverse strand reads using samtools. 
-    
-    Parameters: 
-    sam_path: path to the sam file as a string,
-    
-    Returns: 
-    forward and reverse strand  sam files as a string. ALso generates these files
-    in a directory. 
-    
-    NOTE: NEED TO EDIT THIS FUNCTION INTO TWO FUNCTIONS, GENERATE PRIMARY SAM FILE PATH STRING AND RUN IT IN THE FIRST PASS FUNCTION. SECOND FUNCTION TO GENERATE THE FORWARD AND REVERSE STRINGS
-    """
-    forward_out_path = os.path.join(os.path.dirname(primary_sam_path), 'forward.sam')
-    reverse_out_path = os.path.join(os.path.dirname(primary_sam_path), 'reverse.sam')
-    #This section actually generates the forward and reverse only reads 
-    # Open the input SAM file for reading
-    with pysam.AlignmentFile(output_sam, "r") as infile:
-
-        # Open two files for writing: one for forward strand reads, another for reverse strand reads
-        with pysam.AlignmentFile(forward_out_path, "w", header=infile.header) as outfile_forward, \
-             pysam.AlignmentFile(reverse_out_path, "w", header=infile.header) as outfile_reverse:
-
-            # Iterate through reads in the input file
-            for read in infile:
-                # Check if the read is mapped to the reverse strand
-                if read.is_reverse:
-                    # Write the read to the reverse strand reads file
-                    outfile_reverse.write(read)
-                else:
-                    # Otherwise, write the read to the forward strand reads file
-                    outfile_forward.write(read)
-        return forward_out_path, reverse_out_path #maybe dont need to return these but will leave this here for now 
-
 def read_trim(bam_path):
     """
     read_trim takes in a BAM file, sorts and indexes it, then returns a list of the reads

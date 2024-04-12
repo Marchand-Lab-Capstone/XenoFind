@@ -26,9 +26,8 @@ def bc_align(working_dir, reads, barcoded_fasta):
     barcoded_fasta: File pathway to reference file for minimap2 alignment, inputted as a string
     """
     
-    # Defualt filenames:
+    # Default filenames:
     p5_fname = "merged"
-    #dorado_path = "dorado" # Should be variable, this assumes dorado is in user's PATH
     dorado_path = xfp.basecaller_path # assumes dorado is in user's home directory, make it a variable somewhere maybe
     basecall_fname = 'basecall' # fq file
     minimap2_path = 'minimap2' #called from conda environment
