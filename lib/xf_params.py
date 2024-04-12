@@ -44,9 +44,9 @@ basecaller_path = '~/dorado-0.6.0-linux-x64/bin/dorado' #consider adding Guppy c
 #Let Dorado automatically choose a model 
 auto_model = True 
 
-#Model type dorado will search the best fit for 
+#Model type dorado will search for the best model based on input (options: fast, hac, sup)
 auto_model_type = 'hac' 
 
 #If manual model selection is desired
-dorado_model = '' 
+dorado_model_path = '' 
 

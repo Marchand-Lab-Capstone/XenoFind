@@ -32,7 +32,7 @@ import raw_read_merger as rrm
 import setup_methods as setup
 
 
-def basecall_command(basecaller_path, pod5_path, out_path, out_name):
+def basecall_command(basecaller_path, model_type, pod5_path, out_path, out_name):
     """
     Basecall_command generates a command to run the basecaller dorado.
     
@@ -45,8 +45,7 @@ def basecall_command(basecaller_path, pod5_path, out_path, out_name):
     Returns:
     a command string.
     """
-    # Currently only supports Dorado
-    cmd = "{} basecaller hac --no-trim --emit-moves --emit-fastq {} > {}{}.fq".format(basecaller_path, pod5_path, out_path, out_name)
+    cmd = "{} basecaller {} --no-trim --emit-moves --emit-fastq {} > {}{}.fq".format(basecaller_path, model_type, pod5_path, out_path, out_name)
     print('[Basecalling]: Command Generated: "{}"'.format(cmd))
     return cmd
 
