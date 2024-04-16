@@ -158,6 +158,7 @@ def load_in_data(bamfile_path):
                 ref = read.reference_start
                 quality = read.query_alignment_qualities
                 rev = read.is_reverse
+                tag_dict = dict(read.tags)
                 read_dict = {'seq_id':sequence_id,
                              'ref_name':ref_name,
                              'sequence':seq,
@@ -165,7 +166,10 @@ def load_in_data(bamfile_path):
                              'cigar':cigar,
                              'len':len(seq),
                              'ref':ref,
-                             'rev':rev}
+                             'rev':rev,
+                             'moves':tag_dict['mv'],
+                             'sig_len': tag_dict['ns'],
+                             'trim_ofs':tag_dict['ts']}
                 #if (ref == 0):
 
                 # Append the dictionary to the data list
