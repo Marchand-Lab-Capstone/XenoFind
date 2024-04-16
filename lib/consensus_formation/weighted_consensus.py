@@ -26,9 +26,8 @@ def bc_align(working_dir, reads, barcoded_fasta):
     barcoded_fasta: File pathway to reference file for minimap2 alignment, inputted as a string
     """
     
-    # Defualt filenames:
+    # Default filenames:
     p5_fname = "merged"
-    #dorado_path = "dorado" # Should be variable, this assumes dorado is in user's PATH
     dorado_path = xfp.basecaller_path # assumes dorado is in user's home directory, make it a variable somewhere maybe
     basecall_fname = 'basecall' # fq file
     minimap2_path = 'minimap2' #called from conda environment
@@ -47,45 +46,59 @@ def bc_align(working_dir, reads, barcoded_fasta):
 
     #----------Setup----------------------#
     # Set up the working directory 0
-    #             basecall_directory, 1
-    #             forward_reads_directory, 2
-    #             forward_reads_fasta_directory, 3
-    #             reverse_reads_directory, 4
-    #             reverse_reads_fasta_directory, 5
-    #             total_reads_directory, 6
-    #             total_reads_fasta_directory, 7
-    #             merged_pod5, 8
-    #             vsearch_forward_processing, 9
-    #             vsearch_reverse_processing, 10
-    #             vsearch_total_processing, 11
-    #             xf_consensus_output, 12
+    #             consensus_files_directory, 1
+    #             merged_pod5, 2
+    #             basecall_directory, 3
+    #             forward_reads_directory, 4
+    #             forward_reads_fasta_directory, 5
+    #             reverse_reads_directory, 6
+    #             reverse_reads_fasta_directory, 7
+    #             total_reads_directory, 8
+    #             total_reads_fasta_directory, 9
+    #             vsearch_forward_processing, 10
+    #             vsearch_reverse_processing, 11
+    #             vsearch_total_processing, 12
+    #             xf_consensus_output, 13
+    #             xf_consensus_forward_read_output, 14
+    #             xf_consensus_reverse_read_output, 15
+    #             xf_consensus_total_read_output, 16
+    #             xf_xna_find_directory, 17
     directories_list = setup.setup_directory_system(working_dir)
 
     #File path string for the merged pod5
-    merged_pod5_path = directories_list[8] + p5_fname + '.pod5'
+    merged_pod5_path = directories_list[2] + p5_fname + '.pod5'
     # add a parameter at top that takes in forced for all the functions 
     if not (os.path.exists(merged_pod5_path)):
         # Using RRM, generate the pod5 from the data directory
         rrm.generate_merged_pod5(reads,
-                                 directories_list[8],
+                                 directories_list[2],
                                  p5_fname)
 
     #-------Basecalling and Sorting ---------
 
 
     # Filepath string for the basecalled fq 
-    basecalled_path = directories_list[1] + basecall_fname + '.fq'
+    basecalled_path = directories_list[3] + basecall_fname + '.fq'
     
     #Make this toggleable if data needs to be rebasecalled 
     if not (os.path.exists(basecalled_path)) or xfp.basecall_pod == True:
-    # Generate the dorado basecall command 
         print('Xenofind [STATUS] - Basecalling using Dorado')
-        bccmd = cs.basecall_command(dorado_path,
-                                 merged_pod5_path,
-                                 directories_list[1],
-                                 basecall_fname)
-        # Run the basecall command
-        st = os.system(bccmd)
+        if xfp.auto_model == True:
+            #Generate basecall command and run it 
+            bccmd = cs.basecall_command(dorado_path,
+                                     xfp.auto_model_type,
+                                     merged_pod5_path,
+                                     directories_list[3],
+                                     basecall_fname)
+            st = os.system(bccmd)
+        else:
+            #Generate basecall command and run it
+            bccmd = cs.basecall_command(dorado_path,
+                                     xfp.dorado_model_path,
+                                     merged_pod5_path,
+                                     directories_list[3],
+                                     basecall_fname)
+            st = os.system(bccmd)
     else: 
         print('Xenofind [STATUS] - basecalls found, skipping basecalling')
         
@@ -98,15 +111,15 @@ def bc_align(working_dir, reads, barcoded_fasta):
     map2ref_cmd = cs.map_to_reference(minimap2_path,
                                   barcoded_fasta,
                                   basecalled_path,
-                                  directories_list[1],
+                                  directories_list[3],
                                   aligned_barcode_fname)
     # Run the minimap2 command
     st = os.system(map2ref_cmd)
-    sam_file_path = '{}{}.sam'.format(directories_list[1],aligned_barcode_fname)
+    sam_file_path = '{}{}.sam'.format(directories_list[3],aligned_barcode_fname)
     
     #Generating a bam file from the sam file above 
     bam2sam_cmd, bam_file_path = cs.sam_to_bam(sam_file_path,
-                                directories_list[1],
+                                directories_list[3],
                                 aligned_barcode_fname)
     st = os.system(bam2sam_cmd)
     
@@ -163,38 +176,44 @@ def consensus_generation(working_dir, bam_file_path, direction, n_indices):
     minimap2_path = 'minimap2'
     similarity_id =  xfp.starting_similarity
     
+    
     #----------Setup----------------------#
     # Set up the working directory 0
-    #             basecall_directory, 1
-    #             forward_reads_directory, 2
-    #             forward_reads_fasta_directory, 3
-    #             reverse_reads_directory, 4
-    #             reverse_reads_fasta_directory, 5
-    #             total_reads_directory, 6
-    #             total_reads_fasta_directory, 7
-    #             merged_pod5, 8
-    #             vsearch_forward_processing, 9
-    #             vsearch_reverse_processing, 10
-    #             vsearch_total_processing, 11
-    #             xf_consensus_output, 12
+    #             consensus_files_directory, 1
+    #             merged_pod5, 2
+    #             basecall_directory, 3
+    #             forward_reads_directory, 4
+    #             forward_reads_fasta_directory, 5
+    #             reverse_reads_directory, 6
+    #             reverse_reads_fasta_directory, 7
+    #             total_reads_directory, 8
+    #             total_reads_fasta_directory, 9
+    #             vsearch_forward_processing, 10
+    #             vsearch_reverse_processing, 11
+    #             vsearch_total_processing, 12
+    #             xf_consensus_output, 13
+    #             xf_consensus_forward_read_output, 14
+    #             xf_consensus_reverse_read_output, 15
+    #             xf_consensus_total_read_output, 16
+    #             xf_xna_find_directory, 17
     directories_list = setup.setup_directory_system(working_dir)
     
     if direction == 'forward': #forward directory isnt calling anything right now, need to fix 
-        fasta_index = 3 
-        vsearch_index = 9
+        fasta_index = 5 
+        vsearch_index = 10
         output_index = 14
         prefix = 'forward'
         #insert a new required index here as necessary
     elif direction == 'reverse':
-        fasta_index = 5
-        vsearch_index = 10
+        fasta_index = 7
+        vsearch_index = 11
         output_index = 15
         prefix = 'reverse'
         #insert a new required index here as necessary
     else: 
-        fasta_index = 7
-        vsearch_index = 11
-        output_index = 13
+        fasta_index = 9
+        vsearch_index = 12
+        output_index = 16
         prefix = 'total'
         #insert a new required index here as necessary
 

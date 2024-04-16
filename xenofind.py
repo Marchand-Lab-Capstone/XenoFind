@@ -54,7 +54,7 @@ parser_train.add_argument('-r',metavar = '[placeholder_fasta]', type=str, requir
 
 
 #Low Quality XNA Detection
-parser_basecall = subparsers.add_parser('low_qual', help='[-w working_dir] [-f raw_dir] [-r consensus_fasta] ')
+parser_basecall = subparsers.add_parser('find', help='[-w working_dir] [-f raw_dir] [-r consensus_fasta] ')
 parser_basecall.add_argument('-w',metavar = '[working_dir]', type=str,required = True, help='Path to output directory for storing outputs and intermediates')
 parser_basecall.add_argument('-f',metavar ='[raw_dir]', type=str,required = True, help='Path to input directories containing multi-fast5 folders of XNA-containing sequence.')
 parser_basecall.add_argument('-r',metavar = '[con_fasta]', type=str, required = True, help='Path to FASTA (.fa, .fasta) file of sequence or sequences with XNAs (e.g. BSPZKXJV). Should be same sequence context as xemora model training.')
@@ -87,9 +87,7 @@ if args.subparsers == 'consensus':
         print('XenoFind [ERROR] - At least one file path not properly set. XenoFind exiting.')
         sys.exit()
 
-
-#Guppy paths and stuff - add that to xr-parms
-if args.subparsers == 'low_qual': 
+if args.subparsers == 'find': 
     if os.path.exists(os.path.expanduser(args.f))==False:
         print('XenoFind [ERROR] - Inputted fast5/pod5 directory path not found or is not valid. Check to ensure path to fast5/pod5 directory is correct.')
         exit_flag = True 
@@ -100,9 +98,9 @@ if args.subparsers == 'low_qual':
 
 
     if exit_flag == False: 
-        cmd = 'python lib/xf_prelims/xf_low_qual.py '+args.w+' '+args.f+' '+args.r
+        cmd = 'python lib/xna_finder/xf_xna_find.py '+args.w+' '+args.f+' '+args.r
         os.system(cmd)
     else: 
-        print('XenoFind [ERROR] - At least one file path not properly set. Xemora basecaller exiting.')
+        print('XenoFind [ERROR] - At least one file path not properly set. Exiting.')
         sys.exit()
 
