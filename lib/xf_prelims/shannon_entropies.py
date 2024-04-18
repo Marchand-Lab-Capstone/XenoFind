@@ -38,13 +38,13 @@ import scipy.signal as sig
 def consensus_formatter(consensus_fasta_path):
     """
     consensus_formatter takes in a consensus fasta path, 
-    and returns a dataframe containing the ids and sequences of all valid samples.
+    and returns a list of dicts containing the ids and sequences of all valid samples.
 
     Parameters:
     consensus_fasta_path: a path, as str, to the consensus fasta
     
     Returns:
-    a pandas dataframe containing id and sequence.
+    a list of dicts containing id and sequence
     """
 
     # Set up list to hold consensus dictionaries
@@ -83,8 +83,8 @@ def consensus_formatter(consensus_fasta_path):
     # convert the ID from a weird touple to an actual value
     df[['id']] = pd.DataFrame(df['id'].tolist(), index=df.index)#3#######
 
-    # return the dataframe
-    return df
+    # return the dataframe as a list of dicts
+    return df.to_dict('records')
 
 
 def get_record_indexes(consensus_path):
@@ -128,13 +128,14 @@ def get_record_indexes(consensus_path):
 def load_in_data(bamfile_path):
     """
     load_in_data takes in a path to a basecalled and aligned consensus bamfile,
-    and converts the data into a dataframe format.
+    and converts the data into a list of dicts format.
 
     Parameters:
     bam_path: path, as str, to the basecalled and aligned consensus bamfile.
 
     Returns:
-    pandas dataframe of the relevant data. [sequence id, sequence, quality, length, reference index]
+    list of dict of relevant data. 
+        [sequence id, sequence, quality, length, reference index]
     """
 
     # Set an empty list to hold the data
@@ -159,10 +160,10 @@ def load_in_data(bamfile_path):
                 quality = read.query_alignment_qualities
                 rev = read.is_reverse
                 tag_dict = dict(read.tags)
-                read_dict = {'seq_id':sequence_id,
+                read_dict = {'seq_id':str(sequence_id),
                              'ref_name':ref_name,
                              'sequence':seq,
-                             'quality':quality,
+                             'quality':list(quality),
                              'cigar':cigar,
                              'len':len(seq),
                              'ref':ref,
@@ -176,13 +177,13 @@ def load_in_data(bamfile_path):
                 data_list.append(read_dict)
 
     # convert the list of dicts into a dataframe
-    df = pd.DataFrame(data_list)
+    #df = pd.DataFrame(data_list)
 
     # convert the qualities to list.
-    df['quality'] = df['quality'].apply(list)
+    #df['quality'] = df['quality'].apply(list)
 
     # return the dataframe
-    return df
+    return data_list
 
 
 def shift_sequence(sequence, ref, cigar):
@@ -490,7 +491,7 @@ def wrapper(c_f, s_p, rev = None, n=10, verbose = False):
          False - return entropies of reads that were not reversed
     n: int value lower than the number of alignments, representing the top n
        alignments by read
-    debug: boolean on wether or not to show steps
+    verbose: boolean on wether or not to show steps
        
     Returns:
     pandas dataframe containing shannon entropies 'sh_ent',
@@ -498,10 +499,10 @@ def wrapper(c_f, s_p, rev = None, n=10, verbose = False):
     """
     
     # use the consensus formatter to format the consensus data
-    form_consens = consensus_formatter(c_f)
+    form_consens = pd.DataFrame(consensus_formatter(c_f))
     
     # Load in the bamfile data 
-    loaded_df = load_in_data(s_p)
+    loaded_df = pd.DataFrame(load_in_data(s_p))
     
     # Get the top n alignments by read
     top_read_ids = get_top_n_reads(form_consens['id'], loaded_df['ref_name'], n=n)
