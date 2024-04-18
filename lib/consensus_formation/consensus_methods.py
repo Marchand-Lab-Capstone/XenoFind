@@ -155,10 +155,12 @@ def read_trim(bam_path):
                 if aligned_length >= reference_length * 0.95:
                     # Append it to the output.
                     output_list.append(f">{read.query_name}\n{read.query_alignment_sequence}")
+                    
                 else:
                     num_outside += 1
             else:
                 num_unmapped += 1
+        print(output_list)
 
     print(f"[Trimming]: {num_unmapped} unmapped reads, {num_outside} short reads removed.")
     
