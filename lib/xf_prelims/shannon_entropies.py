@@ -166,7 +166,7 @@ def load_in_data(bamfile_path):
                              'sequence':seq,
                              'quality':list(quality),
                              'cigar':cigar,
-                             'len':len(seq),
+                             'len':int(len(seq)),
                              'ref':int(ref),
                              'rev':rev,
                              'moves':tag_dict['mv'],
