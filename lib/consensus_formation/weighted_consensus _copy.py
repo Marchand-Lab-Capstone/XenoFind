@@ -124,7 +124,7 @@ def bc_align(working_dir, reads, barcoded_fasta):
     st = os.system(bam2sam_cmd)
     
     #filter the bam file with primiary aligned reads
-    filtered_bam_file_path = cs.filter_primary_alignments(bam_file_path, 'primary_read_filtered.bam')
+    filtered_bam_file_path = cs.filter_primary_alignments(bam_file_path, 'primary_read_filtered')
     
     return filtered_bam_file_path, n_positions
 
@@ -277,31 +277,49 @@ def consensus_generation(working_dir, bam_file_path, direction, n_indices):
                                                     directories_list[vsearch_index],
                                                     f'{prefix}_weighted_sorted_{i+1}',
                                                      weighted_sorted_list)
-
+        #Medaka command needs to go here 
+        if i == 0:
+            #do something to state we arent doing a medaka thing here
+            continue 
+        else: 
+            medaka_cmd = cs.medaka_consensus_command(medaka_path,trimmed_fasta_path,
+                                            cluster_path, directories_list[vsearch_index])
+            st = os.system(medaka_cmd)
+            
+        if i != xfp.vsearch_iterations - 1:
+            print(i)
+            vsearch_cmd, cluster_path = cs.vsearch_command(vsearch_path,
+                                                           weighted_sorted_fasta_path,
+                                                           directories_list[vsearch_index],
+                                                          f'{prefix}_weighted_consensus_{i+1}',
+                                                          similarity_id) #get rid of hard coded 0.9, 
+            st = os.system(vsearch_cmd)
+            print(f'The {i+1} Rounds of consensus generation is complete')
         
-        vsearch_cmd, cluster_path = cs.vsearch_command(vsearch_path,
-                                                       weighted_sorted_fasta_path,
-                                                       directories_list[vsearch_index],
-                                                      f'{prefix}_weighted_consensus_{i+1}',
-                                                      similarity_id) #get rid of hard coded 0.9, 
-        st = os.system(vsearch_cmd)
-        
-        print(f'The {i+1} Rounds of consensus generation is complete')
+        elif i == xfp.vsearch_iterations - 1:
+            print(i)
+            vsearch_cmd, cluster_path = cs.vsearch_command(vsearch_path,
+                                                           weighted_sorted_fasta_path,
+                                                           directories_list[output_index],
+                                                          f'final_weighted_consensus',
+                                                          similarity_id)
+            print(cluster_path)
+            st = os.system(vsearch_cmd)
+            print(f'The {i+1} Final round of VSEARCH complete')
 
     #Calling Medaka to perform polishing
-    medaka_cmd = cs.medaka_consensus_command(medaka_path, trimmed_fasta_path, #<---- this needs to be fixed
-                                          cluster_path, directories_list[output_index])
+   # medaka_cmd = cs.medaka_consensus_command(medaka_path, trimmed_fasta_path, #<---- this needs to be fixed
+                                          #cluster_path, directories_list[output_index])
     
-    st = os.system(medaka_cmd)
+    #st = os.system(medaka_cmd)
 
     #Setting starting and ending indexes for randomers 
     j, k = n_indices[0]
 
-    medaka_cons_path = directories_list[output_index] + 'consensus.fasta'
-    lab_cons_path = directories_list[output_index] + 'labeled_consensus.fasta'
+    lab_cons_path = directories_list[output_index] + 'labeled_final_weighted_consensus.fasta'
 
     #return the path to the polished fasta.
-    return cs.rename_consensus_headers(medaka_cons_path, j, k , lab_cons_path) #<----double check this return statement 
+    return cs.rename_consensus_headers(cluster_path, j, k , lab_cons_path) #<----double check this return statement 
 
 def main():
     #in_w_dir = input("Please provide working directory path: ")
