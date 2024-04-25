@@ -1244,3 +1244,4 @@ data/large_working_directory/fasta_directory/cons90.fasta
 data/large_working_directory/fasta_directory/cons85.fasta
 data/large_working_directory/basecall_directory/bc_aligned.sam
 data/large_working_directory/basecall_directory/basecall.fq
+*.csv

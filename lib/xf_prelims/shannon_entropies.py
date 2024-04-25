@@ -34,6 +34,7 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.signal as sig
+import gc
 
 def consensus_formatter(consensus_fasta_path):
     """
@@ -166,7 +167,7 @@ def load_in_data(bamfile_path):
                              'quality':list(quality),
                              'cigar':cigar,
                              'len':len(seq),
-                             'ref':ref,
+                             'ref':int(ref),
                              'rev':rev,
                              'moves':tag_dict['mv'],
                              'sig_len': tag_dict['ns'],
@@ -181,6 +182,7 @@ def load_in_data(bamfile_path):
 
     # convert the qualities to list.
     #df['quality'] = df['quality'].apply(list)
+    bamfile.close()
 
     # return the dataframe
     return data_list
