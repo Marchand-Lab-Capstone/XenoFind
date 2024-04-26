@@ -319,7 +319,6 @@ def save_by_consensus(merged_dict, savefile_path):
         # write the json object
         with open(filepath, 'a') as file:
             file.write(json_out)
-            
         file.close()
         del(file)
         del(cosensus)
