@@ -1,10 +1,26 @@
 '''
-Solely to avoid issues where TOO MUCH memory leaks, 
-here's this to help subdivide that stuff down.
+merge_consensus.py
+J. Sumabat, N. Lai, S. Peck, Y. Huang
+4/24/2024 -- Created by S. Peck
+4/29/2024 -- Updated by S. Peck
 
-I pray it works.
+merge_consensus.py is designed around importing a bamfile of reads, a consensensus fasta, and a pod5 file, 
+and then combining the information contained into separate json files organized by consensus sequence and constituent reads.
+This was penned with the hope of avoiding/mitigating memory leakage from a variety of sources. 
 
--Sebastian
+load_in_data() - uses pysam to load all the relevant information from a bamfile to a list of dictionaries.
+consensus_formattter() - reads a consensus fasta and returns it as a list of dictionaries.
+load_pod5_data() - reads a pod5 file and loads relevant information into a list of dictionaries.
+merge_bam_reads_by_id() - merge data from load_in_data, consensus_formatter, and load_pod5_data by comparing
+                          read id and consensus id.
+map_signal_to_moves() - map a nanopore sequencing signal to the corresponding moves table extracted from that read's bamfile.
+convert_signal_to_dict() - convert merged data's signal data to be mapped onto each read's corresponding moves.
+save_by_consensus() - exports each individual consensus and its constituent reads to json files at a specified folder.
+main() - request paths to bam, pod5, and reference fasta files, merge, and 
+         save those data by consensus to individual json files
+         at a specified output.
+
+
 '''
 
 # import statements
@@ -77,7 +93,16 @@ def load_in_data(bamfile_path):
                 #if (ref == 0):
 
                 # Append the dictionary to the data list
+                del(sequence_id)
+                del(ref_name)
+                del(seq)
+                del(cigar)
+                del(ref)
+                del(quality)
+                del(rev)
+                del(tag_dict)
                 data_list.append(read_dict)
+            del(read)
 
     # convert the list of dicts into a dataframe
     #df = pd.DataFrame(data_list)
@@ -143,48 +168,117 @@ def consensus_formatter(consensus_fasta_path):
 
 
 def load_pod5_data(p5_path):
+    '''
+    load_pod5_data reads read information from a pod5 file and then exports it as
+    a list of dicts.
     
+    Parameters:
+    p5_path: path to pod5 file, as a str.
+    
+    Returns:
+    a list of dictionaries containing sequence id 'seq_id', signal 'signal', and sampling frequency 'freq'.
+    '''
     # For some godforsaken reason, pod5 somehow consumes upwards of 6 GiB of memory when this runs, 
     # and it DOES NOT DISSAPEAR. ESLIT'rkjasvkajs;flksarejva;lkrvj
     data_list = []
+    
+    # use pod5's reader object to read through the pod5 file
     with pod5.Reader(p5_path) as pod5_file:
+        
+        # look at the reads
         reads = pod5_file.reads()
+        
+        # loop through each read
         for read in reads:
+            
+            # save the sequence id, signal, and frequency to a dict
             seq_id = read.read_id
             signal = read.signal_pa
             freq = read.run_info.sample_rate
             data_dict = {'seq_id': str(seq_id),
                          'signal': signal,
                          'freq': freq}
-            data_list.append(data_dict)
-    pod5_file.close()
             
+            # append the dict to the list
+            data_list.append(data_dict)
+            
+            # force garbage collection
+            del(seq_id)
+            del(signal)
+            del(freq)
+            del(data_dict)
+            # A GC collect here makes it run in circles
+        del(read)
+        gc.collect()
+        
+    pod5_file.close()
+    del (pod5_file)
+            
+    # return the data list 
     return data_list
 
 #https://pod5-file-format.readthedocs.io/en/latest/reference/api/pod5.reader.html#pod5.reader.ReadRecord
 
 
 def merge_bam_reads_by_id(bam_list_dict, read_list_dict, consensus_list_dict):
-        
+    '''
+    merge_bam_reads_by_id() takes in lists of dicts extracted from a bamfile, pod5 file, and consensus fasta,
+    and then merges them into a single list of dictionaries.
+    
+    Parameters:
+    bam_list_dict: list of dicts extracted using the load_in_data method.
+    read_list_dict: list of dicts extracted using the load_pod5_data method.
+    consensus_list_dict: list of dicts extracted using the consensus_formatter method.
+    
+    Returns:
+    a list of dictionaries of all the data, merged by read sequence id.
+    '''
+    
     # this code can be made more time efficient and memory-chunking but that's not important rn
+    # convert inputs to dataframe
     bld = pd.DataFrame(bam_list_dict)
     rld = pd.DataFrame(read_list_dict)
     cld = pd.DataFrame(consensus_list_dict)
     
+    # merge the bam dataframe and read dataframe by sequence id
     merged_data_df = pd.merge(bld, rld, on='seq_id', how='left')
     
+    # loop through the consensus fasta,
     for i in range(len(cld)):
-        #merged_data_df.at[]
+        
+        # combine the id and sequence if the reference name at the index is the same
+        # filter the merged data by reference name
         indexes = merged_data_df[merged_data_df['ref_name'] == cld['id'][i]].index
         merged_data_df.loc[indexes,'ref_seq'] = cld['seq'][i]
+        del(indexes)
     
-    
+    # convert the dataframe back to a list of dicts.
     data_dict = merged_data_df.to_dict('records')
+    
+    # force garbage collector
+    del(bld)
+    del(rld)
+    del(cld)
+    del(merged_data_df)
+    gc.collect()
 
     return data_dict
 
 
 def map_signal_to_moves(moves_table, offset, signal):
+    '''
+    map_signal_to_moves() takes in a moves table, base offeset, and a signal,
+    and then maps the signal to each corresponding move/observation in the table.
+    
+    Parameters:
+    moves_table: an array or list containing the stride as the first index, and the moves
+                 table of a nanopore sequencing pysam read. 
+    offset: the alignment base position, as an int. 
+    signal: a list or array containing nanopore sequencing signal corresponding to the moves table passed.
+    
+    Returns:
+    a list of lists of signals that correspond to each move in the moves table.
+    '''
     if (str(signal) == 'nan'):
         return np.asarray([])
     else:
@@ -241,28 +335,69 @@ def map_signal_to_moves(moves_table, offset, signal):
             # append the signal that falls between those indexes
             signal_list.append(signal[begindex:enddex])
 
+        # force run the garbage collector
+        del(raw_moves)
+        del(stride)
+        del(lendiff)
+        del(moves)
+        del(stride_indicies)
+        
         # return the list of observed signal segments
         return signal_list
     
 
 def convert_signal_from_dict(m_list_dict):
+    '''
+    convert_signal_from_dict takes in a list of dictionaries that were generated from merge_bam_reads_by_id,
+    and then maps the signal of each read to the corresponding move table.
+    
+    Parameters:
+    m_list_dict: list of dictionaries merged from the merge_bam_reads_by_id method.
+    
+    Returns:
+    a list of dicts with the signal now mapped to the corresponding moves table.
+    '''
+    # convert to dataframe
     merged_data_df = pd.DataFrame(merged_list_dict)
+    
+    # map the signal to moves
     merged_data_df['signal'] = merged_data_df.apply(lambda x: map_signal_to_moves(x['moves'], x['trim_ofs'], x['signal']), axis=1)
+    
+    # convert back to a dict
     end_dict = merged_data_df.to_dict('records')
+    
+    # delete the dataframe
     del(merged_data_df)
+    
+    # run garbage collection
+    
+    # return the dict.
     return end_dict
     
     
 def save_by_consensus(merged_dict, savefile_path):
     '''
-    Saves reads by consensus in their own individual json files
+    save_by_consensus() saves reads by consensus in their own individual json files.
+    
+    Parameters:
+    merged_dict: list of dicts containing relevant data keys: [ref_name,
+                                                               quality,
+                                                               len,
+                                                               ref,
+                                                               rev,
+                                                               moves,
+                                                               sig_len,
+                                                               trim_offs,
+                                                               freq,
+                                                               ref_seq]
+    savefile_path: folder that the json files will be exported to, as a str. MAKE SURE IT ENDS WITH '/'.
+    
     '''
     # First, make it a dataframe again
     df = pd.DataFrame(merged_signal_list_dict)
     
     # Make directory
     os.makedirs(savefile_path,exist_ok=True)
-    
     
     # then, get the reference names
     consensus_ids = list(df['ref_name'].unique())
@@ -282,14 +417,18 @@ def save_by_consensus(merged_dict, savefile_path):
         consensus.loc[:,'trim_ofs']=consensus['trim_ofs'].apply(np.int16)
         consensus = consensus.reset_index(drop=True)
         # sub method to convert datatypes in a list to a list
+        
         def listconvert(x):
+            # submethod listconvert is used to map subsects of data entries to lists.
             for i in range(len(x)):
                 x[i]=list(x[i])
             return x
+        
         consensus.loc[:,'signal']=consensus['signal'].apply(listconvert)
         consensus.loc[:,'freq']=consensus['freq'].apply(np.float16)
         
-        # Get the reference name, sequence, and frequency
+        # Get the reference name, sequence, and frequency - 
+        # #### THIS IS ASSUMING THAT THE FREQUENCY IS THE SAME FOR ALL READS ####
         ref_name = consensus['ref_name'][0]
         ref_seq = consensus['ref_seq'][0]
         freq = consensus['freq'][0]
@@ -320,9 +459,19 @@ def save_by_consensus(merged_dict, savefile_path):
         with open(filepath, 'a') as file:
             file.write(json_out)
         file.close()
-        del(file)
-        del(cosensus)
         
+        # run garbage collector.
+        del(file)
+        del(ref_name)
+        del(ref_seq)
+        del(freq)
+        del(header)
+        del(filename)
+        del(filepath)
+        del(json_frame)
+        del(json_out)
+
+    
     # return the savefile path
     return savefile_path    
 
@@ -336,29 +485,35 @@ if __name__ == "__main__":
     
     # Use the shannon entropy methods to load the bam
     loaded_bam = load_in_data(bam_path)
+    gc.collect()
     print("bam loaded")
     #Load the consensus reference fasta using shannon entropy methods
     consens = consensus_formatter(ref_fasta)
+    gc.collect()
 
     print('fasta loaded')
     
     print('processing reads...')
     # Load the pod5 read data using load_pod5_data -- MEMORY LEAK FROM pod5!!!!
     dl = load_pod5_data(pod5_path)
+    gc.collect()
 
     print('reads processed')
     
     print('merging...')
     # Merge the data
     merged_list_dict = merge_bam_reads_by_id(loaded_bam, dl, consens)
+    gc.collect()
     print('merged')
     
     print('mapping signals to moves...')
     merged_signal_list_dict = convert_signal_from_dict(merged_list_dict)
+    gc.collect()
     print('signals mapped')
     
     print('saving to {}...'.format(output_path))
     
     save_by_consensus(merged_signal_list_dict, output_path)
+    gc.collect()
     print('Closing. ')
     sys.exit()
