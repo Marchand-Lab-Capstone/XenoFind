@@ -32,7 +32,6 @@ import pod5
 import numpy as np
 import pandas as pd
 import math
-import line_profiler as lprof
 import json
 from Bio import SeqIO
 import tables
@@ -346,13 +345,13 @@ def map_signal_to_moves(moves_table, offset, signal):
         return signal_list
     
 
-def convert_signal_from_dict(m_list_dict):
+def convert_signal_from_dict(merged_list_dict):
     '''
     convert_signal_from_dict takes in a list of dictionaries that were generated from merge_bam_reads_by_id,
     and then maps the signal of each read to the corresponding move table.
     
     Parameters:
-    m_list_dict: list of dictionaries merged from the merge_bam_reads_by_id method.
+    merged_list_dict: list of dictionaries merged from the merge_bam_reads_by_id method.
     
     Returns:
     a list of dicts with the signal now mapped to the corresponding moves table.
@@ -375,12 +374,12 @@ def convert_signal_from_dict(m_list_dict):
     return end_dict
     
     
-def save_by_consensus(merged_dict, savefile_path):
+def save_by_consensus(merged_signal_list_dict, savefile_path):
     '''
     save_by_consensus() saves reads by consensus in their own individual json files.
     
     Parameters:
-    merged_dict: list of dicts containing relevant data keys: [ref_name,
+    merged_signal_list_dict: list of dicts containing relevant data keys: [ref_name,
                                                                quality,
                                                                len,
                                                                ref,
