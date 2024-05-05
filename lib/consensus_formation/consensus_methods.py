@@ -30,7 +30,8 @@ import pysam
 import subprocess
 import raw_read_merger as rrm
 import setup_methods as setup
-
+import pandas as pd
+import re
 
 def basecall_command(basecaller_path, model_type, pod5_path, out_path, out_name):
     """
@@ -462,4 +463,36 @@ def rename_consensus_headers(consensus_fasta_file, j, k, output_file):
             SeqIO.write(record, outfile, "fasta")
 
     return str(os.path.abspath(output_file))
+    
+def cluster_size_df(cluster_fasta, dataframe): 
+    print('Xemora [STATUS] - Generating cluster sizes')
+    with open(cluster_fasta, "r") as fasta:
+        read_id_list = [] 
+        cluster_size_list = []
+        for record in SeqIO.parse(fasta, "fasta"):
+            header_parts = re.split(';', record.id)
+            read_id_part = re.split('=', header_parts[0])
+            size_part = re.split('=', header_parts[-1])
+            read_id = read_id_part[-1]
+            size = size_part[-1]
+            read_id_list.append(read_id)
+            cluster_size_list.append(size)
 
+   # Determine the iteration number
+    next_iteration = 'iteration 0' if dataframe.empty else f'iteration {len(dataframe.columns) - 1}'
+    # Create a temporary dataframe from the current fasta read
+    current_data = pd.DataFrame({
+        'read_id': read_id_list,
+        next_iteration: cluster_size_list
+    })
+    if dataframe.empty:
+        dataframe = current_data
+    else:
+        # Merge existing dataframe with new data
+        dataframe = dataframe.merge(current_data, on='read_id', how='outer')
+        
+    print(dataframe)
+    return dataframe
+            
+
+   
