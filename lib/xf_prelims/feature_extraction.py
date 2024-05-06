@@ -2,6 +2,7 @@
 feature_extraction.py
 J. Sumabat, N, Lai, S. Peck, Y. Huang
 4/29/2024 -- Created by S. Peck
+5/5/2024 -- Updated by S. Peck
 
 feature_extraction.py contains methods useful for extracting possible ml features from
 a consensus of reads and their aggregate information as produced by merge_consensus.py.
@@ -31,7 +32,8 @@ convert_signals_to_objects() - method to convert signals in df to signal objects
 convert_signal_list() - method to convert a list of signals to a list of signal objects
 convert_signal_obs_to_groups() - method to convert a df of signal objects to signal object groups
 convert_signal_obj_list() - method to convert a list of signal object list to signalgroups
-feature_extraction() - method to extract features
+twas_the_monster_mash() - method to convert signal observations to usable features and squish it all together.
+feature_extraction() - method to extract features to a pandas dataframe from a json file.
 
 Classes:
 Signal - a class that contains relevant information for a signal sequence
@@ -47,7 +49,7 @@ import matplotlib.pyplot as plt
 import math
 import json
 import gc
-
+import datetime
 
 def load_info_from_json(path):
     '''
@@ -741,13 +743,14 @@ class Signal:
         self.median = np.median(signal_array)
         time_step = 1/freq
         time = np.full((signal_array.shape)[0], time_step)
-        self.time = np.cumsum(time)
+        self.time = np.sum(time)
         self.signal = signal_array
         self.coulomb_signal = signal_array*time_step
-        self.coulombs_moved = self.coulomb_signal.cumsum()
+        self.coulombs_moved = self.coulomb_signal.sum()
         self.mean_coulombs_per_step = np.mean(self.coulomb_signal) # per time step
         self.std_coulombs_per_step = np.std(self.coulomb_signal) # per time step
         self.median_coulombs_per_step = np.median(self.coulomb_signal)
+        self.fft_peak = (np.abs(np.fft.fft(signal_array))**2).max()
     
     
 class GroupedSignals:
@@ -785,13 +788,18 @@ class GroupedSignals:
         sigmeans = []
         sigstds = []
         total_signal = []
+        total_time = 0
+        total_coulombs = 0 
+        fft_peaks = []
         # loop through each signal in the list
         for signal in self.signal_list:
-            
+            total_time += signal.time
+            total_coulombs += signal.coulombs_moved
             # get the mean, std, and total signal
             sigmeans.append(signal.mean)
             sigstds.append(np.square(signal.std))
             total_signal.extend(list(signal.signal))
+            fft_peaks.append(signal.fft_peak)
             
         # get the mean of means
         mean_of_means = np.mean(np.asarray(sigmeans))
@@ -804,6 +812,8 @@ class GroupedSignals:
         total_sig_mean = np.mean(total_signal)
         total_sig_std = np.std(total_signal)
         total_sig_median = np.median(total_signal)
+        fft_peaks = np.asarray(fft_peaks)
+        mean_fft_peak = np.mean(np.asarray(fft_peaks))
         
         # assign to class variables -- should these be calculated on demand rather than stored?
         # yes, but that takes more time we don't have rn.
@@ -813,6 +823,12 @@ class GroupedSignals:
         self.total_signal_mean = total_sig_mean
         self.total_signal_std = total_sig_std
         self.total_signal_median = total_sig_median
+        self.total_fft_peak = (np.abs(np.fft.fft(total_signal))**2).max()
+        self.mean_fft_peaks = mean_fft_peak
+        self.residence_time = total_time
+        
+        
+        
         
         #### MORE GO BELOW, DONT KNWO WHAT YET
         
@@ -863,29 +879,76 @@ def convert_signal_obj_list(x):
     else:
         return None
     
+
+def twas_the_monster_mash(grouped_coords):
+    # it was a graveyard bash
+    
+    def get_info_if_not_none(val):
+        if type(val) != type(None):
+            return [val.total_signal_mean, val.total_signal_std, val.total_signal_median, val.total_fft_peak, val.residence_time, val.mean_fft_peaks]
+        else:
+            return [None, None, None, None, None, None]
+    base_dict = {}
+    for column in grouped_coords:
+        base_col = grouped_coords[column]
+        grouped_vals = base_col.apply(lambda x: get_info_if_not_none(x))
+        
+        sep_vals = pd.DataFrame(grouped_vals.to_list(), columns=['sig_means', 'sig_stds', 'sig_meds', 'sig_peaks', 'sig_time', 'sig_peaks_means'])
+
+        base_features = {}
+        mean_vals = dict(sep_vals.mean())
+        for key in mean_vals.keys():
+            base_features['mean_{}'.format(key)] = mean_vals[key]
+        
+        std_vals = dict(sep_vals.std())
+        for key in mean_vals.keys():
+            base_features['std_{}'.format(key)] = std_vals[key]
+            
+        med_vals = dict(sep_vals.median())
+        for key in mean_vals.keys():
+            base_features['median_{}'.format(key)] = med_vals[key]
+            
+                         
+        base_dict[column] = base_features
+        
+    return pd.DataFrame(base_dict)
+
     
 
-    
 
-
-def feature_extraction(json_path):
+def feature_extraction(json_path, verbose=False):
     '''
-    example method/ 'pipeline' demonstration for getting features outta a json
+    feature_extraction takes a path to a json file, and loads all of the features in that dataset
+    to a dataframe, with a column called 'XNA_PRESENT' representing the idx where the xna is present
+    
+    Parameters:
+    json_path: path, as str, to a json file that is exported by merge_consensus.
+    verbose: boolean on wether or not to print information on progress. 
+    
+    Returns:
+    pandas Dataframe with all features and corresponding values.
     '''
     
+    if verbose: print(str(datetime.datetime.now()) + ' loading json... ')
     # yoink the consensus id, data dictionary, reference sequence, and frequency from the json path
     consensus_id, data_dict, ref_seq, freq = load_info_from_json(json_path)
+    print(str(datetime.datetime.now()) + ' json loaded. ')
     
+    if verbose: print(str(datetime.datetime.now()) + ' reading alignment... ')
     # get the read_alignment_data
     read_alignment_data = extract_alignment_from_dict(data_dict, ref_seq)
     
     # get te read_alignment dataframe
     read_alignment_df = pd.DataFrame(read_alignment_data)
+    if verbose: print(str(datetime.datetime.now()) + ' alignment read. ')
     
+    if verbose: print(str(datetime.datetime.now()) + ' generating data coordinates... ')
     # base-based features, base_probs is 6 but lets just look at insertions and deletions
     # get the alignment coordinate data
     data_coordinate_list = extract_coordinate_data(read_alignment_df['alignment_data'])
 
+    if verbose: print(str(datetime.datetime.now()) + ' data coordinates generated. ')
+    if verbose: print(str(datetime.datetime.now()) + ' calculating observation features... ')
     # get the base probabilites at each position -- THIS HAS INSERTION AND DELETION PERCENTAGE BUILT IN
     base_probs = calc_base_probs(data_coordinate_list[0])
 
@@ -895,6 +958,8 @@ def feature_extraction(json_path):
     # Get the shannon entropy of each base position.
     shentropy_series = shannon_entropies(base_probs)
     
+    if verbose: print(str(datetime.datetime.now()) + ' observation features calculated.  ')
+    if verbose: print(str(datetime.datetime.now()) + ' calculating quality features...  ')
     # quality score features
     # get the qualities with no insertions or deletions
     no_in_del_qual = remove_in_dels(data_coordinate_list[0], data_coordinate_list[1])
@@ -908,6 +973,8 @@ def feature_extraction(json_path):
     # get the raw median quality score of each base.
     rawmeds = get_raw_median(data_coordinate_list[1])
     
+    if verbose: print(str(datetime.datetime.now()) + ' quality features calculated.  ')
+    if verbose: print(str(datetime.datetime.now()) + ' calculating signal features...  ')
     # Signal features
     # convert the signals to objects
     sig_obj_coords = convert_signals_to_objects(data_coordinate_list[2], freq)
@@ -915,7 +982,38 @@ def feature_extraction(json_path):
     # convert the signal lists to signal group objects
     sig_group_coords = convert_signal_obs_to_groups(sig_obj_coords)
     
-    # then, exectue methods for aggregateing base-coordinate level signal group operations.
-    # what those are is TBD. 
+    #get the signal objects with no insertions or deletions
+    no_sig_obj_coords = convert_signals_to_objects(remove_in_dels(data_coordinate_list[0], data_coordinate_list[2]), freq)
+
+    # get signal groups with no insertions or deletions
+    no_sig_group_coords = convert_signal_obs_to_groups(no_sig_obj_coords)
+    
+    # get the mess of signal features
+    mess_with_in_del = twas_the_monster_mash(sig_group_coords)
+    mess_wo_in_del = twas_the_monster_mash(no_sig_group_coords)
+    
+    if verbose: print(str(datetime.datetime.now()) + ' signal features calculated.  ')
+    if verbose: print(str(datetime.datetime.now()) + ' assembling features...  ')
+    # combine all of the features as well as the xna position into one cumulative dataframe
+    mismatch_probs = pd.DataFrame(mismatch_probs, columns=['mm_prob'])
+    shentropy_col = pd.DataFrame(shentropy_series, columns=['shentropy'])
+    no_quals = pd.concat([no_mvals, no_stvals, no_meanmedian], axis=1)
+    no_quals.columns = ['n_qmean', 'n_qst', 'n_qmed']
+    id_quals = pd.concat([mvals, stvals, meanmedian], axis=1)
+    id_quals.columns = ['i-d_qmean', 'i-d_qst', 'i-d_qmed']
+    rawmeds = pd.DataFrame(rawmeds, columns = ['r_qmed'])
+    in_del_sigs = mess_with_in_del.T.add_suffix('_i-d')
+    wo_in_del_sigs = mess_wo_in_del.T.add_suffix('_w/o')
+
+    xna_idx = int(consensus_id.split(':')[-1].split(']')[0])
+    xna_df = pd.DataFrame(mismatch_probs.index, columns = ['XNA_PRESENT'])
+    xna_df['XNA_PRESENT'] = 0
+    xna_df['XNA_PRESENT'][xna_idx] = 1
+    
+    assembled_features = pd.concat([xna_df, base_probs, mismatch_probs, shentropy_col, no_quals, id_quals, rawmeds, in_del_sigs, wo_in_del_sigs], axis=1)
+    if verbose: print(str(datetime.datetime.now()) + ' features assembled.  ')
+    
+    return assembled_features
+    
     
     
