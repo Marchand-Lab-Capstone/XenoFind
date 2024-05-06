@@ -15,7 +15,7 @@ Updated: 11/28/23
 ##Analysis instructions 
 
 #Re-basecall pod5 file. Required if new reference files are being used. 
-basecall_pod = True
+basecall_pod = False
 
 #Perform Quality Score Analysis 
 analyze_fastq = True
