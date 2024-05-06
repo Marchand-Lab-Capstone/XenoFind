@@ -50,3 +50,6 @@ auto_model_type = 'hac'
 #If manual model selection is desired
 dorado_model_path = '' 
 
+#cluster size filter threshold
+threshold = 100
+
