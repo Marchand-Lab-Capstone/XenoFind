@@ -64,7 +64,7 @@ def map_to_reference(mapper_path, reference_path, basecall_path, out_path, out_n
     out_name: name the output sam file will be given, as str
     """
     # Currently only supports minimap2
-    cmd = "{} -ax map-ont --score-N 0 --MD --min-dp-score 10 {} {} > {}{}.sam".format(mapper_path, reference_path, basecall_path, out_path, out_name) #probably doesn't need minimap2 as a separate path
+    cmd = "{} -ax map-ont --score-N 0 --MD {} {} > {}{}.sam".format(mapper_path, reference_path, basecall_path, out_path, out_name) #probably doesn't need minimap2 as a separate path
 
     print('[Mapping]: Command Generated: "{}"'.format(cmd))
     return cmd
@@ -146,25 +146,21 @@ def read_trim(bam_path):
         
         # for each read in the bamfile,
         for read in bamfile.fetch():
-            # Increment num_unmapped if the read is unmapped
-            if read.is_unmapped:
+            # Check that the read is mapped
+            if not read.is_unmapped:
+                # Get the reference sequence length and the alignment length
+                reference_length = bamfile.get_reference_length(read.reference_name)
+                aligned_length = read.reference_length
+
+                # if the aligned length is greater or equal to 95% of the reference length,
+                if aligned_length >= reference_length * 0.95:
+                    # Append it to the output.
+                    output_list.append(f">{read.query_name}\n{read.query_alignment_sequence}")
+                    
+                else:
+                    num_outside += 1
+            else:
                 num_unmapped += 1
-                continue
-                
-            # Check that the read meets alignment length criteria
-            if read.query_alignment_length < 0.95 * read.reference_length:
-                num_outside += 1
-                continue
-
-            # Determine orientation
-            orientation = 'fwd' if not read.is_reverse else 'rev'
-            # Get query ID
-            query_id = read.query_name
-            # Get alignment sequence
-            alignment_sequence = read.query_sequence if not read.is_reverse else str(Seq(read.query_sequence).reverse_complement())
-            # Append to output list
-            output_list.append((f"{query_id}:{orientation}", alignment_sequence))
-
         print(output_list)
 
     print(f"[Trimming]: {num_unmapped} unmapped reads, {num_outside} short reads removed.")
@@ -231,7 +227,7 @@ def vsearch_command(vsearch_path, fasta_path, out_path, out_name, sim_id):
     return cmd, cluster_path
             
     
-def filter_cluster_size(fasta_path, threshold):
+def filter_cluster_size(fasta_path, threshold=1):
     """
     filter_cluster_size takes in a fasta filepath and a threshold,
     and removes all clusters that are not within that size threshold.
@@ -461,14 +457,9 @@ def rename_consensus_headers(consensus_fasta_file, j, k, output_file):
     """
     with open(output_file, 'w') as outfile:
         for i, record in enumerate(SeqIO.parse(consensus_fasta_file, "fasta"), start=1):
-            header_parts = re.split(';', record.id)
-            read_id_part = re.split('=', header_parts[0])
-            read_id = read_id_part[-1]
-
-            new_header = f"consensus_{1}_{read_id} - BC 1: {j}, BC 2: {k}"
-            record.id = new_header
-            record.description = new_header
-
+            record.description = f"consensus {i}- BC 1: {j}, BC 2: {k}"
+            record.description = f" - BC 1: {j}, BC 2: {k}"
+            record.id = f"consensus_{i}"
             SeqIO.write(record, outfile, "fasta")
 
     return str(os.path.abspath(output_file))

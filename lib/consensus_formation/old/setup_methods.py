@@ -39,16 +39,17 @@ def setup_directory_system(working_directory):
     Parameters: 
     working_directory: a str representing a directory to do all the processes in
     
-    Returns: a 9-value list with the paths for the following:
-            working_directory 0,
-            consensus_files_directory 1,
-            merged_pod5 2,
-            basecall_directory 3,
-            total_reads_directory 4,
-            total_reads_fasta_directory 5,
-            total_reads_vsearch_directory 6,
-            xf_consensus_output 7,
-            total_read 8
+    Returns: a 11-value list with the paths for the following:
+             basecall_directory,
+             forward_reads_directory,
+             forward_reads_fasta_directory,
+             reverse_reads_directory,
+             reverse_reads_fasta_directory,
+             all_reads_directory,
+             all_reads_fasta_directory,
+             merged_pod5,
+             rough_consensus_output,
+             xf_consensus_output
     """
     
     # Use check_make_dir to generate or validate the existing directories.
@@ -56,9 +57,21 @@ def setup_directory_system(working_directory):
     con_file_dir = check_make_dir(working_directory + "consensus_files")
     p5dir = check_make_dir(con_file_dir + "merged_pod5")
     bcdir = check_make_dir(con_file_dir + "basecall_directory")
+    forward_dir = check_make_dir(con_file_dir + "forward_reads")
+    fadir_fwd = check_make_dir(forward_dir + "fasta_directory")
+    reverse_dir = check_make_dir(con_file_dir + "reverse_reads")
+    fadir_rev = check_make_dir(reverse_dir + "fasta_directory")
+    reverse_unflip_dir = check_make_dir(con_file_dir + 'reverse_unflipped_reads')
+    fadir_unrev = check_make_dir(reverse_unflip_dir + 'fasta_directory')
     total_dir = check_make_dir(con_file_dir + "total_reads")
     fadir_tot = check_make_dir(total_dir + "fasta_directory")
+    vsearch_dir_fwd = check_make_dir(forward_dir + "vsearch_processing")
+    vsearch_dir_rev = check_make_dir(reverse_dir + "vsearch_processing")
+    vsearch_dir_rev_unflip = check_make_dir(reverse_unflip_dir + 'vsearch_processing')
     vsearch_dir_tot = check_make_dir(total_dir + "vsearch_processing")
     xfconsdir = check_make_dir(con_file_dir + "xf_consensus_output")
+    xfconsdir_fwd = check_make_dir(xfconsdir + "forward_reads")
+    xfconsdir_rev = check_make_dir(xfconsdir + "reverse_reads")
+    xfconsdir_rev_unflip = check_make_dir(xfconsdir + 'reverse_unflipped_reads')
     xfconsdir_all = check_make_dir(xfconsdir + "total_reads")
-    return [wdir, con_file_dir, p5dir, bcdir, total_dir, fadir_tot, vsearch_dir_tot, xfconsdir, xfconsdir_all]
+    return [wdir, con_file_dir, p5dir, bcdir, forward_dir, fadir_fwd, reverse_dir, fadir_rev, reverse_unflip_dir, fadir_unrev, total_dir, fadir_tot, vsearch_dir_fwd, vsearch_dir_rev, vsearch_dir_rev_unflip, vsearch_dir_tot, xfconsdir, xfconsdir_fwd, xfconsdir_rev, xfconsdir_rev_unflip, xfconsdir_all]

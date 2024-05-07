@@ -3,10 +3,11 @@ from Bio.Seq import Seq
 import os
 import pysam
 import sys
+import pandas as pd
+
 import raw_read_merger as rrm
 import setup_methods as setup
 import consensus_methods as cs
-import pandas as pd
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(script_dir)
@@ -37,37 +38,18 @@ def bc_align(working_dir, reads, barcoded_fasta):
     trimmed_fname = 'trimmed' # Fasta 
     sorted_fname = 'sorted' # Fasta
     vsearch_path = 'vsearch' # should be variable
-    vs_cons_fname = 'cons' # Fasta
-    filtered_fname = 'represented_seq' # Fasta
-    medaka_path = 'medaka_consensus' # should be variable
-    polished_fname = 'polished_consensus' # Fasta
-
-    # Get the barcode indexes using extract_n_indexes
-    n_positions = cs.extract_n_indexes(barcoded_fasta)
 
 
     #----------Setup----------------------#
     # Set up the working directory 0
-    #               consensus_files_directory, 1
-    #               merged_pod5, 2
-    #               basecall_directory, 3
-    #               forward_reads_directory, 4
-    #               forward_reads_fasta_directory, 5
-    #               reverse_reads_directory, 6
-    #               reverse_reads_fasta_directory, 7
-    #               reverse_reads_unflipped_directory, 8
-    #               reverse_reads_unflipped_fasta_directory, 9             
-    #               total_reads_directory, 10
-    #               total_reads_fasta_directory, 11
-    #               vsearch_forward_processing, 12
-    #               vsearch_reverse_processing, 13
-    #               vsearch_reverse_unflipped_processing, 14
-    #               vsearch_total_processing, 15
-    #               xf_consensus_output, 16
-    #               xf_consensus_forward_read_output, 17
-    #               xf_consensus_reverse_read_output, 18
-    #               xf_consensus_reverse_unflipped_read_output, 19
-    #               xf_consensus_total_read_output, 20
+    #             consensus_files_directory, 1
+    #             merged_pod5, 2
+    #             basecall_directory, 3
+    #             total_reads_directory, 4
+    #             total_reads_fasta_directory, 5
+    #             vsearch_total_processing, 6
+    #             xf_consensus_output, 7
+    #             xf_consensus_total_read_output, 8
     directories_list = setup.setup_directory_system(working_dir)
 
     #File path string for the merged pod5
@@ -129,120 +111,44 @@ def bc_align(working_dir, reads, barcoded_fasta):
     st = os.system(bam2sam_cmd)
     
     #filter the bam file with primiary aligned reads
-    filtered_bam_file_path = cs.filter_primary_alignments(bam_file_path, 'primary_read_filtered.bam')
+    filtered_bam_file_path = cs.filter_primary_alignments(bam_file_path, 'primary_read_filtered')
     
-    return filtered_bam_file_path, n_positions
-
-def decouple(bam_file_path):
+    return filtered_bam_file_path
+    
+def consensus_generation(working_dir, bam_file_path, direction):
     """
-    Separates reads from an aligned BAM file into forward and reverse strand reads
-    using samtools. 
-    
-    Parameters: 
-    bam_file_path: path to the BAM file, inputted as a string.
-    
-    Returns: 
-    Paths to forward and reverse strand BAM files as strings. Also generates these files in the same directory.
+    consensus generation takes in the working directory pathway,
     """
-    # Correct variable names for clarity
-    forward_out_path = os.path.join(os.path.dirname(bam_file_path), 'forward.bam')
-    reverse_out_path = os.path.join(os.path.dirname(bam_file_path), 'reverse.bam')
-    
-    # Open the input BAM file for reading
-    with pysam.AlignmentFile(bam_file_path, "rb") as infile:  # Note "rb" for reading BAM
-
-        # Open two files for writing: one for forward strand reads, another for reverse strand reads
-        # Note "wb" for writing BAM files
-        with pysam.AlignmentFile(forward_out_path, "wb", header=infile.header) as outfile_forward, \
-             pysam.AlignmentFile(reverse_out_path, "wb", header=infile.header) as outfile_reverse:
-
-            # Iterate through reads in the input file
-            for read in infile:
-                # Check if the read is mapped to the reverse strand
-                if read.is_reverse:
-                    # Write the read to the reverse strand reads file
-                    outfile_reverse.write(read)
-                else:
-                    # Write the read to the forward strand reads file (implicitly forward if not reverse)
-                    outfile_forward.write(read)
-    
-    return forward_out_path, reverse_out_path
-    
-def consensus_generation(working_dir, bam_file_path, direction, n_indices):
-
     #Default File names 
     trimmed_fname = 'trimmed' # Fasta 
     sorted_fname = 'sorted' # Fasta
     vsearch_path = 'vsearch' # should be variable
-    vs_cons_fname = 'cons' # Fasta
-    filtered_fname = 'represented_seq' # Fasta
-    medaka_path = 'medaka_consensus' # should be variable
-    polished_fname = 'polished_consensus' # Fasta
     minimap2_path = 'minimap2'
     similarity_id =  xfp.starting_similarity
     
     
     #----------Setup----------------------#
     # Set up the working directory 0
-    #               consensus_files_directory, 1
-    #               merged_pod5, 2
-    #               basecall_directory, 3
-    #               forward_reads_directory, 4
-    #               forward_reads_fasta_directory, 5
-    #               reverse_reads_directory, 6
-    #               reverse_reads_fasta_directory, 7
-    #               reverse_reads_unflipped_directory, 8
-    #               reverse_reads_unflipped_fasta_directory, 9             
-    #               total_reads_directory, 10
-    #               total_reads_fasta_directory, 11
-    #               vsearch_forward_processing, 12
-    #               vsearch_reverse_processing, 13
-    #               vsearch_reverse_unflipped_processing, 14
-    #               vsearch_total_processing, 15
-    #               xf_consensus_output, 16
-    #               xf_consensus_forward_read_output, 17
-    #               xf_consensus_reverse_read_output, 18
-    #               xf_consensus_reverse_unflipped_read_output, 19
-    #               xf_consensus_total_read_output, 20
+    #             consensus_files_directory, 1
+    #             merged_pod5, 2
+    #             basecall_directory, 3
+    #             total_reads_directory, 4
+    #             total_reads_fasta_directory, 5
+    #             vsearch_total_processing, 6
+    #             xf_consensus_output, 7
+    #             xf_consensus_total_read_output, 8
     directories_list = setup.setup_directory_system(working_dir)
-    
-    if direction == 'forward': #forward directory isnt calling anything right now, need to fix 
-        fasta_index = 5 
-        vsearch_index = 12
-        output_index = 17
-        prefix = 'forward'
-        #insert a new required index here as necessary
-    elif direction == 'reverse':
-        fasta_index = 7
-        vsearch_index = 13
-        output_index = 18
-        prefix = 'reverse'
-        #insert a new required index here as necessary
-    elif direction == 'reverse_unflipped':
-        fasta_index = 9
-        vsearch_index = 14
-        output_index = 19
-        prefix = 'reverse_unflipped'
-    else: 
-        fasta_index = 11
-        vsearch_index = 15
-        output_index = 20
-        prefix = 'total'
-        #insert a new required index here as necessary
+
+    #indexes:
+    prefix = 'total'
+    fasta_index = 5
+    vsearch_index = 6
+    output_index = 8
 
     #--------Trimming and Sorting Steps----------#
 
     # trim down the samfile to a trimmed fasta using default of 95% margin
     read_trims_list = cs.read_trim(bam_file_path)
-    
-    
-    #Generate a concensus where the reverse reads are unreversed complemented after minimap2
-    if direction == 'reverse_unflipped':
-        for idx, entry in enumerate(read_trims_list):
-            header, sequence = entry.split('\n', 1)
-            reverse_complement = str(Seq(sequence).reverse_complement())  # Calculate the reverse complement using Seq
-            read_trims_list[idx] = f"{header}\n{reverse_complement}"  # Update the element in the list
-
     trimmed_fasta_path = cs.write_to_fasta(directories_list[fasta_index],
                                         trimmed_fname,
                                         read_trims_list)
@@ -254,7 +160,7 @@ def consensus_generation(working_dir, bam_file_path, direction, n_indices):
                                        sorted_records_list)
     #NOTE: ADD DATA  VIS IN BETWEEN EACH ROUND OF VSEARCH
 
-    #--------Vsearch Steps-------------#
+   #--------Vsearch Steps-------------#
     # use rename_consensus_headers to assign the adequate headers to the consensus sequence
  
     # generate the vsearch command
@@ -270,16 +176,9 @@ def consensus_generation(working_dir, bam_file_path, direction, n_indices):
     df = pd.DataFrame()
     #start logging number of reads in dataframe 
     df = cs.cluster_size_df(cluster_path, df)
-    print(df)
     # visualization of the numbers of read aligned to each cluster
 
     for i in range(xfp.vsearch_iterations):
-        '''
-        TO DO: remove hard coding here, make sure to keep each iteration of the consensus fastas
-        Use NCBI Multiple Sequence Aligner to visualy check how each cluster is doing with each iteration 
-        Add the positions where 'N' bases start and end and rename clusters after this for loop 
-        Push this to github and have sebastian update to the main branch 
-        '''
         similarity_id = similarity_id + xfp.similarity_increment
         
         # realign the reads to the cluster generated by vsearch
@@ -321,23 +220,14 @@ def consensus_generation(working_dir, bam_file_path, direction, n_indices):
     
     #Turn dataframe into csv file 
     df.to_csv(os.path.join(os.path.dirname(cluster_path),'{}_cluster_size.csv'.format(direction)))
-    
-    #Calling Medaka to perform polishing
-    medaka_cmd = cs.medaka_consensus_command(medaka_path, trimmed_fasta_path, #<---- this needs to be fixed
-                                             cluster_path, directories_list[output_index])
-    
-    st = os.system(medaka_cmd)
 
-    #Setting starting and ending indexes for randomers 
-    j, k = n_indices[0]
-
-    medaka_cons_path = directories_list[output_index] + f'consensus.fasta'
+    #medaka_cons_path = directories_list[output_index] + f'consensus.fasta'
     lab_cons_path = directories_list[output_index] + f'{prefix}_labeled_consensus.fasta'
     
-    print(df)
-
-    #return the path to the polished fasta.
-    return cs.rename_consensus_headers(medaka_cons_path, j, k , lab_cons_path) #<----double check this return statement 
+    #Rename fasta headers for final format 
+    lab_cons_path = cs.rename_consensus_headers(cluster_path, lab_cons_path) 
+    #return the path to the filtered consensus fasta.
+    return cs.filter_cluster_size(lab_cons_path, xfp.cluster_size_threshold)
 
 def main():
     #in_w_dir = input("Please provide working directory path: ")
@@ -348,21 +238,13 @@ def main():
     in_r_dir = sys.argv[2]
     in_f_dir = sys.argv[3]
     
-    alignment_path, n_indices = bc_align(in_w_dir, in_r_dir, in_f_dir)
-    forward_alignments, reverse_alignments = decouple(alignment_path)
-    print('Xenofind [STATUS] - Forward and Reverse strands decoupled')
+    alignment_path = bc_align(in_w_dir, in_r_dir, in_f_dir)
     
     print('Xenofind [STATUS] - Preparing to create consensus fastas')
      
-    total_consensus_fasta = consensus_generation(in_w_dir, alignment_path, 'all', n_indices) #full dataset
-    print('Xenofind [STATUS] - Generated consensus fasta for all reads') 
-    fwd_consensus_fasta = consensus_generation(in_w_dir, forward_alignments, 'forward', n_indices)
-    print('Xenofind [STATUS] - Generated consensus fasta for forward reads')
-    rev_conensus_fasta = consensus_generation(in_w_dir, reverse_alignments, 'reverse', n_indices)
-    print('Xenofind [STATUS] - Generated consensus fasta for reverse reads') 
-    rev_flipped_consensus_fasta = consensus_generation(in_w_dir, reverse_alignments, 'reverse_unflipped', n_indices)
-    print('Xenofind [STATUS] - Generated consensus fasta for reverse reads (unflipped)')
-
+    total_consensus_fasta = consensus_generation(in_w_dir, alignment_path, 'all') #full dataset
+    print('Xenofind [STATUS] - Generated consensus fasta containing forward and reverse strands') 
+    
 
 
 if __name__ == '__main__':
