@@ -15,7 +15,7 @@ Updated: 11/28/23
 ##Analysis instructions 
 
 #Re-basecall pod5 file. Required if new reference files are being used. 
-basecall_pod = False
+basecall_pod = True
 
 #Perform Quality Score Analysis 
 analyze_fastq = True
@@ -36,6 +36,8 @@ shannon_entropy_graphs = False
 
 #cluster size filter threshold
 cluster_size_threshold = 100
+
+##Model Training Parameters
 ############################################################
 #Dorado Base caller configuration
 
@@ -43,6 +45,7 @@ cluster_size_threshold = 100
 basecaller_path = '~/dorado-0.6.0-linux-x64/bin/dorado' #consider adding Guppy compatibility 
 
 #Dorado Model Parameters
+min_qscore = 5
 
 #Let Dorado automatically choose a model 
 auto_model = True 
