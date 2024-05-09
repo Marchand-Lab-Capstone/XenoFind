@@ -91,7 +91,7 @@ def load_info_from_json(path):
     # get the data 
     data_dict = data[1]
     
-    gc.collect()
+    #gc.collect()
     # return the information extracted.
     return consensus_id, data_dict, ref_seq, freq
 
@@ -129,7 +129,7 @@ def extract_coordinate_data(alignment_data):
     del(base_coordinate_df)
     del(qual_coordinate_df)
     del(signal_coordinate_df)
-    gc.collect()
+    #gc.collect()
     
     # return the dataframe list.
     return data_out
@@ -189,7 +189,7 @@ def align_observation_ops(cig, sig):
             
         # index the observation indexer
         observation_indexer += ob_len
-        gc.collect()
+        #gc.collect()
         
     # convert to a dataframe, and filter the not-so-valuable operations
     obs_df = pd.DataFrame(observation_dict_list)
@@ -360,7 +360,7 @@ def extract_alignment_from_dict(m_list_dict, r_seq):
     del(e_df)
     
     # collect the garbage.
-    gc.collect()
+    #gc.collect()
     
     # return the dict.
     return out_dict
@@ -434,7 +434,7 @@ def calc_base_probs(sequence_coordinates):
     return_df = pd.DataFrame(list_of_prob_dicts)
     return_df['n']=pd.Series(list_of_obs)
     
-    gc.collect()
+    #gc.collect()
     # Return the dataframe
     return return_df
 
@@ -479,7 +479,7 @@ def shannon_entropies(base_probs):
     e_min = entropy.min()
     n_entropy = (entropy - e_min) / (e_max-e_min)
 
-    gc.collect()
+    #gc.collect()
     # Return the entropy
     return entropy
 
@@ -932,7 +932,7 @@ def feature_extraction(json_path, verbose=False):
     if verbose: print(str(datetime.datetime.now()) + ' loading json... ')
     # yoink the consensus id, data dictionary, reference sequence, and frequency from the json path
     consensus_id, data_dict, ref_seq, freq = load_info_from_json(json_path)
-    print(str(datetime.datetime.now()) + ' json loaded. ')
+    if verbose: print(str(datetime.datetime.now()) + ' json loaded. ')
     
     if verbose: print(str(datetime.datetime.now()) + ' reading alignment... ')
     # get the read_alignment_data
