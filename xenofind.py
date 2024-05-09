@@ -81,7 +81,7 @@ if args.subparsers == 'consensus':
 
 
     if exit_flag == False: 
-        cmd = 'python lib/consensus_formation/weighted_consensus_2.py '+args.w+' '+args.f+' '+args.r
+        cmd = 'python lib/consensus_formation/weighted_consensus.py '+args.w+' '+args.f+' '+args.r
         os.system(cmd)
     else: 
         print('XenoFind [ERROR] - At least one file path not properly set. XenoFind exiting.')

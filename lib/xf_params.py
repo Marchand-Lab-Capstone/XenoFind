@@ -23,7 +23,7 @@ analyze_fastq = True
 ##Consensus Parameters
 
 #Starting similarity ID, initial similarity ID prior to doing VSEARCH iterations
-starting_similarity = 0.80
+starting_similarity = 0.7
 
 #Increment, how much to increase the similarity ID by during VSEARCH iterations
 similarity_increment = 0.05
@@ -33,6 +33,11 @@ vsearch_iterations = 3
 
 ##Find Parameters 
 shannon_entropy_graphs = False 
+
+#cluster size filter threshold
+cluster_size_threshold = 100
+
+##Model Training Parameters
 ############################################################
 #Dorado Base caller configuration
 
@@ -40,6 +45,7 @@ shannon_entropy_graphs = False
 basecaller_path = '~/dorado-0.6.0-linux-x64/bin/dorado' #consider adding Guppy compatibility 
 
 #Dorado Model Parameters
+min_qscore = 5
 
 #Let Dorado automatically choose a model 
 auto_model = True 
@@ -49,4 +55,6 @@ auto_model_type = 'hac'
 
 #If manual model selection is desired
 dorado_model_path = '' 
+
+
 

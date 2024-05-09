@@ -45,23 +45,8 @@ def setup_directory_system(working_directory):
     
     # Use Check_make_dir to generate or validate the existing directories.
     wdir = check_make_dir(working_directory) #0
-    xna_find_dir = check_make_dir(working_directory + 'XNA_find/') #1
-    p5dir = check_make_dir(xna_find_dir + "merged_pod5") #2
-    bcdir = check_make_dir(xna_find_dir + "basecall_directory/") #3
-    fwd_dir = check_make_dir(xna_find_dir + 'forward_read') #4
-    fwd_qs = check_make_dir(fwd_dir + 'quality_score') #5
-    fwd_shannon = check_make_dir(fwd_dir + 'shannon_entropy') #6
-    fwd_signal = check_make_dir(fwd_dir + 'signal_level') #7
-    rev_dir = check_make_dir(xna_find_dir + 'reverse_read') #8
-    rev_qs = check_make_dir(rev_dir + 'quality_score') #9
-    rev_shannon = check_make_dir(rev_dir + 'shannon_entropy') #10
-    rev_signal = check_make_dir(rev_dir + 'signal_level') #11
-    rev_unflip_dir = check_make_dir(xna_find_dir + 'reverse_unflipped_read') #12
-    rev_unflip_qs = check_make_dir(rev_unflip_dir + 'quality_score') #13
-    rev_unflip_shannon = check_make_dir(rev_unflip_dir + 'shannon_entropy') #14
-    rev_unflip_signal = check_make_dir(rev_unflip_dir + 'signal_level') #15
-    total_dir = check_make_dir(xna_find_dir + 'total_read') #16
-    total_qs = check_make_dir(total_dir + 'quality_score') #17
-    total_shannon = check_make_dir(total_dir + 'shannon_entropy') #18
-    total_signal = check_make_dir(total_dir + 'signal_level') #19
-    return [wdir,xna_find_dir,p5dir,bcdir, fwd_dir, fwd_qs, fwd_shannon, fwd_signal, rev_dir, rev_qs, rev_shannon, rev_signal, rev_unflip_dir, rev_unflip_qs, rev_unflip_shannon, rev_unflip_signal, total_dir, total_qs, total_shannon, total_signal]
+    model_train_dir = check_make_dir(working_directory + 'model_training/') #1
+    p5dir = check_make_dir(model_train_dir + "merged_pod5") #2
+    bcdir = check_make_dir(model_train_dir + "basecall_directory/") #3
+    merged_dir = check_make_dir(model_train_dir + "merged_dataset") #4
+    return [wdir,model_train_dir,p5dir,bcdir, merged_dir]
