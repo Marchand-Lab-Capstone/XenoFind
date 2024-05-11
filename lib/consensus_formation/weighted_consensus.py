@@ -16,7 +16,7 @@ if parent_dir not in sys.path:
 
 import xf_params as xfp
 
-def bc_align(working_dir, reads, barcoded_fasta):
+def consensus_generation(working_dir, reads, barcoded_fasta):
     """
     bc_align takes in working directory, reads, and a barcoded fasta file,
     and performs basecalling on them using Dorado then perform alignment using 
@@ -28,7 +28,7 @@ def bc_align(working_dir, reads, barcoded_fasta):
     reads: fast5 or pod5 directory, inputted as a string
     barcoded_fasta: File pathway to reference file for minimap2 alignment, inputted as a string
     """
-    
+
     # Default filenames:
     p5_fname = "merged"
     dorado_path = xfp.basecaller_path # assumes dorado is in user's home directory, make it a variable somewhere maybe
@@ -38,7 +38,13 @@ def bc_align(working_dir, reads, barcoded_fasta):
     trimmed_fname = 'trimmed' # Fasta 
     sorted_fname = 'sorted' # Fasta
     vsearch_path = 'vsearch' # should be variable
+    similarity_id =  xfp.starting_similarity
 
+    #indexes:
+    prefix = 'total'
+    fasta_index = 5
+    vsearch_index = 6
+    output_index = 8
 
     #----------Setup----------------------#
     # Set up the working directory 0
@@ -112,43 +118,11 @@ def bc_align(working_dir, reads, barcoded_fasta):
     
     #filter the bam file with primiary aligned reads
     filtered_bam_file_path = cs.filter_primary_alignments(bam_file_path, 'primary_read_filtered')
-    
-    return filtered_bam_file_path
-    
-def consensus_generation(working_dir, bam_file_path, direction):
-    """
-    consensus generation takes in the working directory pathway,
-    """
-    #Default File names 
-    trimmed_fname = 'trimmed' # Fasta 
-    sorted_fname = 'sorted' # Fasta
-    vsearch_path = 'vsearch' # should be variable
-    minimap2_path = 'minimap2'
-    similarity_id =  xfp.starting_similarity
-    
-    
-    #----------Setup----------------------#
-    # Set up the working directory 0
-    #             consensus_files_directory, 1
-    #             merged_pod5, 2
-    #             basecall_directory, 3
-    #             total_reads_directory, 4
-    #             total_reads_fasta_directory, 5
-    #             vsearch_total_processing, 6
-    #             xf_consensus_output, 7
-    #             xf_consensus_total_read_output, 8
-    directories_list = setup.setup_directory_system(working_dir)
-
-    #indexes:
-    prefix = 'total'
-    fasta_index = 5
-    vsearch_index = 6
-    output_index = 8
 
     #--------Trimming and Sorting Steps----------#
 
     # trim down the samfile to a trimmed fasta using default of 95% margin
-    read_trims_list = cs.read_trim(bam_file_path)
+    read_trims_list = cs.read_trim(filtered_bam_file_path)
     trimmed_fasta_path = cs.write_to_fasta(directories_list[fasta_index],
                                         trimmed_fname,
                                         read_trims_list)
@@ -219,10 +193,13 @@ def consensus_generation(working_dir, bam_file_path, direction):
         df = cs.cluster_size_df(cluster_path, df)
     
     #Turn dataframe into csv file 
-    df.to_csv(os.path.join(os.path.dirname(cluster_path),'{}_cluster_size.csv'.format(direction)))
+    df.to_csv(os.path.join(os.path.dirname(cluster_path), 'cluster_size.csv'))
 
+    '''
+    Fix the file directories here, probably put the labelled fasta in the total reads folder and final fasta file out of all the folders 
+    '''
     #medaka_cons_path = directories_list[output_index] + f'consensus.fasta'
-    lab_cons_path = directories_list[output_index] + f'{prefix}_labeled_consensus.fasta'
+    lab_cons_path = directories_list[1] + f'{prefix}_labeled_consensus.fasta'
     
     #Rename fasta headers for final format 
     lab_cons_path = cs.rename_consensus_headers(cluster_path, lab_cons_path) 
@@ -238,11 +215,8 @@ def main():
     in_r_dir = sys.argv[2]
     in_f_dir = sys.argv[3]
     
-    alignment_path = bc_align(in_w_dir, in_r_dir, in_f_dir)
-    
-    print('Xenofind [STATUS] - Preparing to create consensus fastas')
+    total_consensus_fasta = consensus_generation(in_w_dir, in_r_dir, in_f_dir)
      
-    total_consensus_fasta = consensus_generation(in_w_dir, alignment_path, 'all') #full dataset
     print('Xenofind [STATUS] - Generated consensus fasta containing forward and reverse strands') 
     
 

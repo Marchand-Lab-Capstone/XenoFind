@@ -157,9 +157,7 @@ def read_trim(bam_path):
             # Append to output list
             output_list.append(f">{query_id}:{orientation}\n{alignment_sequence}")
 
-        print(output_list)
-
-    print(f"[Trimming]: {num_unmapped} unmapped reads, {num_outside} short reads removed.")
+    print(f"XenoFind [STATUS] - Trimming complete: {num_unmapped} unmapped reads, {num_outside} short reads removed.")
     
     # Remove the sorted and indexed BAM file after processing
     os.remove(sorted_bam_path)
@@ -214,7 +212,6 @@ def sort_fasta(fasta_path):
     Returns:
     a list of the records, sorted by length.
     """
-    print(fasta_path)
     # get SeqRecord iterator as list by parsing the fasta file and passing fasta format.
     records = list(SeqIO.parse(fasta_path, "fasta"))
     
@@ -227,7 +224,7 @@ def sort_fasta(fasta_path):
     for record in sorted_records:
         output_records.append(">{}\n{}".format(record.id, record.seq))
 
-    print("[Sorting]: {} records resorted.".format(len(output_records)))
+    print("XenoFind [STATUS] - {} records sorted.".format(len(output_records)))
     
     # return the sorted_records list
     return output_records
@@ -401,8 +398,6 @@ def cluster_size_df(cluster_fasta, dataframe):
     else:
         # Merge existing dataframe with new data
         dataframe = dataframe.merge(current_data, on='read_id', how='outer')
-        
-    print(dataframe)
     return dataframe
 
 def filter_cluster_size(fasta_path, threshold):
