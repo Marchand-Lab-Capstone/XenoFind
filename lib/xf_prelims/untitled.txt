@@ -1,0 +1,5 @@
+# Load the paths
+../../data/large_working_directory/rough_consensus_output/large_align.bam
+../../data/large_working_directory/merged_pod5/merged.pod5
+../../data/reads_large/230725_PZ_lib_v4_r10/fasta/good.fa
+../../data/large_working_directory/rough_consensus_output/json_data/

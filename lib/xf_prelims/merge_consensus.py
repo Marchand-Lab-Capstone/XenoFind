@@ -26,21 +26,35 @@ main() - request paths to bam, pod5, and reference fasta files, merge, and
 # import statements
 import os
 import pysam
-import remora
+#import remora
 import sys
 import pod5
 import numpy as np
+#import dask.dataframe as dd
 import pandas as pd
 import math
 import json
 from Bio import SeqIO
-import tables
-import h5py # not sure if nessecary, too afraid to check
+#import tables
+#import h5py # not sure if nessecary, too afraid to check
 import re
 import numpy as np
 import scipy.signal as sig
 import gc
+#import tracemalloc
+from alive_progress import alive_bar
 
+'''
+tracemalloc.start()
+
+def memory_report():
+    snapshot = tracemalloc.take_snapshot()
+    top_stats = snapshot.statistics('lineno')
+
+    print("[ Top 5 Memory Uses ]--------------------------")
+    for stat in top_stats[:5]:
+        print(stat)
+        '''
 
 
 def load_in_data(bamfile_path):
@@ -102,6 +116,7 @@ def load_in_data(bamfile_path):
                 del(tag_dict)
                 data_list.append(read_dict)
             del(read)
+    gc.collect()
 
     # convert the list of dicts into a dataframe
     #df = pd.DataFrame(data_list)
@@ -181,6 +196,8 @@ def load_pod5_data(p5_path):
     # and it DOES NOT DISSAPEAR. ESLIT'rkjasvkajs;flksarejva;lkrvj
     data_list = []
     
+    
+    # ----------------------------------------------- Segment that hogs 7gigs. 
     # use pod5's reader object to read through the pod5 file
     with pod5.Reader(p5_path) as pod5_file:
         
@@ -210,9 +227,11 @@ def load_pod5_data(p5_path):
         del(read)
         gc.collect()
         
-    pod5_file.close()
+        pod5_file.close()
     del (pod5_file)
+    del()
             
+    print(type(data_list[0]['signal']))
     # return the data list 
     return data_list
 
@@ -259,12 +278,16 @@ def merge_bam_reads_by_id(bam_list_dict, read_list_dict, consensus_list_dict):
     del(rld)
     del(cld)
     del(merged_data_df)
+    del(bam_list_dict)
+    del(read_list_dict)
+    del(consensus_list_dict)
+    
     gc.collect()
 
     return data_dict
 
 
-def map_signal_to_moves(moves_table, offset, signal):
+def map_signal_to_moves(moves_table, offset, signal, bar):
     '''
     map_signal_to_moves() takes in a moves table, base offeset, and a signal,
     and then maps the signal to each corresponding move/observation in the table.
@@ -340,7 +363,11 @@ def map_signal_to_moves(moves_table, offset, signal):
         del(lendiff)
         del(moves)
         del(stride_indicies)
-        
+        del(moves_table)
+        del(offset)
+        del(signal)
+        bar()
+
         # return the list of observed signal segments
         return signal_list
     
@@ -358,9 +385,12 @@ def convert_signal_from_dict(merged_list_dict):
     '''
     # convert to dataframe
     merged_data_df = pd.DataFrame(merged_list_dict)
-    
+    del(merged_list_dict)
+    gc.collect()
     # map the signal to moves
-    merged_data_df['signal'] = merged_data_df.apply(lambda x: map_signal_to_moves(x['moves'], x['trim_ofs'], x['signal']), axis=1)
+    with alive_bar(len(merged_data_df['moves'])) as bar:
+        
+        merged_data_df['signal'] = merged_data_df.apply(lambda x: map_signal_to_moves(x['moves'], x['trim_ofs'], x['signal'], bar), axis=1)
     
     # convert back to a dict
     end_dict = merged_data_df.to_dict('records')
@@ -369,6 +399,7 @@ def convert_signal_from_dict(merged_list_dict):
     del(merged_data_df)
     
     # run garbage collection
+    gc.collect()
     
     # return the dict.
     return end_dict
@@ -404,6 +435,7 @@ def save_by_consensus(merged_signal_list_dict, savefile_path):
     # loop through the reference names:
     for consensus_id in consensus_ids:
         # filter the data accordingly:
+        #memory_report()
         consensus = df[df['ref_name'] == consensus_id]
         
         # Condense the data types (Making sure no info is lost)
@@ -484,10 +516,12 @@ if __name__ == "__main__":
     
     # Use the shannon entropy methods to load the bam
     loaded_bam = load_in_data(bam_path)
+    #memory_report()
     gc.collect()
     print("bam loaded")
     #Load the consensus reference fasta using shannon entropy methods
     consens = consensus_formatter(ref_fasta)
+    #memory_report()
     gc.collect()
 
     print('fasta loaded')
@@ -495,6 +529,8 @@ if __name__ == "__main__":
     print('processing reads...')
     # Load the pod5 read data using load_pod5_data -- MEMORY LEAK FROM pod5!!!!
     dl = load_pod5_data(pod5_path)
+    print(sys.getsizeof(dl))
+    #memory_report()
     gc.collect()
 
     print('reads processed')
@@ -502,11 +538,13 @@ if __name__ == "__main__":
     print('merging...')
     # Merge the data
     merged_list_dict = merge_bam_reads_by_id(loaded_bam, dl, consens)
+    #memory_report()
     gc.collect()
     print('merged')
     
     print('mapping signals to moves...')
     merged_signal_list_dict = convert_signal_from_dict(merged_list_dict)
+    #memory_report()
     gc.collect()
     print('signals mapped')
     

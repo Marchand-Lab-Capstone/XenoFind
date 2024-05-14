@@ -22,7 +22,7 @@ shannon_entropies() - method to calculate shannon entropies
 get_first_base() - method to get the first base in a list of bases
 check_base_match() - method to check if a base matches the reference
 mismatch_prob() - method to check probability of mismatches at given bases
-is_in_del() - method to check if something is an insertion/deletion or not.
+is_in_del() - method to check if s+omething is an insertion/deletion or not.
 filter_by_indel() - method to filter data to not conain information corresponding to insertions or deletions
 remove_in_dels() - method to remove insertions and deletions
 getmean() - method to get the mean value of dataset
@@ -941,6 +941,8 @@ def feature_extraction(json_path, verbose=False):
     # get te read_alignment dataframe
     read_alignment_df = pd.DataFrame(read_alignment_data)
     if verbose: print(str(datetime.datetime.now()) + ' alignment read. ')
+    
+    ## IF THERE IS A SPLIT IN DATA, SPLIT IT HERE AND MAKE THE FOLLOWING A PER-SPLIT METHOD
     
     if verbose: print(str(datetime.datetime.now()) + ' generating data coordinates... ')
     # base-based features, base_probs is 6 but lets just look at insertions and deletions
