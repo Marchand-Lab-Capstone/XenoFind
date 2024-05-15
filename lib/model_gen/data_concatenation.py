@@ -592,10 +592,10 @@ def part1(pod5_path, bam_path, ref_fasta):
 if __name__ == "__main__":
     
     #needs to be a moves table containing bam file 
-    bam_path = "/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240514_PZ_xm_lib_model_training_development/model_training/basecall_directory/aligned.bam"
-    pod5_path = "/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240514_PZ_xm_lib_model_training_development/model_training/merged_pod5/merged.pod5"
-    ref_fasta = "/home/marchandlab/github/jay/capstone/reference/xref_libv2_PZ_CxDx-.fa"
-    output_path = "/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/051424_json_file_generation"
+    pod5_path = sys.argv[1]
+    bam_path = sys.argv[2]
+    ref_fasta = sys.argv[3]
+    output_path = sys.argv[4]
     merged_list_dict = None
     with multiprocessing.Pool(processes=1) as loading_pool:
         merged_list_dict = loading_pool.starmap(part1, [(pod5_path, bam_path, ref_fasta)])[0]
@@ -613,5 +613,3 @@ if __name__ == "__main__":
     
     save_by_consensus(merged_signal_list_dict, output_path)
     gc.collect()
-    print("Everything's saved successfully! Closing. :)")
-    sys.exit()

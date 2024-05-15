@@ -37,7 +37,12 @@ shannon_entropy_graphs = False
 #cluster size filter threshold
 cluster_size_threshold = 100
 
+############################################################
 ##Model Training Parameters
+regenerate_json = False
+
+
+
 ############################################################
 #Dorado Base caller configuration
 

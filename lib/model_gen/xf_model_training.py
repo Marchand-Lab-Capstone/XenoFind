@@ -2,9 +2,11 @@ from Bio import SeqIO
 import os
 import pysam
 import sys
+import warnings
 import setup_methods as setup
 import raw_read_merger as rrm
 import xf_basecall as bc
+import feature_extraction as fe
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(script_dir)
@@ -75,27 +77,47 @@ def preprocessing(working_directory, raw_data, reference_fasta):
     align_cmd, aligned_bam_path = bc.alignment_command(bc_bam_path, reference_fasta, directories_list[3])
     os.system(align_cmd)
     
-    return aligned_bam_path
-
+    return merged_pod5_path, aligned_bam_path
+    
+def consensus_features(working_dir, merged_pod5, aligned_bam, ref_fasta):
+    """
+    """
+    directories_list = setup.setup_directory_system(working_dir)
+    
+    if xfp.regenerate_json or not os.listdir(directories_list[5]):
+        cmd = 'python lib/model_gen/data_concatenation.py '+merged_pod5+' '+aligned_bam+' '+ref_fasta+' '+ directories_list[5]+'/'
+        os.system(cmd)
+    
+    warnings.filterwarnings("ignore") # stops a warning from spamming your output
+    sys.path.append('..//') # path to directory holding feature_extraction
+    json_dir = directories_list[5]+'/'
+    json_file_names = os.listdir(json_dir)
+    cons_features_list = []
+    for i in range(len(json_file_names)): # can be adjusted to the number of files you want
+        json_file_path = os.path.join(json_dir, json_file_names[i])
+        consensus_features = fe.feature_extraction(json_file_path, verbose=False)
+        cons_features_list.append(consensus_features)
+    
+    return cons_features_list
 def main():
     #in_w_dir = input("Please provide working directory path: ")
     #in_r_dir = input("Please provide read directory path: ")
     #in_f_dir = input("Please provide reference fasta directory path: ")
     
-    #in_w_dir = sys.argv[1]
-    #in_r_dir = sys.argv[2]
-    #in_f_dir = sys.argv[3]
-    in_w_dir = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240508_PZ_xm_lib_model_training_development/' #Input desired working/ file output directory here
-    in_r_dir = '/home/marchandlab/DataAnalysis/Sumabat/230725_PZ_lib_v4_r10/20230725_1220_MN37138_APH167_a204cb54/fast5' #Input either fast5 or pod5 containing directory here 
-    in_f_fwd_dir = '/home/marchandlab/github/jay/capstone/reference/xPZ_xm_libv4_full.fa'
-    in_f_rev_dir = '/home/marchandlab/github/jay/capstone/reference/xPZ_xm_libv4_full.fa;
-    #Step 0: Rebasecalling/aligning data 
-    fwd_aligned_bam_path = preprocessing(in_w_dir, in_r_dir, in_f_rev_dir)
-    rev_aligned_bam_path = preprocessing(in_w_dir, in_r_dir, in_f_rev_dir)
+    '''
+    Need to chagne this to either: A, take in both a forward and reverse reference fasta file based on work from last week. B take in a fasta file containing both forward and reverse strands and auto split it.
+    '''
+    in_w_dir = sys.argv[1]
+    in_r_dir = sys.argv[2]
+    in_f_dir = sys.argv[3]
+    '''
+    if we had both forward and reverse reads decoupled, the preprocessing function would get called twice 
+    '''
+    merged_pod5_path, aligned_bam_path = preprocessing(in_w_dir, in_r_dir, in_f_dir)
     '''
     Need to decide if we simply call the shannon_entropies.py script or import functions
     '''
-
+    consensus_features_list = consensus_features(in_w_dir, merged_pod5_path, aligned_bam_path, in_f_dir)
 
 if __name__ == '__main__':
     main()
