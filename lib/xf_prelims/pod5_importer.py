@@ -2,8 +2,11 @@ import os
 import sys
 import pod5
 import gc
+import multiprocessing
+import pandas as pd
 
 def load_pod5_data(p5_path):
+    print('pod5 load called...')
     '''
     load_pod5_data reads read information from a pod5 file and then exports it as
     a list of dicts.
@@ -14,6 +17,7 @@ def load_pod5_data(p5_path):
     Returns:
     a list of dictionaries containing sequence id 'seq_id', signal 'signal', and sampling frequency 'freq'.
     '''
+
     # For some godforsaken reason, pod5 somehow consumes upwards of 6 GiB of memory when this runs, 
     # and it DOES NOT DISSAPEAR. ESLIT'rkjasvkajs;flksarejva;lkrvj
     data_list = []
@@ -23,38 +27,30 @@ def load_pod5_data(p5_path):
     # use pod5's reader object to read through the pod5 file
     with pod5.Reader(p5_path) as pod5_file:
         
-        # look at the reads
-        reads = pod5_file.reads()
-        
-        # loop through each read
-        for read in reads:
-            
-            # save the sequence id, signal, and frequency to a dict
-            seq_id = read.read_id
-            signal = read.signal_pa
-            freq = read.run_info.sample_rate
-            data_dict = {'seq_id': str(seq_id),
-                         'signal': signal,
-                         'freq': freq}
-            
-            # append the dict to the list
-            data_list.append(data_dict)
-            
-            # force garbage collection
-            del(seq_id)
-            del(signal)
-            del(freq)
-            del(data_dict)
-            # A GC collect here makes it run in circles
-        del(read)
-        gc.collect()
-        
+        for read in pod5_file.reads():
+            data_list.append(yoink(read))
         pod5_file.close()
-    del (pod5_file)
-    del()
+        
+    print('saving to pod5.pickle...')
+    pd.DataFrame(data_list).to_pickle('pod5.pickle')
+    
+    return pd.DataFrame(data_list)
             
     # return the data list 
-    return data_list
+    #return data_list
+
+
+
+def yoink(read):
+    seq_id = read.read_id
+    signal = read.signal_pa
+    freq = read.run_info.sample_rate
+    data_dict = {'seq_id': str(seq_id),
+                 'signal': signal,
+                 'freq': freq}
+    return data_dict
+
+        
 
 if __name__ == "__main__":
     import argparse

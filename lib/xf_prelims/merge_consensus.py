@@ -43,6 +43,9 @@ import scipy.signal as sig
 import gc
 #import tracemalloc
 from alive_progress import alive_bar
+import psutil
+import datetime
+import multiprocessing
 
 '''
 tracemalloc.start()
@@ -55,6 +58,23 @@ def memory_report():
     for stat in top_stats[:5]:
         print(stat)
         '''
+
+def memory_report():
+    #snapshot = tracemalloc.take_snapshot()
+    #top_stats = snapshot.statistics('lineno')
+    proc = psutil.Process(os.getpid())
+    rss = proc.memory_info().rss/(1*10**9)
+    vms= proc.memory_info().vms/(1*10**9)
+    shared = proc.memory_info().shared/(1*10**9)
+    data = proc.memory_info().data/(1*10**9)
+    #size,peak= tracemalloc.get_traced_memory()
+    print("[ Memory Report {} ]------------------------------------------------".format(datetime.datetime.now()))
+    print("RSS: {} gb, VMS: {} gb, SHARED: {} gb, DATA: {} gb".format(rss, vms, shared, data))
+    #print("Size: {} gb, Peak {} gb".format(size/(1*10**9),peak/(1*10**9)))
+    #print("[ Top 5 Memory Uses ]")
+    #for stat in top_stats[:5]:
+    #    print(stat)
+    print("--------------------------------------------------------------------------------------------")
 
 
 def load_in_data(bamfile_path):
@@ -181,6 +201,28 @@ def consensus_formatter(consensus_fasta_path):
     return df.to_dict('records')
 
 
+def yoink_from_read(read):
+    '''
+    yoink_from_read takes in a pod5.Reader.Read object,
+    and returns a dict of relevant info:
+    
+    Parameters:
+    read: the Read Object to be parsed
+    
+    Returns:
+    dictionary with seq_id, signal, and freq as keys.
+    '''
+    
+    # save the sequence id, signal, and frequency to a dict
+    seq_id = read.read_id
+    signal = read.signal_pa
+    freq = read.run_info.sample_rate
+    data_dict = {'seq_id': str(seq_id),
+                 'signal': signal,
+                 'freq': freq}
+    return data_dict
+
+
 def load_pod5_data(p5_path):
     '''
     load_pod5_data reads read information from a pod5 file and then exports it as
@@ -205,33 +247,13 @@ def load_pod5_data(p5_path):
         reads = pod5_file.reads()
         
         # loop through each read
-        for read in reads:
-            
-            # save the sequence id, signal, and frequency to a dict
-            seq_id = read.read_id
-            signal = read.signal_pa
-            freq = read.run_info.sample_rate
-            data_dict = {'seq_id': str(seq_id),
-                         'signal': signal,
-                         'freq': freq}
+        for read in pod5_file.reads():
             
             # append the dict to the list
-            data_list.append(data_dict)
-            
-            # force garbage collection
-            del(seq_id)
-            del(signal)
-            del(freq)
-            del(data_dict)
-            # A GC collect here makes it run in circles
-        del(read)
-        gc.collect()
+            data_list.append(yoink_from_read(read))
         
         pod5_file.close()
-    del (pod5_file)
-    del()
             
-    print(type(data_list[0]['signal']))
     # return the data list 
     return data_list
 
@@ -302,6 +324,7 @@ def map_signal_to_moves(moves_table, offset, signal, bar):
     a list of lists of signals that correspond to each move in the moves table.
     '''
     if (str(signal) == 'nan'):
+        bar()
         return np.asarray([])
     else:
         # Generate an empty list to hold the true moves
@@ -405,6 +428,78 @@ def convert_signal_from_dict(merged_list_dict):
     return end_dict
     
     
+def jsonwriter(consensus, savefile_path):
+    # filter the data accordingly:
+
+
+    # Condense the data types (Making sure no info is lost)
+    consensus.loc[:,'quality']=consensus['quality'].apply(np.int16)
+    consensus.loc[:,'len']=consensus['len'].apply(np.int16)
+    consensus.loc[:,'ref']=consensus['ref'].apply(np.int16)
+    consensus.loc[:,'rev']=consensus['rev'].apply(np.int16)
+    consensus.loc[:,'moves']=consensus['moves'].apply(np.asarray)
+    consensus.loc[:,'sig_len']=consensus['sig_len'].apply(np.int16)
+    consensus.loc[:,'trim_ofs']=consensus['trim_ofs'].apply(np.int16)
+    consensus = consensus.reset_index(drop=True)
+    # sub method to convert datatypes in a list to a list
+
+
+    def listconvert(x):
+        # submethod listconvert is used to map subsects of data entries to lists.
+
+        for i in range(len(x)):
+            x[i]=list(x[i])
+        return x
+
+
+    consensus.loc[:,'signal']=consensus['signal'].apply(listconvert)
+    consensus.loc[:,'freq']=consensus['freq'].apply(np.float16)
+
+    # Get the reference name, sequence, and frequency - 
+    # #### THIS IS ASSUMING THAT THE FREQUENCY IS THE SAME FOR ALL READS ####
+    ref_name = consensus['ref_name'][0]
+    ref_seq = consensus['ref_seq'][0]
+    freq = consensus['freq'][0]
+
+    # remove those columns
+    del(consensus['ref_seq'])
+    del(consensus['ref_name'])
+    del(consensus['freq'])
+
+    # generate the header and filename
+    header = {'ref_seq':ref_seq,'freq':freq}
+    filename = "cons_merge__{}.json".format(ref_name)
+
+    # generate the filepath
+    filepath = savefile_path + filename
+
+    # generate the json object with the header and the dataframe
+    json_frame = consensus.to_json() # conver dataframe to json
+    json_frame = json.loads(json_frame) # convert json back to dict
+    json_out = json.dumps([header, json_frame]) # convert list of dicts to json
+
+    del(consensus)
+    # if the path exists, overwrite it
+    if os.path.exists(filepath):
+        os.remove(filepath)
+
+    # write the json object
+    with open(filepath, 'a') as file:
+        file.write(json_out)
+    file.close()
+
+    # run garbage collector.
+    del(file)
+    del(ref_name)
+    del(ref_seq)
+    del(freq)
+    del(header)
+    del(filename)
+    del(filepath)
+    del(json_frame)
+    del(json_out)
+    
+    
 def save_by_consensus(merged_signal_list_dict, savefile_path):
     '''
     save_by_consensus() saves reads by consensus in their own individual json files.
@@ -432,96 +527,44 @@ def save_by_consensus(merged_signal_list_dict, savefile_path):
     # then, get the reference names
     consensus_ids = list(df['ref_name'].unique())
     
-    # loop through the reference names:
-    for consensus_id in consensus_ids:
-        # filter the data accordingly:
-        #memory_report()
-        consensus = df[df['ref_name'] == consensus_id]
+    # There's an optimization problem here for how large a batchsize to how fast it processes,
+    # 25 is pretty close.
+    n = 25
+    
+    # Set up a progress bar for funsies
+    with alive_bar(len(consensus_ids)) as bar:
+        # create batches of consensus ids
+        batched_consensus_ids = [consensus_ids[i:i+n] for i in range(0, len(consensus_ids), n)]
         
-        # Condense the data types (Making sure no info is lost)
-        consensus.loc[:,'quality']=consensus['quality'].apply(np.int16)
-        consensus.loc[:,'len']=consensus['len'].apply(np.int16)
-        consensus.loc[:,'ref']=consensus['ref'].apply(np.int16)
-        consensus.loc[:,'rev']=consensus['rev'].apply(np.int16)
-        consensus.loc[:,'moves']=consensus['moves'].apply(np.asarray)
-        consensus.loc[:,'sig_len']=consensus['sig_len'].apply(np.int16)
-        consensus.loc[:,'trim_ofs']=consensus['trim_ofs'].apply(np.int16)
-        consensus = consensus.reset_index(drop=True)
-        # sub method to convert datatypes in a list to a list
-        
-        def listconvert(x):
-            # submethod listconvert is used to map subsects of data entries to lists.
-            for i in range(len(x)):
-                x[i]=list(x[i])
-            return x
-        
-        consensus.loc[:,'signal']=consensus['signal'].apply(listconvert)
-        consensus.loc[:,'freq']=consensus['freq'].apply(np.float16)
-        
-        # Get the reference name, sequence, and frequency - 
-        # #### THIS IS ASSUMING THAT THE FREQUENCY IS THE SAME FOR ALL READS ####
-        ref_name = consensus['ref_name'][0]
-        ref_seq = consensus['ref_seq'][0]
-        freq = consensus['freq'][0]
-        
-        # remove those columns
-        del(consensus['ref_seq'])
-        del(consensus['ref_name'])
-        del(consensus['freq'])
-        
-        # generate the header and filename
-        header = {'ref_seq':ref_seq,'freq':freq}
-        filename = "cons_merge__{}.json".format(ref_name)
-        
-        # generate the filepath
-        filepath = savefile_path + filename
-        
-        # generate the json object with the header and the dataframe
-        json_frame = consensus.to_json() # conver dataframe to json
-        json_frame = json.loads(json_frame) # convert json back to dict
-        json_out = json.dumps([header, json_frame]) # convert list of dicts to json
-
-        del(consensus)
-        # if the path exists, overwrite it
-        if os.path.exists(filepath):
-            os.remove(filepath)
-        
-        # write the json object
-        with open(filepath, 'a') as file:
-            file.write(json_out)
-        file.close()
-        
-        # run garbage collector.
-        del(file)
-        del(ref_name)
-        del(ref_seq)
-        del(freq)
-        del(header)
-        del(filename)
-        del(filepath)
-        del(json_frame)
-        del(json_out)
+        # loop through each batch
+        for batch in batched_consensus_ids:
+            param_list = []
+            # within each batch, add a touple to the param list of the corresponding dataframe and the path
+            for consensus_id in batch:
+                consensus = df[df['ref_name'] == consensus_id]
+                param_list.append((consensus, savefile_path))
+                
+            # use multiprocessing to run the batch and save them using jsonwriter
+            with multiprocessing.Pool(processes=n) as jsonpool:
+                jsonpool.starmap(jsonwriter, param_list)
+            # toggle the bar the corresponding number of times for the batchsize
+            for i in range(n):
+                bar()
 
     
     # return the savefile path
-    return savefile_path    
+    return savefile_path
 
 
-if __name__ == "__main__":
-    
-    bam_path = input("Bam Path: ")
-    pod5_path = input("pod5 path: ")
-    ref_fasta = input("reference fasta path: ")
-    output_path = input("output path ")
-    
-    # Use the shannon entropy methods to load the bam
+def part1(pod5_path, bam_path, ref_fasta):
+        # Use the shannon entropy methods to load the bam
     loaded_bam = load_in_data(bam_path)
-    #memory_report()
+    memory_report()
     gc.collect()
     print("bam loaded")
     #Load the consensus reference fasta using shannon entropy methods
     consens = consensus_formatter(ref_fasta)
-    #memory_report()
+    memory_report()
     gc.collect()
 
     print('fasta loaded')
@@ -530,7 +573,7 @@ if __name__ == "__main__":
     # Load the pod5 read data using load_pod5_data -- MEMORY LEAK FROM pod5!!!!
     dl = load_pod5_data(pod5_path)
     print(sys.getsizeof(dl))
-    #memory_report()
+    memory_report()
     gc.collect()
 
     print('reads processed')
@@ -538,19 +581,36 @@ if __name__ == "__main__":
     print('merging...')
     # Merge the data
     merged_list_dict = merge_bam_reads_by_id(loaded_bam, dl, consens)
-    #memory_report()
+    memory_report()
     gc.collect()
     print('merged')
     
+    return merged_list_dict
+    
+    
+
+if __name__ == "__main__":
+    
+    bam_path = input("Bam Path: ")
+    pod5_path = input("pod5 path: ")
+    ref_fasta = input("reference fasta path: ")
+    output_path = input("output path ")
+    merged_list_dict = None
+    with multiprocessing.Pool(processes=1) as loading_pool:
+        merged_list_dict = loading_pool.starmap(part1, [(pod5_path, bam_path, ref_fasta)])[0]
+
+    memory_report()
+    
     print('mapping signals to moves...')
     merged_signal_list_dict = convert_signal_from_dict(merged_list_dict)
-    #memory_report()
     gc.collect()
     print('signals mapped')
     
+    memory_report()
+
     print('saving to {}...'.format(output_path))
     
     save_by_consensus(merged_signal_list_dict, output_path)
     gc.collect()
-    print('Closing. ')
+    print("Everything's saved successfully! Closing. :)")
     sys.exit()
