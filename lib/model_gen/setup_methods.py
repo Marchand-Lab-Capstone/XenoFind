@@ -49,4 +49,5 @@ def setup_directory_system(working_directory):
     p5dir = check_make_dir(model_train_dir + "merged_pod5") #2
     bcdir = check_make_dir(model_train_dir + "basecall_directory/") #3
     merged_dir = check_make_dir(model_train_dir + "merged_dataset") #4
-    return [wdir,model_train_dir,p5dir,bcdir, merged_dir]
+    json_dir = check_make_dir(model_train_dir + "json_files") #5
+    return [wdir,model_train_dir,p5dir,bcdir, merged_dir, json_dir]

@@ -15,7 +15,7 @@ Updated: 11/28/23
 ##Analysis instructions 
 
 #Re-basecall pod5 file. Required if new reference files are being used. 
-basecall_pod = True
+basecall_pod = False
 
 #Perform Quality Score Analysis 
 analyze_fastq = True
@@ -37,7 +37,12 @@ shannon_entropy_graphs = False
 #cluster size filter threshold
 cluster_size_threshold = 100
 
+############################################################
 ##Model Training Parameters
+regenerate_json = False
+
+
+
 ############################################################
 #Dorado Base caller configuration
 

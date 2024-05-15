@@ -21,7 +21,7 @@ DATASETS TO TESTS
 
 '''
 # Consensus Paths
-working_dir = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240507_pzbs_mixed_test_fwd_rev_70_threshold/' #Input desired working/ file output directory here  <--- fix directory function to not neeed '/' at end
+working_dir = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240509_split_fwd_rev_fasta_tests/' #Input desired working/ file output directory here  <--- fix directory function to not neeed '/' at end
 #raw_dir = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #Input either fast5 or pod5 containing directory here
 raw_dir = '/home/marchandlab/github/jay/capstone/datasets/bsn_pz_mixed_90mer/pod5'
 #raw_dir = '/home/marchandlab/DataAnalysis/Sumabat/230725_PZ_lib_v4_r10/20230725_1220_MN37138_APH167_a204cb54/subset_fast5' #Input either fast5 or pod5 containing directory here
@@ -32,20 +32,21 @@ placeholder_fasta = '/home/marchandlab/github/jay/capstone/datasets/bsn_pz_mixed
 #placeholder_fasta = '/home/marchandlab/github/jay/capstone/reference/xPZ_NB25_xr_Train_fake_randomer.fasta' #PZ 139 mer data set
 #placeholder_fasta = '/home/marchandlab/github/jay/capstone/reference/xxref_libv2_PZ_CxDx-_fake_randomer.fasta'#PZ xenomorph library
 
-# Detection Paths
-working_dir_detect = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240419_BSn_90mer_SE_tests' #Input desired working/ file output directory here
-raw_dir_detect = '/home/marchandlab/DataAnalysis/Kaplan/raw/fast5/10.4.1/240104_BSn_90mer_xr_train/50fast5' #Input either fast5 or pod5 containing directory here 
-con_fasta_fwd = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240418_four_output_tests/consensus_files/xf_consensus_output/forward_reads/labeled_consensus.fasta' #Input consensus fasta or canonical ground truth fasta here
-con_fasta_rev = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240418_four_output_tests/consensus_files/xf_consensus_output/reverse_reads/labeled_consensus.fasta' #Input consensus fasta or canonical ground truth fasta here
-con_fasta_rev_unflipped = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240418_four_output_tests/consensus_files/xf_consensus_output/reverse_unflipped_reads/labeled_consensus.fasta' #Input consensus fasta or canonical ground truth fasta here
-con_fasta_all = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240418_four_output_tests/consensus_files/xf_consensus_output/total_reads/labeled_consensus.fasta' #Input consensus fasta or canonical ground truth fasta here
-######################################################
-
+# Model Training Paths 
+working_dir_model = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240514_model_preprocessing_tests' #Input desired working/ file output directory here
+raw_dir_train = '/home/marchandlab/DataAnalysis/Sumabat/230725_PZ_lib_v4_r10/20230725_1220_MN37138_APH167_a204cb54/fast5' #Input either fast5 or pod5 containing directory here 
+ref_fasta = '/home/marchandlab/github/jay/capstone/reference/xref_libv2_PZ_CxDx-.fa'
+#fwd_fasta = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240418_four_output_tests/consensus_files/xf_consensus_output/forward_reads/labeled_consensus.fasta' #Input consensus fasta or canonical ground truth fasta here
+#rev_fasta = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240418_four_output_tests/consensus_files/xf_consensus_output/reverse_reads/labeled_consensus.fasta' #Input consensus fasta or canonical ground truth fasta here
 
 ######################################################
 
-consensus = True
-find = False #placeholder variables 
+
+######################################################
+
+consensus = False
+model_gen = True #placeholder variables 
+find = False
 
 ######################################################
 
@@ -54,6 +55,12 @@ if consensus == True:
 	cmd = 'python xenofind.py consensus -w ' + working_dir+' -f '+ raw_dir+' -r '+placeholder_fasta
 	os.system(cmd)
 
+# Find model generation 
+if model_gen == True:
+    #cmd = 'python xenofind.py model_gen -w '+working_dir_model+ ' -f '+ raw_dir+' -r1 '+fwd_fasta+' -r2 '+rev_fasta
+    cmd = 'python xenofind.py model_gen -w '+working_dir_model+' -f '+raw_dir_train+' -r '+ref_fasta
+    os.system(cmd)
+    
 # Low Quality Score Detection 
 if find == True: 
 	cmd = 'python xenofind.py find -w '+working_dir_detect+' -f '+raw_dir_detect+' -r '+con_fasta
