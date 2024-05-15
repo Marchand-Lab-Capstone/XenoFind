@@ -44,11 +44,9 @@ def setup_directory_system(working_directory):
             consensus_files_directory 1,
             merged_pod5 2,
             basecall_directory 3,
-            total_reads_directory 4,
-            total_reads_fasta_directory 5,
-            total_reads_vsearch_directory 6,
-            xf_consensus_output 7,
-            total_read 8
+            preprocessing_directory 4,
+            preprocessing_fasta_directory 5,
+            preprocessing_vsearch_directory 6,
     """
     
     # Use check_make_dir to generate or validate the existing directories.
@@ -56,9 +54,8 @@ def setup_directory_system(working_directory):
     con_file_dir = check_make_dir(working_directory + "consensus_files")
     p5dir = check_make_dir(con_file_dir + "merged_pod5")
     bcdir = check_make_dir(con_file_dir + "basecall_directory")
-    total_dir = check_make_dir(con_file_dir + "total_reads")
-    fadir_tot = check_make_dir(total_dir + "fasta_directory")
-    vsearch_dir_tot = check_make_dir(total_dir + "vsearch_processing")
-    xfconsdir = check_make_dir(con_file_dir + "xf_consensus_output")
-    xfconsdir_all = check_make_dir(xfconsdir + "total_reads")
-    return [wdir, con_file_dir, p5dir, bcdir, total_dir, fadir_tot, vsearch_dir_tot, xfconsdir, xfconsdir_all]
+    preprocess_dir = check_make_dir(con_file_dir + "preprocessing")
+    fadir_pre = check_make_dir(preprocess_dir + "fasta_directory")
+    vsearch_dir_pre = check_make_dir(preprocess_dir + "vsearch_processing")
+
+    return [wdir, con_file_dir, p5dir, bcdir, preprocess_dir, fadir_pre, vsearch_dir_pre]

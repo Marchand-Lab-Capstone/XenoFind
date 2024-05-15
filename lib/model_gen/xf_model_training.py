@@ -87,11 +87,11 @@ def main():
     #in_f_dir = sys.argv[3]
     in_w_dir = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240508_PZ_xm_lib_model_training_development/' #Input desired working/ file output directory here
     in_r_dir = '/home/marchandlab/DataAnalysis/Sumabat/230725_PZ_lib_v4_r10/20230725_1220_MN37138_APH167_a204cb54/fast5' #Input either fast5 or pod5 containing directory here 
-    in_f_dir = '/home/marchandlab/github/jay/capstone/reference/xPZ_xm_libv4_full.fa'
-
+    in_f_fwd_dir = '/home/marchandlab/github/jay/capstone/reference/xPZ_xm_libv4_full.fa'
+    in_f_rev_dir = '/home/marchandlab/github/jay/capstone/reference/xPZ_xm_libv4_full.fa;
     #Step 0: Rebasecalling/aligning data 
-    aligned_bam_path = preprocessing(in_w_dir, in_r_dir, in_f_dir)
-    
+    fwd_aligned_bam_path = preprocessing(in_w_dir, in_r_dir, in_f_rev_dir)
+    rev_aligned_bam_path = preprocessing(in_w_dir, in_r_dir, in_f_rev_dir)
     '''
     Need to decide if we simply call the shannon_entropies.py script or import functions
     '''

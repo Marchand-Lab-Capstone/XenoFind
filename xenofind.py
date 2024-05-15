@@ -24,7 +24,7 @@ from lib.xf_params import *
 
 
 parser = argparse.ArgumentParser(
-        usage='"python xenofind.py  [-h] {consensus, low_qual}',
+        usage='"python xenofind.py  [-h] {consensus, model_gen, find}',
         formatter_class=argparse.RawTextHelpFormatter,
 	description= textwrap.dedent('''
 
@@ -52,12 +52,18 @@ parser_train.add_argument('-w',metavar = '[working_dir]', type=str,required = Tr
 parser_train.add_argument('-f',metavar ='[raw_dir]', type=str,required = True, help='Path to input directories containing multi-fast5 or pod5 folder')
 parser_train.add_argument('-r',metavar = '[placeholder_fasta]', type=str, required = True, help='Path to FASTA (.fa, .fasta) file of sequence or sequences with barcodes for alignment and randomer placeholders for consensus formation. ')
 
+#Consensus Formation
+parser_train = subparsers.add_parser('model_gen', help='[-w working_dir] [-f raw_dir] [-r placeholder_fasta]')
+parser_train.add_argument('-w',metavar = '[working_dir]', type=str,required = True, help='Path to output directory for storing outputs and intermediates')
+parser_train.add_argument('-f',metavar ='[raw_dir]', type=str,required = True, help='Path to input directories containing multi-fast5 or pod5 folder')
+parser_train.add_argument('-r1',metavar = '[placeholder_fasta]', type=str, required = True, help='Path to FASTA (.fa, .fasta) file of sequence or sequences for model training. ')
+parser_train.add_argument('-r2',metavar = '[placeholder_fasta]', type=str, required = True, help='Path to FASTA (.fa, .fasta) file of sequence or sequences for model training. ')
 
 #Low Quality XNA Detection
 parser_basecall = subparsers.add_parser('find', help='[-w working_dir] [-f raw_dir] [-r consensus_fasta] ')
 parser_basecall.add_argument('-w',metavar = '[working_dir]', type=str,required = True, help='Path to output directory for storing outputs and intermediates')
-parser_basecall.add_argument('-f',metavar ='[raw_dir]', type=str,required = True, help='Path to input directories containing multi-fast5 folders of XNA-containing sequence.')
-parser_basecall.add_argument('-r',metavar = '[con_fasta]', type=str, required = True, help='Path to FASTA (.fa, .fasta) file of sequence or sequences with XNAs (e.g. BSPZKXJV). Should be same sequence context as xemora model training.')
+parser_basecall.add_argument('-f',metavar ='[raw_dir]', type=str,required = True, help='Path to input directories containing multi-fast5 or pod5 files for consensus formed dataset')
+parser_basecall.add_argument('-r',metavar = '[con_fasta]', type=str, required = True, help='Path to consensus fasta')
 
 
 
@@ -79,9 +85,24 @@ if args.subparsers == 'consensus':
         print('XenoFind [ERROR] - Consensus requires a dummy fasta to be inputted. This file path is invalid. Check to ensure that the fasta path is corect.')
         exit_flag = True 
 
+    if exit_flag == False: 
+        cmd = 'python lib/consensus_formation/weighted_consensus_split.py '+args.w+' '+args.f+' '+args.r
+        os.system(cmd)
+    else: 
+        print('XenoFind [ERROR] - At least one file path not properly set. XenoFind exiting.')
+        sys.exit()
+
+if args.subparsers == 'model_gen': 
+    if os.path.exists(os.path.expanduser(args.f))==False:
+        print('XenoFind [ERROR] - model_gen requires either a Pod5 or Fast5 directory. This file path is invalid. Check to ensure pod5/fast path is correct.')
+        exit_flag = True 
+
+    if os.path.exists(os.path.expanduser(args.r1))==False or os.path.exists(os.path.expanduser(args.r1))==False:
+        print('XenoFind [ERROR] - model_gen requires a forward and reverse sequence fasta files for training. At least one of these file path is invalid. Check to ensure fasta path(s) are set properly..')
+        exit_flag = True 
 
     if exit_flag == False: 
-        cmd = 'python lib/consensus_formation/weighted_consensus.py '+args.w+' '+args.f+' '+args.r
+        cmd = 'python lib/consensus_formation/weighted_consensus_split.py '+args.w+' '+args.f+' '+args.r
         os.system(cmd)
     else: 
         print('XenoFind [ERROR] - At least one file path not properly set. XenoFind exiting.')
