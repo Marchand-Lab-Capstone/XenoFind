@@ -21,7 +21,6 @@ consensus sequences are built.
 
 WIP
 """
-
 def preprocessing(working_directory, raw_data, reference_fasta):
     """
     preprocessing will generate necessary files needed for feature extraction 
@@ -39,16 +38,15 @@ def preprocessing(working_directory, raw_data, reference_fasta):
     directories_list = setup.setup_directory_system(working_directory)
     
     #File path string for the merged pod5
-    merged_pod5_path = directories_list[2] + p5_fname + '.pod5'
+    merged_pod5_path = os.path.join(directories_list[2], p5_fname + '.pod5')
     # add a parameter at top that takes in forced for all the functions 
     if not (os.path.exists(merged_pod5_path)):
         # Using RRM, generate the pod5 from the data directory
         rrm.generate_merged_pod5(raw_data,
-                                 directories_list[2],
-                                 p5_fname)
+                                 merged_pod5_path)
 
     #-------Basecalling---------
-    bc_bam_path = os.path.join(directories_list[3],basecall_fname)+'.bam'
+    bc_bam_path = os.path.join(directories_list[3], basecall_fname+'.bam')
     #Make this toggleable if data needs to be rebasecalled 
     if not (os.path.exists(bc_bam_path)) or xfp.basecall_pod == True:
         print('Xenofind [STATUS] - Basecalling using Dorado')
@@ -58,8 +56,7 @@ def preprocessing(working_directory, raw_data, reference_fasta):
                                      xfp.auto_model_type,
                                      xfp.min_qscore,
                                      merged_pod5_path,
-                                     directories_list[3],
-                                     basecall_fname)
+                                     bc_bam_path)
             st = os.system(bccmd)
         else:
             #Generate basecall command and run it
@@ -67,8 +64,7 @@ def preprocessing(working_directory, raw_data, reference_fasta):
                                      xfp.dorado_model_path,
                                      xfp.min_qscore,
                                      merged_pod5_path,
-                                     directories_list[3],
-                                     basecall_fname)
+                                     bc_bam_path)
             st = os.system(bccmd)
     else: 
         print('Xenofind [STATUS] - basecalls found, skipping basecalling')
@@ -96,7 +92,8 @@ def consensus_features(working_dir, merged_pod5, aligned_bam, ref_fasta):
     for i in range(len(json_file_names)): # can be adjusted to the number of files you want
         json_file_path = os.path.join(json_dir, json_file_names[i])
         consensus_features = fe.feature_extraction(json_file_path, verbose=False)
-        cons_features_list.append(consensus_features)
+        cons_features_list.append(consensus_features.T)
+        print('Consensus sequence', i, 'features', consensus_features.T)
     
     return cons_features_list
 def main():
@@ -113,6 +110,7 @@ def main():
     '''
     if we had both forward and reverse reads decoupled, the preprocessing function would get called twice 
     '''
+    #xfasta_path = 
     merged_pod5_path, aligned_bam_path = preprocessing(in_w_dir, in_r_dir, in_f_dir)
     '''
     Need to decide if we simply call the shannon_entropies.py script or import functions

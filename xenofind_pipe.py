@@ -33,7 +33,7 @@ placeholder_fasta = '/home/marchandlab/github/jay/capstone/datasets/bsn_pz_mixed
 #placeholder_fasta = '/home/marchandlab/github/jay/capstone/reference/xxref_libv2_PZ_CxDx-_fake_randomer.fasta'#PZ xenomorph library
 
 # Model Training Paths 
-working_dir_model = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240514_model_preprocessing_tests' #Input desired working/ file output directory here
+working_dir_model = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240514_model_preprocessing_tests/' #Input desired working/ file output directory here
 raw_dir_train = '/home/marchandlab/DataAnalysis/Sumabat/230725_PZ_lib_v4_r10/20230725_1220_MN37138_APH167_a204cb54/fast5' #Input either fast5 or pod5 containing directory here 
 ref_fasta = '/home/marchandlab/github/jay/capstone/reference/xref_libv2_PZ_CxDx-.fa'
 #fwd_fasta = '/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240418_four_output_tests/consensus_files/xf_consensus_output/forward_reads/labeled_consensus.fasta' #Input consensus fasta or canonical ground truth fasta here

@@ -6,7 +6,6 @@ raw_read_merger.py contains methods used for taking a directory of either fast5 
 and then merging them into a singular pod5 file. 
 
 merge_reads_command() - generate the merge command dependant on the OS and filetype.
-validate_read_directory() - check that the passed read directory actually exists.
 validate_target_directory() - check if a passed directory exists. 
 generate_merged_pod5() - use a directory of reads to generate the merged pod5, agnostic of filetype
 """
@@ -16,22 +15,20 @@ import os
 import platform
 SYS = platform.system()
 
-def merge_reads_command(reads_dir, filetype, target_dir_path, file_name):
+def merge_reads_command(reads_dir, filetype, target_dir_path):
     # This already assumes the read directory and target directory are valid
     cmd = ""
     subcommand = ""
     os_command = ""
-    output_filename = "{}{}.pod5".format(target_dir_path, file_name)
     
     if filetype == 'fast5':
         subcommand = 'convert fast5'
     elif filetype == 'pod5':
         subcommand = 'merge'
     
-    os_command = '{}/*.{}'.format(reads_dir, filetype) #need to account for when users enter their file path as A/B/C/ <-- last slash included
-        
-    cmd = "pod5 {} --force-overwrite {} -o {}".format(subcommand, os_command, output_filename)
-
+    os_command = '{}/*.{}'.format(reads_dir, filetype) 
+    cmd = "pod5 {} --force-overwrite {} -o {}".format(subcommand, os_command, target_dir_path)
+    print(cmd)
     return cmd
 
 
@@ -53,19 +50,11 @@ def validate_read_directory(reads_dir):
             filetype = uniques[0]
             
     return filetype
-
-
-def validate_target_directory(target_dir):
-    directory_exists = os.path.isdir(target_dir)
-    return directory_exists
-        
     
-def generate_merged_pod5(reads_dir, target_dir_path, file_name):
+def generate_merged_pod5(reads_dir, target_dir_path):
     filetype = validate_read_directory(reads_dir)
-    valid_target = validate_target_directory(target_dir_path)
-    st = 1
-    if (valid_target and (filetype != "")):
-        cmd = merge_reads_command(reads_dir, filetype, target_dir_path, file_name)
+    if filetype != "":
+        cmd = merge_reads_command(reads_dir, filetype, target_dir_path)
         st = os.system(cmd)
-    return (st, filetype, valid_target)
+    return st, filetype
     
