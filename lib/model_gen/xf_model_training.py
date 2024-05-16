@@ -7,6 +7,7 @@ import setup_methods as setup
 import raw_read_merger as rrm
 import xf_basecall as bc
 import feature_extraction as fe
+from alive_progress import alive_bar
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(script_dir)
@@ -84,17 +85,19 @@ def consensus_features(working_dir, merged_pod5, aligned_bam, ref_fasta):
         cmd = 'python lib/model_gen/data_concatenation.py '+merged_pod5+' '+aligned_bam+' '+ref_fasta+' '+ directories_list[5]+'/'
         os.system(cmd)
     
-    warnings.filterwarnings("ignore") # stops a warning from spamming your output
-    sys.path.append('..//') # path to directory holding feature_extraction
-    json_dir = directories_list[5]+'/'
+    warnings.filterwarnings("ignore")  # stops a warning from spamming your output
+    sys.path.append('..//')  # path to directory holding feature_extraction
+    json_dir = directories_list[5] + '/'
     json_file_names = os.listdir(json_dir)
     cons_features_list = []
-    for i in range(len(json_file_names)): # can be adjusted to the number of files you want
-        json_file_path = os.path.join(json_dir, json_file_names[i])
-        consensus_features = fe.feature_extraction(json_file_path, verbose=False)
-        cons_features_list.append(consensus_features.T)
-        print('Consensus sequence', i, 'features', consensus_features.T)
     
+    with alive_bar(len(json_file_names), title="Processing JSON files") as bar:
+        for i in range(len(json_file_names)):
+            json_file_path = os.path.join(json_dir, json_file_names[i])
+            consensus_features = fe.feature_extraction(json_file_path, verbose=False)
+            cons_features_list.append(consensus_features.T)
+            print('Consensus sequence', i, 'features', consensus_features.T)
+            bar()  # Update the progress bar
     return cons_features_list
 def main():
     #in_w_dir = input("Please provide working directory path: ")
