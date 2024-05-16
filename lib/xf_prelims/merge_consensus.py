@@ -3,6 +3,7 @@ merge_consensus.py
 J. Sumabat, N. Lai, S. Peck, Y. Huang
 4/24/2024 -- Created by S. Peck
 4/29/2024 -- Updated by S. Peck
+5/15/2024 -- Updated by S. Peck
 
 merge_consensus.py is designed around importing a bamfile of reads, a consensensus fasta, and a pod5 file, 
 and then combining the information contained into separate json files organized by consensus sequence and constituent reads.
@@ -16,6 +17,9 @@ merge_bam_reads_by_id() - merge data from load_in_data, consensus_formatter, and
 map_signal_to_moves() - map a nanopore sequencing signal to the corresponding moves table extracted from that read's bamfile.
 convert_signal_to_dict() - convert merged data's signal data to be mapped onto each read's corresponding moves.
 save_by_consensus() - exports each individual consensus and its constituent reads to json files at a specified folder.
+yoink_from_read() - extracts the dictionary from a pod5 read of relevant info
+jsonwriter() - writes the data out to individualized consensus json files.
+load_and_merge() - merges the bam, pod5, and fasta data into one list of dictionaries.
 main() - request paths to bam, pod5, and reference fasta files, merge, and 
          save those data by consensus to individual json files
          at a specified output.
@@ -26,54 +30,45 @@ main() - request paths to bam, pod5, and reference fasta files, merge, and
 # import statements
 import os
 import pysam
-#import remora
 import sys
 import pod5
 import numpy as np
-#import dask.dataframe as dd
 import pandas as pd
 import math
 import json
 from Bio import SeqIO
-#import tables
-#import h5py # not sure if nessecary, too afraid to check
 import re
 import numpy as np
 import scipy.signal as sig
 import gc
-#import tracemalloc
 from alive_progress import alive_bar
 import psutil
 import datetime
 import multiprocessing
+import argparse
 
-'''
-tracemalloc.start()
-
-def memory_report():
-    snapshot = tracemalloc.take_snapshot()
-    top_stats = snapshot.statistics('lineno')
-
-    print("[ Top 5 Memory Uses ]--------------------------")
-    for stat in top_stats[:5]:
-        print(stat)
-        '''
+VERBOSE = False
+MEM_TRACK = False
 
 def memory_report():
-    #snapshot = tracemalloc.take_snapshot()
-    #top_stats = snapshot.statistics('lineno')
+    '''
+    memory_report is a method of reporting the memory use statistics at any given point in the process,
+    through printing a string of information.
+    
+    Parameters:
+    None
+    Returns:
+    None
+    '''
+    
+    # use psutil to get the process memory info in Gb
     proc = psutil.Process(os.getpid())
     rss = proc.memory_info().rss/(1*10**9)
     vms= proc.memory_info().vms/(1*10**9)
     shared = proc.memory_info().shared/(1*10**9)
     data = proc.memory_info().data/(1*10**9)
-    #size,peak= tracemalloc.get_traced_memory()
     print("[ Memory Report {} ]------------------------------------------------".format(datetime.datetime.now()))
-    print("RSS: {} gb, VMS: {} gb, SHARED: {} gb, DATA: {} gb".format(rss, vms, shared, data))
-    #print("Size: {} gb, Peak {} gb".format(size/(1*10**9),peak/(1*10**9)))
-    #print("[ Top 5 Memory Uses ]")
-    #for stat in top_stats[:5]:
-    #    print(stat)
+    print("RSS: {} Gb, VMS: {} Gb, SHARED: {} Gb, DATA: {} Gb".format(rss, vms, shared, data))
     print("--------------------------------------------------------------------------------------------")
 
 
@@ -556,62 +551,121 @@ def save_by_consensus(merged_signal_list_dict, savefile_path):
     return savefile_path
 
 
-def part1(pod5_path, bam_path, ref_fasta):
-        # Use the shannon entropy methods to load the bam
+def load_and_merge(pod5_path, bam_path, ref_fasta):
+    '''
+    load_and_merge takes in a pod5, bam, and fasta filepath,
+    and then generates and returns a merged list of dictionaries,
+    containing all the merged reads by ID and their relevant info.
+    
+    Parameters:
+    pod5_path: path, as str, to pod5 file
+    bam_path: path, as str, to bam file
+    ref_fasta: path, as str, to reference fasta file
+    
+    Returns:
+    a list of dictionaries of all the data, merged by read sequence id.
+    '''
     loaded_bam = load_in_data(bam_path)
-    memory_report()
+    if MEM_TRACK: memory_report()
     gc.collect()
-    print("bam loaded")
+    if VERBOSE: print("[ merge_consensus.py ] Bam loaded.")
+    
     #Load the consensus reference fasta using shannon entropy methods
     consens = consensus_formatter(ref_fasta)
-    memory_report()
+    if MEM_TRACK: memory_report()
     gc.collect()
 
-    print('fasta loaded')
+    if VERBOSE: print('[ merge_consensus.py ] Fasta loaded.')
     
-    print('processing reads...')
+    
+    if VERBOSE: print('[ merge_consensus.py ] Processing reads...')
     # Load the pod5 read data using load_pod5_data -- MEMORY LEAK FROM pod5!!!!
     dl = load_pod5_data(pod5_path)
-    print(sys.getsizeof(dl))
-    memory_report()
+    if VERBOSE: print(sys.getsizeof(dl))
+    if MEM_TRACK: memory_report()
     gc.collect()
 
-    print('reads processed')
+    if VERBOSE: print('[ merge_consensus.py ] Reads processed.')
     
-    print('merging...')
+    
+    if VERBOSE: print('[ merge_consensus.py ] Merging data...')
     # Merge the data
     merged_list_dict = merge_bam_reads_by_id(loaded_bam, dl, consens)
-    memory_report()
+    if MEM_TRACK: memory_report()
     gc.collect()
-    print('merged')
+    if VERBOSE: print('[ merge_consensus.py ] Data merged.')
+    
     
     return merged_list_dict
     
     
-
-if __name__ == "__main__":
+def main(bam_path, pod5_path, fasta_path, output_path):
+    '''
+    main() is used to allow for this tool to be used outside of the command line as a method.
     
-    #needs to be a moves table containing bam file 
-    bam_path = "/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240514_PZ_xm_lib_model_training_development/model_training/basecall_directory/aligned.bam"
-    pod5_path = "/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/240514_PZ_xm_lib_model_training_development/model_training/merged_pod5/merged.pod5"
-    ref_fasta = "/home/marchandlab/github/jay/capstone/reference/xref_libv2_PZ_CxDx-.fa"
-    output_path = "/home/marchandlab/github/jay/capstone/XenoFind/xenofind_test/051424_json_file_generation"
+    Parameters:
+    pod5_path: path, as str, to pod5 file
+    bam_path: path, as str, to bam file
+    ref_fasta: path, as str, to reference fasta file
+    output_path: path, as str, to json dump folder
+    
+    Returns:
+    None
+    '''
+    # generate a pool to run the load_and_merge method
     merged_list_dict = None
     with multiprocessing.Pool(processes=1) as loading_pool:
-        merged_list_dict = loading_pool.starmap(part1, [(pod5_path, bam_path, ref_fasta)])[0]
-
-    memory_report()
+        merged_list_dict = loading_pool.starmap(load_and_merge, [(pod5_path, bam_path, fasta_path)])[0]
     
-    print('mapping signals to moves...')
+
+    if MEM_TRACK: memory_report()
+    
+    if VERBOSE: print('[ merge_consensus.py ] Mapping signals to moves...')
     merged_signal_list_dict = convert_signal_from_dict(merged_list_dict)
     gc.collect()
-    print('signals mapped')
+    if VERBOSE: print('[ merge_consensus.py ] Signals mapped.')
     
-    memory_report()
+    
+    if MEM_TRACK: memory_report()
 
-    print('saving to {}...'.format(output_path))
+    if VERBOSE: print('[ merge_consensus.py ] Saving to {}...'.format(output_path))
     
     save_by_consensus(merged_signal_list_dict, output_path)
     gc.collect()
-    print("Everything's saved successfully! Closing. :)")
+    
+    if VERBOSE: print("[ merge_consensus.py ] Everything's saved successfully! Closing. :)")
+    return None
+    
+if __name__ == "__main__":
+    
+    # set up possible arguments
+    parser = argparse.ArgumentParser(description='Convert raw information to json files by consensus.')
+    parser.add_argument('-v',"--verbose", help="Make output verbose.", action="store_true")
+    parser.add_argument('-m', help="Track memory.", action = "store_true")
+    parser.add_argument('-bam', help="Bam filepath.")
+    parser.add_argument('-pod5', help="Pod5 filepath.")
+    parser.add_argument('-fasta', help="Fasta filepath.")
+    parser.add_argument('-output', help="Output filepath.")
+    
+    # Parse the arguments
+    args = parser.parse_args()
+    
+    # check the arguments and assign them
+    VERBOSE = args.verbose
+    MEM_TRACK = args.m
+    bam_path = args.bam
+    pod5_path = args.pod5
+    fasta_path = args.fasta
+    output_path = args.output
+    
+    # check to make sure all of the required pieces have info
+    if type(bam_path) == type(None): bam_path = input("[ merge_consensus.py ] Bam Path: ")
+    if type(pod5_path) == type(None): pod5_path = input("[ merge_consensus.py ] Pod5 path: ")
+    if type(fasta_path) == type(None): fasta_path = input("[ merge_consensus.py ] Reference fasta path: ")
+    if type(output_path) == type(None): output_path = input("[ merge_consensus.py ] Output path: ")
+
+    # run the main method
+    main(bam_path, pod5_path, fasta_path, output_path)
+    
+    if VERBOSE: print("[ merge_consensus.py ] Everything's saved successfully! Closing. :)")
     sys.exit()
