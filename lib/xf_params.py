@@ -41,7 +41,23 @@ cluster_size_threshold = 100
 ##Model Training Parameters
 regenerate_json = False
 
+#Standard basepairs written in 'purine pyrimidine' order
+standard_base_pairs = ['AT','GC', 'NN']
 
+#Convert this to set
+standard_bases = np.concatenate(list(list(i) for i in standard_base_pairs))
+
+#Alternative basepairs written in 'purine pyrimidine' order
+xna_base_pairs = ['BS','PZ','JV','XK']
+
+#Specify canonical base substitution desired for xFASTA generation here
+confounding_pairs =  ['BN','SN','PG','ZC','JC','VG','XA','KG'] 
+
+#If XNAs are given different standard base substitutions, set them up as seperate (e.g, ['P','Z'])
+xna_segmentation_model_sets = ['B','S','PZ','JV','X', 'K', 'QW','ER']
+
+#Possible XNA bases
+xna_bases = np.concatenate(list(list(i) for i in xna_base_pairs))
 
 ############################################################
 #Dorado Base caller configuration
