@@ -1,0 +1,15 @@
+# Load the paths
+../../data/large_working_directory/rough_consensus_output/large_align.bam
+../../data/large_working_directory/merged_pod5/merged.pod5
+../../data/reads_large/230725_PZ_lib_v4_r10/fasta/good.fa
+../../data/large_working_directory/rough_consensus_output/json_data/
+
+'python xenofind.py model_gen -w {} -f {} -r {}'.format('/media/sebastian/Slepnir/xenofind_datasets/Working_directory_PZ/', '/media/sebastian/Slepnir/xenofind_datasets/PZ dataset/231117_PZn_libv4_minion/20231117_1644_MN37138_FAX70078_76df2751/', '/media/sebastian/Slepnir/xenofind_datasets/PZ dataset/231117_PZn_libv4_minion/fasta_metadata/ref_libv2_PZ_CxDx.fa')
+
+/media/sebastian/Slepnir/xenofind_datasets/Working_directory_PZ/
+/media/sebastian/Slepnir/xenofind_datasets/PZ dataset/231117_PZn_libv4_minion/20231117_1644_MN37138_FAX70078_76df2751/
+/media/sebastian/Slepnir/xenofind_datasets/PZ dataset/231117_PZn_libv4_minion/fasta_metadata/ref_libv2_PZ_CxDx.fa
+
+
+Basecall command:
+dorado basecaller hac -x "cuda:all" -b 448 --no-trim --emit-moves --min-qscore 5 /media/sebastian/Slepnir/xenofind_datasets/Working_directory_PZ/model_training/merged_pod5/merged.pod5 > /media/sebastian/Slepnir/xenofind_datasets/Working_directory_PZ/model_training/basecall_directory/basecall.bam

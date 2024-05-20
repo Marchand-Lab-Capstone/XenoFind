@@ -66,6 +66,7 @@ def generate_merged_pod5(reads_dir, target_dir_path, file_name):
     st = 1
     if (valid_target and (filetype != "")):
         cmd = merge_reads_command(reads_dir, filetype, target_dir_path, file_name)
+        print('running merge command...')
         st = os.system(cmd)
     return (st, filetype, valid_target)
     

@@ -28,7 +28,7 @@ def dorado_bc_command(basecaller_path, model_type, qscore_threshold, pod5_path, 
     '''
     consider adding qscore filter here, can be a parameter in xf_params
     '''
-    cmd = "{} basecaller {} --no-trim --emit-moves --min-qscore {} {} > {}{}.bam".format(basecaller_path, model_type, qscore_threshold, pod5_path, out_path, out_name)
+    cmd = "{} basecaller {} -vv --no-trim --emit-moves --min-qscore {} {} > {}{}.bam".format(basecaller_path, model_type, qscore_threshold, pod5_path, out_path, out_name)
     
     print('XenoFind [STATUS] - basecalling command generated: "{}"'.format(cmd))
     return cmd

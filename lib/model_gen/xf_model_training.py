@@ -32,8 +32,8 @@ def preprocessing(working_directory, raw_data, reference_fasta):
 
     # Defualt filenames:
     p5_fname = "merged"
-    dorado_path = xfp.basecaller_path # assumes dorado is in user's home directory, make it a variable somewhere maybe
     basecall_fname = 'basecall' # fq file
+    dorado_path = xfp.basecaller_path # assumes dorado is in user's home directory, make it a variable somewhere maybe
 
 
     directories_list = setup.setup_directory_system(working_directory)
@@ -42,10 +42,12 @@ def preprocessing(working_directory, raw_data, reference_fasta):
     merged_pod5_path = directories_list[2] + p5_fname + '.pod5'
     # add a parameter at top that takes in forced for all the functions 
     if not (os.path.exists(merged_pod5_path)):
+        print('generating merged pod5')
         # Using RRM, generate the pod5 from the data directory
         rrm.generate_merged_pod5(raw_data,
                                  directories_list[2],
                                  p5_fname)
+    # ELSE HERE, PROMPT FOR REGEN? TODO
 
     #-------Basecalling---------
     bc_bam_path = os.path.join(directories_list[3],basecall_fname)+'.bam'
@@ -54,7 +56,7 @@ def preprocessing(working_directory, raw_data, reference_fasta):
         print('Xenofind [STATUS] - Basecalling using Dorado')
         if xfp.auto_model == True:
             #Generate basecall command and run it 
-            bccmd = bc.dorado_bc_command(dorado_path,
+            bccmd = bc.dorado_bc_command (dorado_path,
                                      xfp.auto_model_type,
                                      xfp.min_qscore,
                                      merged_pod5_path,
@@ -71,6 +73,7 @@ def preprocessing(working_directory, raw_data, reference_fasta):
                                      basecall_fname)
             st = os.system(bccmd)
     else: 
+        # DONT SKIP, PROMPT USERS FOR BASECALLING OR REGEN TODO
         print('Xenofind [STATUS] - basecalls found, skipping basecalling')
     
     #Alignment 

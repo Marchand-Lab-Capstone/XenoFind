@@ -47,7 +47,7 @@ regenerate_json = False
 #Dorado Base caller configuration
 
 #Path to guppy basecaller
-basecaller_path = '~/dorado-0.6.0-linux-x64/bin/dorado' #consider adding Guppy compatibility 
+basecaller_path = 'dorado' #consider adding Guppy compatibility 
 
 #Dorado Model Parameters
 min_qscore = 5

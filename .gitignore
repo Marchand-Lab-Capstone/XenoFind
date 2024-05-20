@@ -1246,3 +1246,8 @@ data/large_working_directory/basecall_directory/bc_aligned.sam
 data/large_working_directory/basecall_directory/basecall.fq
 *.csv
 *.json
+*.sam
+*.pickle
+*.tensor
+*.parquet
+*.toml
