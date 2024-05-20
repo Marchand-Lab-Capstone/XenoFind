@@ -29,7 +29,6 @@ def merge_reads_command(reads_dir, filetype, target_dir_path):
         subcommand = 'merge'
     
     os_command = '{}/*.{}'.format(reads_dir, filetype) #need to account for when users enter their file path as A/B/C/ <-- last slash included
-    print('os_command is',os_command)
     cmd = "pod5 {} --force-overwrite {} -o {}".format(subcommand, os_command, output_filename)
     print(cmd)
 
@@ -41,7 +40,6 @@ def validate_read_directory(reads_dir):
     homogenous_files = True
     filetype = ""
     if directory_exists:
-        print('directory exists')
         directory_files = os.listdir(reads_dir)
         ext_list = []
         for file in directory_files:

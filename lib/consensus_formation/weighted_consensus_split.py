@@ -57,7 +57,7 @@ def consensus_generation(working_dir, raw_data, barcoded_fasta):
     directories_list = setup.setup_directory_system(working_dir)
 
     #File path string for the merged pod5
-    merged_pod5_path = os.path.join(directories_list[3], p5_fname + '.pod5')
+    merged_pod5_path = os.path.join(directories_list[2], p5_fname + '.pod5')
     # add a parameter at top that takes in forced for all the functions 
     if xfp.regenerate_pod5 == True or not (os.path.exists(merged_pod5_path)):
         # Using RRM, generate the pod5 from the data directory
@@ -89,7 +89,7 @@ def consensus_generation(working_dir, raw_data, barcoded_fasta):
     else: 
         print('Xenofind [STATUS] - basecalls found, skipping basecalling')
         
-    # ensure the barcode is absolute.
+    # ensure the barcoded fasta file path is absolute.
     barcoded_fasta = str(os.path.abspath(barcoded_fasta))
     
     # use minimap2 to align the basecalled to the basecalled fq
