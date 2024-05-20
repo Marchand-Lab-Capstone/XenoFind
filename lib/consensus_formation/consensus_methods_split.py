@@ -39,7 +39,7 @@ def basecall_command(basecaller_path, model_type, pod5_path, out_path, out_name)
     a command string.
     """
     cmd = "{} basecaller {} --no-trim --emit-moves --emit-fastq {} > {}{}.fq".format(basecaller_path, model_type, pod5_path, out_path, out_name)
-    print('[Basecalling]: Command Generated: "{}"'.format(cmd))
+    print('XenoFind [STATUS] - basecalling command generated: "{}"'.format(cmd))
     return cmd
 
 
@@ -58,7 +58,7 @@ def map_to_reference(mapper_path, reference_path, basecall_path, out_path, out_n
     # Currently only supports minimap2
     cmd = "{} -ax map-ont --score-N 0 --MD --min-dp-score 10 {} {} > {}{}.sam".format(mapper_path, reference_path, basecall_path, out_path, out_name) #probably doesn't need minimap2 as a separate path
 
-    print('[Mapping]: Command Generated: "{}"'.format(cmd))
+    print('XenoFind [STATUS] - alignment command generated: "{}"'.format(cmd))
     return cmd
 
 def sam_to_bam(input_sam, out_path, out_name):
@@ -122,7 +122,7 @@ def read_trim(bam_path):
     output_reverse_list = []
 
     # Generate paths for sorted and indexed bam
-    sorted_bam_path = bam_path + ".sorted.bam"
+    sorted_bam_path = os.path.join(os.path.dirname(bam_path),"sorted.bam")
     
     # Sorting the bam file
     sort_cmd = f'samtools sort {bam_path} -o {sorted_bam_path}'

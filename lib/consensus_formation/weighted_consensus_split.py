@@ -217,7 +217,7 @@ def main():
     
     total_consensus_fasta = consensus_generation(in_w_dir, in_r_dir, in_f_dir)
      
-    print('Xenofind [STATUS] - Generated consensus fasta containing forward and reverse strands') 
+    print('Xenofind [STATUS] - Generated consensus fasta containing forward and reverse strands at', total_consensus_fasta) 
     
 
 

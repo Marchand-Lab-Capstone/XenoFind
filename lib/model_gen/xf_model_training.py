@@ -130,10 +130,6 @@ def consensus_features(json_dir):
     return cons_features_list
 
 def main():
-    #in_w_dir = input("Please provide working directory path: ")
-    #in_r_dir = input("Please provide read directory path: ")
-    #in_f_dir = input("Please provide reference fasta directory path: ")
-
     in_w_dir = sys.argv[1]
     in_r_dir = sys.argv[2]
     in_f_dir = sys.argv[3]
