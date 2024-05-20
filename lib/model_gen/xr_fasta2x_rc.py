@@ -12,14 +12,17 @@ Updated: 3/2/23
 ########################################################################
 ########################################################################
 
-from xr_params import *
 import sys
 import numpy as np
-from xr_tools import *
 from Bio.Seq import Seq
 import os
 
+script_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(script_dir)
+if parent_dir not in sys.path:
+    sys.path.append(parent_dir)
 
+from xf_params import *
 
 
 #Input fasta 
@@ -28,6 +31,25 @@ input_fasta=sys.argv[1]
 #Output xfasta
 output_fasta=sys.argv[2]
 
+print('XenoFind [STATUS] - Generating forward and reverse xFasta files')
+'''
+note, consider adding these to xr_tools for reuse
+'''
+def fetch_xna_pos(xm_header):
+    pos=xm_header[xm_header.find('XPOS[')+5:-1].split('-')
+    xpos = [x.split(':') for x in pos]
+    return xpos
+    
+def xna_base_rc(xna_base, xna_bp): 
+	for x in xna_bp: 
+		if xna_base in x:
+			if len(x)>1:
+			    xx=list(x)
+			    xx.remove(xna_base)
+			    xrc=xx[0]
+			else:
+			   xrc=False
+	return xrc
 
 #Optional confounding pair override
 if len(sys.argv)==5: 
@@ -117,7 +139,7 @@ f.close()
 
 
 
-
+#Generate RC xFASTA file
 if require_rc_fasta == True: 
     fr = open(output_fasta.replace('.fa','_rc')+'.fa', "w")
     with open(output_fasta, "r") as fo:
@@ -131,7 +153,7 @@ if require_rc_fasta == True:
                     x_pos = x[1]
 
 
-                    if xna_base_rc(x_base,xna_segmentation_model_sets)==False: 
+                    if xna_base_rc(x_base,xna_segmentation_model_sets)!=False: 
                         xpr = [x_base, x_pos.replace(']','')]
                         x_pos_to_rc.append(xpr) 
 
@@ -145,8 +167,6 @@ if require_rc_fasta == True:
                 seq_rc = str(Seq(seq).reverse_complement())
                 #Get Length
                 seq_len = len(seq_rc) 
-
-
 
                 for x in x_pos_to_rc: 
                     x_base_rc=xna_base_rc(x[0],xna_base_pairs)

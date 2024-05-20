@@ -35,10 +35,10 @@ def dorado_bc_command(basecaller_path, model_type, qscore_threshold, pod5_path, 
     
     #Alignment
     #$ dorado aligner <index> <reads>  > aligned.bam 
-def alignment_command(bam_input, reference_path, output_dir): 
+def alignment_command(bam_input, reference_path, output_dir, direction): 
     """
     """
-    bam_output = os.path.join(output_dir,'aligned.bam')
+    bam_output = os.path.join(output_dir, direction+'_aligned.bam')
     cmd = 'samtools fastq -T "*" ' + bam_input + ' | minimap2 -y -ax map-ont --score-N 0 --MD --secondary=n --sam-hit-only ' +reference_path+ ' - | samtools view -b -o ' + bam_output
     
     print('XenoFind [STATUS] - basecalling command generated: "{}"'.format(cmd))
