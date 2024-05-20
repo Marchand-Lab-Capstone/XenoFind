@@ -202,19 +202,9 @@ def consensus_generation(working_dir, reads, barcoded_fasta):
         
         filtered_fasta_files.append(cs.filter_cluster_size(lab_cons_path, xfp.cluster_size_threshold, direction))
     
-    cs.merge_fasta_files(filtered_fasta_files, os.path.join(directories_list[1], 'final_merged_consensus.fasta'))
+    final_fasta_path = cs.merge_fasta_files(filtered_fasta_files, os.path.join(directories_list[1], 'final_merged_consensus.fasta'))
 
-    '''
-    function call below needs to be moved inside the for loop 
-    
-    label all files either fwd or rev 
-    fix file system 
-    
-    perform blastn / csv file commparison 
-    
-    make sure the dataframe in the for loop doenst get messed up, may need to start it outside teh for loop 
-    '''
-    return 
+    return final_fasta_path
 
 def main():
     #in_w_dir = input("Please provide working directory path: ")
