@@ -3,11 +3,10 @@
 """
 xm_fasta2x_rc.py 
 
-Title: Unpublished work
 
-By: H. Kawabe, N. Kaplan, J. A. Marchand
+By: H. Kawabe, N. Kaplan, J. Suamabat, J. A. Marchand
 
-Updated: 3/2/23
+Updated: 5/20/24
 """
 ########################################################################
 ########################################################################
@@ -152,7 +151,6 @@ if require_rc_fasta == True:
                     x_base = x[0]
                     x_pos = x[1]
 
-
                     if xna_base_rc(x_base,xna_segmentation_model_sets)!=False: 
                         xpr = [x_base, x_pos.replace(']','')]
                         x_pos_to_rc.append(xpr) 
@@ -189,15 +187,11 @@ else:
         require_rc_fasta = False
 
 
-                    
-                    
-
-
 if detected_xfasta_header == True: 
-    print('Xenomorph Status - [Error] Fasta input file already in xfasta format')
+    print('XenoFind Status - [Error] Fasta input file already in xfasta format')
     fasta_input_error=True 
 else: 
     if detected_xna == False: 
-        print('Xenomorph Status - [Error] No XNAs (BS/PZ/KX/JV/XY) detected in fasta input sequence.')
+        print('XenoFind Status - [Error] No XNAs (BS/PZ/KX/JV/XY) detected in fasta input sequence.')
         fasta_input_error=True 
 

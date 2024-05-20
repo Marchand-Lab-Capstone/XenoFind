@@ -16,7 +16,7 @@ if parent_dir not in sys.path:
 
 import xf_params as xfp
 
-def consensus_generation(working_dir, reads, barcoded_fasta):
+def consensus_generation(working_dir, raw_data, barcoded_fasta):
     """
     bc_align takes in working directory, reads, and a barcoded fasta file,
     and performs basecalling on them using Dorado then perform alignment using 
@@ -57,19 +57,17 @@ def consensus_generation(working_dir, reads, barcoded_fasta):
     directories_list = setup.setup_directory_system(working_dir)
 
     #File path string for the merged pod5
-    merged_pod5_path = directories_list[2] + p5_fname + '.pod5'
+    merged_pod5_path = os.path.join(directories_list[3], p5_fname + '.pod5')
     # add a parameter at top that takes in forced for all the functions 
-    if not (os.path.exists(merged_pod5_path)):
+    if xfp.regenerate_pod5 == True or not (os.path.exists(merged_pod5_path)):
         # Using RRM, generate the pod5 from the data directory
-        rrm.generate_merged_pod5(reads,
-                                 directories_list[2],
-                                 p5_fname)
+        rrm.generate_merged_pod5(raw_data,
+                                 merged_pod5_path)
 
     #-------Basecalling and Sorting ---------
 
-
     # Filepath string for the basecalled fq 
-    basecalled_path = directories_list[3] + basecall_fname + '.fq'
+    basecalled_path = os.path.join(directories_list[3],basecall_fname + '.fq')
     
     #Make this toggleable if data needs to be rebasecalled 
     if not (os.path.exists(basecalled_path)) or xfp.basecall_pod == True:
@@ -79,16 +77,14 @@ def consensus_generation(working_dir, reads, barcoded_fasta):
             bccmd = cs.basecall_command(dorado_path,
                                      xfp.auto_model_type,
                                      merged_pod5_path,
-                                     directories_list[3],
-                                     basecall_fname)
+                                     basecalled_path)
             st = os.system(bccmd)
         else:
             #Generate basecall command and run it
             bccmd = cs.basecall_command(dorado_path,
                                      xfp.dorado_model_path,
                                      merged_pod5_path,
-                                     directories_list[3],
-                                     basecall_fname)
+                                     basecalled_path)
             st = os.system(bccmd)
     else: 
         print('Xenofind [STATUS] - basecalls found, skipping basecalling')

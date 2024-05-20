@@ -25,7 +25,7 @@ import setup_methods as setup
 import pandas as pd
 import re
 
-def basecall_command(basecaller_path, model_type, pod5_path, out_path, out_name):
+def basecall_command(basecaller_path, model_type, pod5_path, out_path):
     """
     basecall_command generates a command to run the basecaller dorado.
     
@@ -38,7 +38,7 @@ def basecall_command(basecaller_path, model_type, pod5_path, out_path, out_name)
     Returns:
     a command string.
     """
-    cmd = "{} basecaller {} --no-trim --emit-moves --emit-fastq {} > {}{}.fq".format(basecaller_path, model_type, pod5_path, out_path, out_name)
+    cmd = "{} basecaller {} --no-trim --emit-moves --emit-fastq {} > {}".format(basecaller_path, model_type, pod5_path, out_path)
     print('XenoFind [STATUS] - basecalling command generated: "{}"'.format(cmd))
     return cmd
 
@@ -257,7 +257,7 @@ def vsearch_command(vsearch_path, fasta_path, out_path, out_name, sim_id):
     """
     
     # Generate the command.
-    cmd = "{} --cluster_fast {} --id {} --clusterout_sort --consout {}{}.fasta".format(vsearch_path, fasta_path, sim_id, out_path, out_name)
+    cmd = "{} --cluster_fast {} --id {} --clusterout_sort --consout {}/{}.fasta".format(vsearch_path, fasta_path, sim_id, out_path, out_name)
     cluster_path = "{}{}.fasta".format(out_path, out_name)
     print('[Vsearching]: Command Generated: "{}"'.format(cmd))
     return cmd, cluster_path

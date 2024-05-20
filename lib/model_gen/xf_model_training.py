@@ -41,7 +41,7 @@ def preprocessing(working_directory, raw_data, reference_fasta, direction):
     #File path string for the merged pod5
     merged_pod5_path = os.path.join(directories_list[3], p5_fname + '.pod5')
     # add a parameter at top that takes in forced for all the functions 
-    if not (os.path.exists(merged_pod5_path)):
+    if xfp.regenerate_pod5 ==True or not (os.path.exists(merged_pod5_path)):
         # Using RRM, generate the pod5 from the data directory
         rrm.generate_merged_pod5(raw_data,
                                  merged_pod5_path)

@@ -28,7 +28,8 @@ def check_make_dir(directory):
     directory = os.path.expanduser(directory)
     if not os.path.exists(directory):
         os.makedirs(directory)
-    return str(os.path.abspath(directory))+"/"
+        print('XenoFind [STATUS] - Required directory not found. Creating directory: '+directory)
+    return directory
 
 
 def setup_directory_system(working_directory):
@@ -51,11 +52,11 @@ def setup_directory_system(working_directory):
     
     # Use check_make_dir to generate or validate the existing directories.
     wdir = check_make_dir(working_directory)
-    con_file_dir = check_make_dir(working_directory + "consensus_files")
-    p5dir = check_make_dir(con_file_dir + "merged_pod5")
-    bcdir = check_make_dir(con_file_dir + "basecall_directory")
-    preprocess_dir = check_make_dir(con_file_dir + "preprocessing")
-    fadir_pre = check_make_dir(preprocess_dir + "fasta_directory")
-    vsearch_dir_pre = check_make_dir(preprocess_dir + "vsearch_processing")
+    con_file_dir = check_make_dir(os.path.join(working_directory,"consensus_files/"))
+    p5dir = check_make_dir(os.path.join(con_file_dir,"merged_pod5/"))
+    bcdir = check_make_dir(os.path.join(con_file_dir,"basecall_directory/"))
+    preprocess_dir = check_make_dir(os.path.join(con_file_dir,"preprocessing/"))
+    fadir_pre = check_make_dir(os.path.join(preprocess_dir,"fasta_directory/"))
+    vsearch_dir_pre = check_make_dir(os.path.join(preprocess_dir,"vsearch_processing/"))
 
     return [wdir, con_file_dir, p5dir, bcdir, preprocess_dir, fadir_pre, vsearch_dir_pre]
