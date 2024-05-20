@@ -646,6 +646,8 @@ if __name__ == "__main__":
     parser.add_argument('-pod5', help="Pod5 filepath.")
     parser.add_argument('-fasta', help="Fasta filepath.")
     parser.add_argument('-output', help="Output filepath.")
+    parser.add_argument('-p5_read_count', help="Number of pod5 reads to be read in a pool.")
+    parser.add_argument('-p5_pool_count', help="Number of pools to be used while reading pod5.")
     
     # Parse the arguments
     args = parser.parse_args()
@@ -657,12 +659,16 @@ if __name__ == "__main__":
     pod5_path = args.pod5
     fasta_path = args.fasta
     output_path = args.output
+    p5_read_count=args.p5_read_count
+    p5_pool_count=args.p5_pool_count
     
     # check to make sure all of the required pieces have info
     if type(bam_path) == type(None): bam_path = input("[ merge_consensus.py ] Bam Path: ")
     if type(pod5_path) == type(None): pod5_path = input("[ merge_consensus.py ] Pod5 path: ")
     if type(fasta_path) == type(None): fasta_path = input("[ merge_consensus.py ] Reference fasta path: ")
     if type(output_path) == type(None): output_path = input("[ merge_consensus.py ] Output path: ")
+    if type(p5_read_count) == type(None): p5_read_count = 5000 # lower end, should be based off of pulling user specs
+    if type(p5_pool_count) == type(None): p5_pool_count = 5 # lower end, should be based off user specs
 
     # run the main method
     main(bam_path, pod5_path, fasta_path, output_path)

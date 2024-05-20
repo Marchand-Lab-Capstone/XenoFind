@@ -7,7 +7,7 @@ if parent_dir not in sys.path:
 
 import xf_params as xfp
 
-def dorado_bc_command(basecaller_path, model_type, qscore_threshold, pod5_path, out_path):
+def dorado_bc_command(basecaller_path, model_type, qscore_threshold, pod5_path, out_path, out_name):
     """
     dorado_command generates a command to run the basecaller dorado.
     This instance of dorado will perform both basecalling and 
@@ -28,17 +28,17 @@ def dorado_bc_command(basecaller_path, model_type, qscore_threshold, pod5_path, 
     '''
     consider adding qscore filter here, can be a parameter in xf_params
     '''
-    cmd = "{} basecaller {} --no-trim --emit-moves --min-qscore {} {} > {}".format(basecaller_path, model_type, qscore_threshold, pod5_path, out_path)
+    cmd = "{} basecaller {} -vv --no-trim --emit-moves --min-qscore {} {} > {}{}.bam".format(basecaller_path, model_type, qscore_threshold, pod5_path, out_path, out_name)
     
     print('XenoFind [STATUS] - basecalling command generated: "{}"'.format(cmd))
     return cmd
     
     #Alignment
     #$ dorado aligner <index> <reads>  > aligned.bam 
-def alignment_command(bam_input, reference_path, output_dir, direction): 
+def alignment_command(bam_input, reference_path, output_dir): 
     """
     """
-    bam_output = os.path.join(output_dir, direction+'_aligned.bam')
+    bam_output = output_dir + 'aligned.bam'
     cmd = 'samtools fastq -T "*" ' + bam_input + ' | minimap2 -y -ax map-ont --score-N 0 --MD --secondary=n --sam-hit-only ' +reference_path+ ' - | samtools view -b -o ' + bam_output
     
     print('XenoFind [STATUS] - basecalling command generated: "{}"'.format(cmd))
