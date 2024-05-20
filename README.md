@@ -66,7 +66,7 @@ Model Generation requires the following inputs: a desired working directory, a P
 
 Where the '...' and 'NNN' regions are ATGC bases and X is an XNA present in lib/xf_params. New XNA base pairs can be added to xf_params by updating the xna_base_pairs and confounding_pairs variables. Model Generation will generate xFASTA files for both the forward and reverse strands. 
 
-#### xFASTA format (adapted from [Xenomorph] https://github.com/xenobiolab/xenomorph)
+#### xFASTA format (adapted from [Xenomorph] (https://github.com/xenobiolab/xenomorph))
 Many tools used to read and manipulate nucleic acid sequences are not built to handle non ATGC bases. The xFASTA file format (.fa) stores XNA positional information in the header of each sequence. xFASTA files can be generated from standard Fasta files that contain non-ATGC bases (e.g. BSPZJVKX) in the sequence. xFASTA files are automatically generated in the standard xenomorph preprocessing workflow. The fasta2x command is provided for utility, but generally not required. Note that XNA bases in the input sequence will be replaced for a standard ATGC. Signal matching to sequence is highly sensitive what base is chosen as the replacement base. As default, XNA bases are replaced as followed: B>A, S>A, P>G, Z>C. Base substitution settings can be modified in lib/xf_params.py by changing the paired base in the confounding_base variable. 
 
 
