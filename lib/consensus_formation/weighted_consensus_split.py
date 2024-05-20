@@ -203,7 +203,7 @@ def consensus_generation(working_dir, reads, barcoded_fasta):
         filtered_fasta_files.append(cs.filter_cluster_size(lab_cons_path, xfp.cluster_size_threshold, direction))
     
     cs.merge_fasta_files(filtered_fasta_files, os.path.join(directories_list[1], 'final_merged_consensus.fasta'))
-        #return the path to the filtered consensus fasta.
+
     '''
     function call below needs to be moved inside the for loop 
     

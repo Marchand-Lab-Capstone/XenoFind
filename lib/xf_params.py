@@ -68,7 +68,7 @@ standard_bases = np.concatenate(list(list(i) for i in standard_base_pairs))
 xna_base_pairs = ['BS','PZ','JV','XK']
 
 #Specify canonical base substitution desired for xFASTA generation here
-confounding_pairs =  ['BN','SN','PG','ZC','JC','VG','XA','KG'] 
+confounding_pairs =  ['BA','SA','PG','ZC','JC','VG','XA','KG'] 
 
 #If XNAs are given different standard base substitutions, set them up as seperate (e.g, ['P','Z'])
 xna_segmentation_model_sets = ['B','S','PZ','JV','X', 'K', 'QW','ER']
