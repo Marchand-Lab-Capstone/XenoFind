@@ -10,6 +10,9 @@ By: H. Kawabe, N. Kaplan, J. Sumabat, J. A. Marchand
 Updated: 11/28/23
 """
 ########################################################################
+#imports 
+import numpy as np
+
 
 ############################################################
 ##Analysis instructions 
@@ -19,6 +22,13 @@ basecall_pod = False
 
 #Perform Quality Score Analysis 
 analyze_fastq = True
+######################XFASTA GENERATION######################
+#Fasta2x - write sequences to xfasta even if they do no contain XNAs. Default = False 
+write_no_xna_seq = False
+
+#Fasta2x - Write gaps in place of XNAs in fasta reference file for null testing
+write_gaps = False
+
 ############################################################
 ##Consensus Parameters
 
@@ -38,10 +48,33 @@ shannon_entropy_graphs = False
 cluster_size_threshold = 100
 
 ############################################################
+######################XFASTA GENERATION#####################
+#Fasta2x - write sequences to xfasta even if they do no contain XNAs. Default = False 
+write_no_xna_seq = False
+
+#Fasta2x - Write gaps in place of XNAs in fasta reference file for null testing
+write_gaps = False
+
 ##Model Training Parameters
 regenerate_json = False
 
+#Standard basepairs written in 'purine pyrimidine' order
+standard_base_pairs = ['AT','GC', 'NN']
 
+#Convert this to set
+standard_bases = np.concatenate(list(list(i) for i in standard_base_pairs))
+
+#Alternative basepairs written in 'purine pyrimidine' order
+xna_base_pairs = ['BS','PZ','JV','XK']
+
+#Specify canonical base substitution desired for xFASTA generation here
+confounding_pairs =  ['BN','SN','PG','ZC','JC','VG','XA','KG'] 
+
+#If XNAs are given different standard base substitutions, set them up as seperate (e.g, ['P','Z'])
+xna_segmentation_model_sets = ['B','S','PZ','JV','X', 'K', 'QW','ER']
+
+#Possible XNA bases
+xna_bases = np.concatenate(list(list(i) for i in xna_base_pairs))
 
 ############################################################
 #Dorado Base caller configuration

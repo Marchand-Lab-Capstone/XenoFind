@@ -26,22 +26,17 @@ main() - request paths to bam, pod5, and reference fasta files, merge, and
 # import statements
 import os
 import pysam
-#import remora
 import sys
 import pod5
 import numpy as np
-#import dask.dataframe as dd
 import pandas as pd
 import math
 import json
 from Bio import SeqIO
-#import tables
-#import h5py # not sure if nessecary, too afraid to check
 import re
 import numpy as np
 import scipy.signal as sig
 import gc
-#import tracemalloc
 from alive_progress import alive_bar
 import psutil
 import datetime
@@ -468,7 +463,7 @@ def jsonwriter(consensus, savefile_path):
 
     # generate the header and filename
     header = {'ref_seq':ref_seq,'freq':freq}
-    filename = "cons_merge__{}.json".format(ref_name)
+    filename = "{}.json".format(ref_name)
 
     # generate the filepath
     filepath = savefile_path + filename

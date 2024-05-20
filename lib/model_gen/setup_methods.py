@@ -28,8 +28,8 @@ def check_make_dir(directory):
     directory = os.path.expanduser(directory)
     if not os.path.exists(directory):
         os.makedirs(directory)
-    return str(os.path.abspath(directory))+"/"
-
+        print('XenoFind [STATUS] - Required directory not found. Creating directory: '+directory)
+    return directory
 
 def setup_directory_system(working_directory):
     """
@@ -45,9 +45,9 @@ def setup_directory_system(working_directory):
     
     # Use Check_make_dir to generate or validate the existing directories.
     wdir = check_make_dir(working_directory) #0
-    model_train_dir = check_make_dir(working_directory + 'model_training/') #1
-    p5dir = check_make_dir(model_train_dir + "merged_pod5") #2
-    bcdir = check_make_dir(model_train_dir + "basecall_directory/") #3
-    merged_dir = check_make_dir(model_train_dir + "merged_dataset") #4
-    json_dir = check_make_dir(model_train_dir + "json_files") #5
-    return [wdir,model_train_dir,p5dir,bcdir, merged_dir, json_dir]
+    model_train_dir = check_make_dir(os.path.join(working_directory, 'model_training')) #1
+    ref_dir = check_make_dir(os.path.join(working_directory, 'reference')) #2
+    p5dir = check_make_dir(os.path.join(model_train_dir, 'merged_pod5')) #3
+    bcdir = check_make_dir(os.path.join(model_train_dir, 'basecall_directory')) #4
+    json_dir = check_make_dir(os.path.join(model_train_dir, 'json_files')) #5
+    return [wdir,model_train_dir, ref_dir, p5dir,bcdir, json_dir]
