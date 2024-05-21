@@ -1251,3 +1251,10 @@ data/large_working_directory/basecall_directory/basecall.fq
 *.tensor
 *.parquet
 *.toml
+*.bam
+*.fq
+*.fasta
+*.pod5
+*.csv#
+*.csv#
+*.csv#
