@@ -3,7 +3,6 @@ feature_extraction.py
 J. Sumabat, N, Lai, S. Peck, Y. Huang
 4/29/2024 -- Created by S. Peck
 5/5/2024 -- Updated by S. Peck
-5/16/2024 -- Updated by S. Peck
 
 feature_extraction.py contains methods useful for extracting possible ml features from
 a consensus of reads and their aggregate information as produced by merge_consensus.py.
@@ -35,10 +34,6 @@ convert_signal_obs_to_groups() - method to convert a df of signal objects to sig
 convert_signal_obj_list() - method to convert a list of signal object list to signalgroups
 twas_the_monster_mash() - method to convert signal observations to usable features and squish it all together.
 feature_extraction() - method to extract features to a pandas dataframe from a json file.
-batch_read_alignment_data() - method to generate a list of subdivided batches of reads
-extract_batch_features() - method to extract the features of a given batch.
-batched_feature_extraction() - method to combine batching and extraction of features.
-main() - method to run feature extraction on a given json file.
 
 Classes:
 Signal - a class that contains relevant information for a signal sequence
@@ -55,12 +50,6 @@ import math
 import json
 import gc
 import datetime
-import multiprocessing
-import argparse
-import warnings
-warnings.filterwarnings("ignore")
-
-VERBOSE = False
 
 def load_info_from_json(path):
     '''
@@ -926,40 +915,42 @@ def twas_the_monster_mash(grouped_coords):
 
     
 
-def feature_extraction(json_path):
+
+def feature_extraction(json_path, verbose=False):
     '''
     feature_extraction takes a path to a json file, and loads all of the features in that dataset
     to a dataframe, with a column called 'XNA_PRESENT' representing the idx where the xna is present
     
     Parameters:
     json_path: path, as str, to a json file that is exported by merge_consensus.
+    verbose: boolean on wether or not to print information on progress. 
     
     Returns:
     pandas Dataframe with all features and corresponding values.
     '''
     
-    if VERBOSE: print(str(datetime.datetime.now()) + ' loading json... ')
+    if verbose: print(str(datetime.datetime.now()) + ' loading json... ')
     # yoink the consensus id, data dictionary, reference sequence, and frequency from the json path
     consensus_id, data_dict, ref_seq, freq = load_info_from_json(json_path)
-    if VERBOSE: print(str(datetime.datetime.now()) + ' json loaded. ')
+    if verbose: print(str(datetime.datetime.now()) + ' json loaded. ')
     
-    if VERBOSE: print(str(datetime.datetime.now()) + ' reading alignment... ')
+    if verbose: print(str(datetime.datetime.now()) + ' reading alignment... ')
     # get the read_alignment_data
     read_alignment_data = extract_alignment_from_dict(data_dict, ref_seq)
     
     # get te read_alignment dataframe
     read_alignment_df = pd.DataFrame(read_alignment_data)
-    if VERBOSE: print(str(datetime.datetime.now()) + ' alignment read. ')
+    if verbose: print(str(datetime.datetime.now()) + ' alignment read. ')
     
     ## IF THERE IS A SPLIT IN DATA, SPLIT IT HERE AND MAKE THE FOLLOWING A PER-SPLIT METHOD
     
-    if VERBOSE: print(str(datetime.datetime.now()) + ' generating data coordinates... ')
+    if verbose: print(str(datetime.datetime.now()) + ' generating data coordinates... ')
     # base-based features, base_probs is 6 but lets just look at insertions and deletions
     # get the alignment coordinate data
     data_coordinate_list = extract_coordinate_data(read_alignment_df['alignment_data'])
 
-    if VERBOSE: print(str(datetime.datetime.now()) + ' data coordinates generated. ')
-    if VERBOSE: print(str(datetime.datetime.now()) + ' calculating observation features... ')
+    if verbose: print(str(datetime.datetime.now()) + ' data coordinates generated. ')
+    if verbose: print(str(datetime.datetime.now()) + ' calculating observation features... ')
     # get the base probabilites at each position -- THIS HAS INSERTION AND DELETION PERCENTAGE BUILT IN
     base_probs = calc_base_probs(data_coordinate_list[0])
 
@@ -969,8 +960,8 @@ def feature_extraction(json_path):
     # Get the shannon entropy of each base position.
     shentropy_series = shannon_entropies(base_probs)
     
-    if VERBOSE: print(str(datetime.datetime.now()) + ' observation features calculated.  ')
-    if VERBOSE: print(str(datetime.datetime.now()) + ' calculating quality features...  ')
+    if verbose: print(str(datetime.datetime.now()) + ' observation features calculated.  ')
+    if verbose: print(str(datetime.datetime.now()) + ' calculating quality features...  ')
     # quality score features
     # get the qualities with no insertions or deletions
     no_in_del_qual = remove_in_dels(data_coordinate_list[0], data_coordinate_list[1])
@@ -984,8 +975,8 @@ def feature_extraction(json_path):
     # get the raw median quality score of each base.
     rawmeds = get_raw_median(data_coordinate_list[1])
     
-    if VERBOSE: print(str(datetime.datetime.now()) + ' quality features calculated.  ')
-    if VERBOSE: print(str(datetime.datetime.now()) + ' calculating signal features...  ')
+    if verbose: print(str(datetime.datetime.now()) + ' quality features calculated.  ')
+    if verbose: print(str(datetime.datetime.now()) + ' calculating signal features...  ')
     # Signal features
     # convert the signals to objects
     sig_obj_coords = convert_signals_to_objects(data_coordinate_list[2], freq)
@@ -1003,8 +994,8 @@ def feature_extraction(json_path):
     mess_with_in_del = twas_the_monster_mash(sig_group_coords)
     mess_wo_in_del = twas_the_monster_mash(no_sig_group_coords)
     
-    if VERBOSE: print(str(datetime.datetime.now()) + ' signal features calculated.  ')
-    if VERBOSE: print(str(datetime.datetime.now()) + ' assembling features...  ')
+    if verbose: print(str(datetime.datetime.now()) + ' signal features calculated.  ')
+    if verbose: print(str(datetime.datetime.now()) + ' assembling features...  ')
     # combine all of the features as well as the xna position into one cumulative dataframe
     mismatch_probs = pd.DataFrame(mismatch_probs, columns=['mm_prob'])
     shentropy_col = pd.DataFrame(shentropy_series, columns=['shentropy'])
@@ -1022,196 +1013,9 @@ def feature_extraction(json_path):
     xna_df['XNA_PRESENT'][xna_idx] = 1
     
     assembled_features = pd.concat([xna_df, base_probs, mismatch_probs, shentropy_col, no_quals, id_quals, rawmeds, in_del_sigs, wo_in_del_sigs], axis=1)
-    if VERBOSE: print(str(datetime.datetime.now()) + ' features assembled.  ')
+    if verbose: print(str(datetime.datetime.now()) + ' features assembled.  ')
     
     return assembled_features
     
     
-def batch_read_alignment_data(read_alignment_data_list, batch_size):
-    '''
-    batch_read_alignment_data takes in a list of read alignment data, and a batch size,
-    and generates a list of subdivided batches of the size of the batch. if there arent enough to fill the last,
-    it populates it with what it can - occasionally resulting in smaller batches.
-    
-    Parameters:
-    read_alignment_data_list: a list of dicts containing info as exported by extract_alignment_from_dict.
-    batch_size: a positive integer representing the size of each batch, in reads.
-    
-    Returns:
-    a list of batched reads with the specified batchsize.
-    '''
-
-    # generate the list
-    batched_reads = [read_alignment_data_list[i:i+batch_size] for i in range(0, len(read_alignment_data_list), batch_size)]
-    
-    # return the batched reads
-    return batched_reads
-    
-
-def extract_batch_features(read_batch, ref_seq, freq, consensus_id):
-    '''
-    extract_batch_features takes in a read batch, and the reference data,
-    and then generates the features for that batch as if it were an entire consensus.
-    
-    Parameters:
-    read_batch: a list of dicts of read data
-    ref_seq: a reference sequence corresponding to the reads, as str
-    freq: a frequency value, as float or int, corresponding to read sampling frequency
-    consensus_id: the id of the consensus sequence, containing xna location.
-    
-    Returns:
-    a conjunction of the features of the batch, as a pandas dataframe.
-    '''
-    read_alignment_df = pd.DataFrame(read_batch)
-    data_coordinate_list = extract_coordinate_data(read_alignment_df['alignment_data'])
-    # get the base probabilites at each position -- THIS HAS INSERTION AND DELETION PERCENTAGE BUILT IN
-    base_probs = calc_base_probs(data_coordinate_list[0])
-
-    # get the probability of mismatch at each position
-    mismatch_probs = mismatch_prob(data_coordinate_list[0], ref_seq)
-
-    # Get the shannon entropy of each base position.
-    shentropy_series = shannon_entropies(base_probs)
-    # quality score features
-    # get the qualities with no insertions or deletions
-    no_in_del_qual = remove_in_dels(data_coordinate_list[0], data_coordinate_list[1])
-
-    # get the mean, std, and median with no insertions or deletions
-    no_mvals, no_stvals, no_meanmedian = mean_std_qual_by_base(no_in_del_qual)
-
-    # get the mean, std, and median while including insertions or deletions
-    mvals, stvals, meanmedian = mean_std_qual_by_base(data_coordinate_list[1])
-
-    # get the raw median quality score of each base.
-    rawmeds = get_raw_median(data_coordinate_list[1])
-    
-    # Signal features
-    # convert the signals to objects
-    sig_obj_coords = convert_signals_to_objects(data_coordinate_list[2], freq)
-
-    # convert the signal lists to signal group objects
-    sig_group_coords = convert_signal_obs_to_groups(sig_obj_coords)
-    
-    #get the signal objects with no insertions or deletions
-    no_sig_obj_coords = convert_signals_to_objects(remove_in_dels(data_coordinate_list[0], data_coordinate_list[2]), freq)
-
-    # get signal groups with no insertions or deletions
-    no_sig_group_coords = convert_signal_obs_to_groups(no_sig_obj_coords)
-    
-    # get the mess of signal features
-    mess_with_in_del = twas_the_monster_mash(sig_group_coords)
-    mess_wo_in_del = twas_the_monster_mash(no_sig_group_coords)
-    
-     # combine all of the features as well as the xna position into one cumulative dataframe
-    mismatch_probs = pd.DataFrame(mismatch_probs, columns=['mm_prob'])
-    shentropy_col = pd.DataFrame(shentropy_series, columns=['shentropy'])
-    no_quals = pd.concat([no_mvals, no_stvals, no_meanmedian], axis=1)
-    no_quals.columns = ['n_qmean', 'n_qst', 'n_qmed']
-    id_quals = pd.concat([mvals, stvals, meanmedian], axis=1)
-    id_quals.columns = ['i-d_qmean', 'i-d_qst', 'i-d_qmed']
-    rawmeds = pd.DataFrame(rawmeds, columns = ['r_qmed'])
-    in_del_sigs = mess_with_in_del.T.add_suffix('_i-d')
-    wo_in_del_sigs = mess_wo_in_del.T.add_suffix('_w/o')
-
-    xna_idx = int(consensus_id.split(':')[-1].split(']')[0])
-    xna_df = pd.DataFrame(mismatch_probs.index, columns = ['XNA_PRESENT'])
-    xna_df['XNA_PRESENT'] = 0
-    xna_df['XNA_PRESENT'][xna_idx] = 1
-    
-    assembled_features = pd.concat([xna_df, base_probs, mismatch_probs, shentropy_col, no_quals, id_quals, rawmeds, in_del_sigs, wo_in_del_sigs], axis=1)
-    
-    return assembled_features
-
-
-def batched_feature_extraction(json_path, batch_size):
-    '''
-    batched_feature_extraction takes in a json filepath and a batch size, and returns
-    a list of the assembled features as batches.
-    
-    Parameters:
-    json_path: the path, as str, to a json file of data
-    batch_size: positive int representing size of each batch of reads
-    '''
-    
-    # extract the cnsensus id, data dict, reference sequence, and frequency from the json
-    consensus_id, data_dict, ref_seq, freq = load_info_from_json(json_path)
-    
-    # read the alignment data
-    read_alignment_data =extract_alignment_from_dict(data_dict, ref_seq)
-    
-    # convert the reads to batches of reads
-    batched_reads = batch_read_alignment_data(read_alignment_data, batch_size)
-    
-    # create an empty list to hold the touples of reads
-    prepped_batches = []
-    
-    # loop through each batch of reads and convert it to a touple with the reference info
-    for i in range(len(batched_reads)):
-        batch = batched_reads[i]
-        prepped_batches.append((batch, ref_seq, freq, consensus_id))
-        
-    # create a list of the assembled features
-    batched_assembled_features = []
-    
-    # use the multiprocessing to run all the batches at once. 
-    with multiprocessing.Pool(processes=len(batched_reads)) as feat_gen_pool:
-        batched_assembled_features = feat_gen_pool.starmap(extract_batch_features, prepped_batches)
-        
-    # return the batched features.
-    return batched_assembled_features
-
-    
-def main(json_path, batch_size=None):
-    '''
-    main takes in a json path and batch size, and returns a list of assembled features by batch.
-    
-    Parameters:
-    json_path: path, as str, to json file
-    batch_size: default None, size of batch of reads.
-    '''
-    
-    if VERBOSE: print('[ feature_extraction.py ] Batch Size: {}'.format(batch_size))
-    # create an empty list to populate with the feature batches
-    assembled_features = []
-    
-    # check batch size, get the features accordingly
-    if type(batch_size) == type(None):
-        assembled_features = [feature_extraction(json_path)]
-    else:
-        assembled_features = batched_feature_extraction(json_path, int(batch_size))
-    
-    return assembled_features
-
-
-if __name__ == '__main__':
-    
-    parser = argparse.ArgumentParser(description='Convert json consensus files to feature information.')
-    parser.add_argument('-v',"--verbose", help="Make output verbose.", action="store_true")
-    parser.add_argument('-batch_size', help="Size of batches of reads.")
-    parser.add_argument('-json_path', help="Json filepath.")
-    parser.add_argument('-output', help="Output filepath.")
-    
-        # Parse the arguments
-    args = parser.parse_args()
-    
-    # check the arguments and assign them
-    VERBOSE = args.verbose
-    batch_size = args.batch_size
-    json_path = args.json_path
-    output_path = args.output
-
-    if type(json_path) == type(None): bam_path = input("[ feature_extraction.py ] Json Path: ")
-    if type(output_path) == type(None): pod5_path = input("[ feature_extraction.py ] Output path: ")
-    
-    assembled_features = main(json_path, batch_size)
-    
-    for i in range(len(assembled_features)):
-        batched_consensus = assembled_features[i]
-        output_filepath = output_path + "consensus{}.parquet".format(i)
-        print(output_filepath)
-        batched_consensus.to_parquet(output_filepath)
-        
-    sys.exit()
-    
-        
     

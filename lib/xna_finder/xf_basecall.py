@@ -7,7 +7,7 @@ if parent_dir not in sys.path:
 
 import xf_params as xfp
 
-def dorado_bc_command(basecaller_path, model_type, pod5_path, out_path, out_name):
+def dorado_bc_command(basecaller_path, model_type, qscore_threshold, pod5_path, out_path, out_name):
     """
     dorado_command generates a command to run the basecaller dorado.
     This instance of dorado will perform both basecalling and 
@@ -25,7 +25,10 @@ def dorado_bc_command(basecaller_path, model_type, pod5_path, out_path, out_name
     a command string.
     """
     #cmd = "{} basecaller {} --no-trim --emit-moves --secondary n --reference {} {} > {}{}.bam".format(basecaller_path, model_type, reference_path, pod5_path, out_path, out_name)
-    cmd = "{} basecaller {} --no-trim --emit-moves {} > {}{}.bam".format(basecaller_path, model_type, pod5_path, out_path, out_name)
+    '''
+    consider adding qscore filter here, can be a parameter in xf_params
+    '''
+    cmd = "{} basecaller {} -vv --no-trim --emit-moves --min-qscore {} {} > {}{}.bam".format(basecaller_path, model_type, qscore_threshold, pod5_path, out_path, out_name)
     
     print('XenoFind [STATUS] - basecalling command generated: "{}"'.format(cmd))
     return cmd
