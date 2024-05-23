@@ -11,7 +11,7 @@ setup_directory_system() - setup the directory system used for consensus_methods
 import os
 
 
-def check_make_dir(directory):
+def check_make_dir(directory, VERBOSE=True):
     """
     ADAPTED FROM XF_TOOLS.PY, By: By: J. Sumabat, N. Lai, Y. Huang, S. Peck, H. Kawabe, N. Kaplan, J. A. Marchand
     
@@ -28,7 +28,7 @@ def check_make_dir(directory):
     directory = os.path.expanduser(directory)
     if not os.path.exists(directory):
         os.makedirs(directory)
-        print('XenoFind [STATUS] - Required directory not found. Creating directory: '+directory)
+        if VERBOSE: print('XenoFind [STATUS] - Required directory not found. Creating directory: '+directory)
     return directory
 
 def setup_directory_system(working_directory):

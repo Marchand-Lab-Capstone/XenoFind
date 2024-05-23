@@ -38,12 +38,18 @@ import datetime
 import argparse
 from pathlib import Path
 from alive_progress import alive_bar
+import feature_extraction as fe
+sys.path.append("..//model_gen/")
+import setup_methods
+import shutil
 
 VERBOSE = False
 N_SAVED_TO_JSON = 0
 N_TOTAL_CONSENSUS = 0
 LAST_TIME = datetime.datetime.now()
 TOTAL_ELAPSED = 0
+store_json = False
+store_parquet = False
 
 class Read: 
     '''
@@ -108,10 +114,11 @@ class ConsensusReadsData:
         Returns:
         N/A
         '''
-        self.ref_name = ref_name
+        self.ref_name = ref_name.replace(":", "#")
         self.ref_seq = reference_sequence
         self.freq = freq
         self.reads_data = reads_data_list
+        self.batched_assembled_features = []
         
     def __reduce__(self):
         return ConsensusReadsData, (self.ref_name, self.ref_seq, self.freq, self.reads_data,) 
@@ -128,6 +135,7 @@ class ConsensusReadsData:
         json object that was saved at the path.
         '''
         
+        
         # generate the header from the reference sequence and frequency
         header = {'ref_seq':self.ref_seq, 'freq':self.freq}
         
@@ -138,7 +146,7 @@ class ConsensusReadsData:
         #if VERBOSE: print(filename, end='\r')
         
         # generate the filepath the json will be saved at
-        filepath = path + filename
+        filepath = "/"+path[1:] + filename
         
         # generate the dataframe to json of the reads data
         json_frame = pd.DataFrame(self.reads_data).to_json()
@@ -153,20 +161,19 @@ class ConsensusReadsData:
         if os.path.exists(filepath):
             os.remove(filepath)
 
-        # create and open a json with that filepath
-        with open(filepath, 'a') as file:
-            # write the contents of the json
-            file.write(json_out)
+        if len(self.reads_data) > 0: 
+            # create and open a json with that filepath
+            with open(filepath, 'a') as file:
+                # write the contents of the json
+                file.write(json_out)
             
-        # close the json
-        file.close()
+            # close the json
+            file.close()
+        # estimate the runtime.
         global N_SAVED_TO_JSON 
-        N_SAVED_TO_JSON += 1
-        
-        # estimate runtime
         global LAST_TIME
         global TOTAL_ELAPSED
-        
+        N_SAVED_TO_JSON += 1
         curtime = datetime.datetime.now()
         duration = (curtime-LAST_TIME).total_seconds()
         TOTAL_ELAPSED += duration
@@ -178,8 +185,108 @@ class ConsensusReadsData:
 
         # return the json object that was saved
         return json_out
+    
+    
+    def feature_extraction(self, batch_size):
+        '''
+        feature extraction runs the feature extraction methods on the
+        data stored within the current object.
+        
+        Parameters:
+        batch_size: n of reads per batched consensus, as an int.
+        
+        Returns:
+        a list of the dictionaries of assembled features.
+        '''
+        # read the alignment data.
+        read_alignment_data = fe.extract_alignment_from_dict(self.reads_data, self.ref_seq)
+        self.reads_data = None
+        # batch the data.
+        batched_reads = fe.batch_read_alignment_data(read_alignment_data, batch_size)
 
+        # iterate through the batches and accumulate the parameters to pass.
+        prepped_batches = []
+    
+        for i in range(len(batched_reads)):
+            batch = batched_reads[i]
+            prepped_batches.append((batch, self.ref_seq, self.freq, self.ref_name))
+        
+        # iterate through the parameters and process the features.
+        self.batched_assembled_features = []
+        with multiprocessing.Pool(processes=len(batched_reads)) as feat_gen_pool:
+            self.batched_assembled_features = feat_gen_pool.starmap(fe.extract_batch_features, prepped_batches)
+        
+        # return the features. 
+        return self.batched_assembled_features
+    
+    def save_batches_to_parquet(self, output_path):
+        '''
+        save_batches_to_parquet takes in an output superdirectory,
+        and saves the batched consensus features as parquets to that directory.
+        
+        Parameters:
+        output_path: path, as str, to superdirectory for parquet files.
+        
+        Returns:
+        N/A
+        '''
 
+        # get the total number of batches
+        total_batches = len(self.batched_assembled_features)
+        
+        # loop through each batch
+        for i in range(total_batches):
+            
+            # get the batch of features
+            batched_consensus = self.batched_assembled_features[i]
+            
+            # create the filepath name
+            output_filepath = output_path + self.ref_name + "/"+ "consensus{}.parquet".format(i)
+            
+            # check if the path to the file exists
+            setup_methods.check_make_dir(output_path + self.ref_name + "/", False)
+            # remove any existing parquet directory with that filepath
+            if os.path.exists(output_filepath):
+                os.remove(output_filepath)
+
+            # save the batch to parquet.
+            batched_consensus.to_parquet(output_filepath)
+           
+        # estimate the runtime ----
+        global N_SAVED_TO_JSON 
+        global LAST_TIME
+        global TOTAL_ELAPSED
+        N_SAVED_TO_JSON += 1
+    
+        
+        curtime = datetime.datetime.now()
+        duration = (curtime-LAST_TIME).total_seconds()
+        TOTAL_ELAPSED += duration
+        mean_dt = TOTAL_ELAPSED/N_SAVED_TO_JSON
+        est_time = datetime.timedelta(seconds = mean_dt*N_TOTAL_CONSENSUS)
+        
+        if VERBOSE: print("[ aggregate_reads.py {} ] {}/{} saved to parquet batches. Estimated Time: {}. Elapsed: {}.".format(datetime.datetime.now(), N_SAVED_TO_JSON, N_TOTAL_CONSENSUS, est_time, datetime.timedelta(seconds=TOTAL_ELAPSED)), end='\r')
+        LAST_TIME = curtime
+        # end runtime estimation ----
+    
+
+def percenttobar(frac):
+    
+    """
+    converts a fractional value to a loading progress bar string.
+    """
+    bar_str = "|"
+    max_bars = 20
+    perc = frac*2000
+    n_bars = int(perc/100)
+    for i in range(n_bars):
+        bar_str += "="
+    for i in range(max_bars-n_bars):
+        bar_str += " "
+    bar_str += "|  {}%           ".format(round(frac*100, 3))
+    return bar_str
+    
+    
 def load_bam(bamfile_path):
     """
     load_bam takes in a path to a basecalled and aligned consensus bamfile,
@@ -195,7 +302,8 @@ def load_bam(bamfile_path):
 
     # Set an empty list to hold the data
     data_list = []
-
+    n_reads = 4858652 /2
+    reads_read = 0
     # Open the bamfile
     with pysam.AlignmentFile(bamfile_path, 'r') as bamfile:
 
@@ -239,6 +347,8 @@ def load_bam(bamfile_path):
                 del(tag_dict)
                 data_list.append(read_dict)
             del(read)
+            reads_read += 1
+            print(percenttobar(reads_read/n_reads), end='\r')
 
     # convert the list of dicts into a dataframe
     #df = pd.DataFrame(data_list)
@@ -544,7 +654,7 @@ def iterable_merged_data(aggregate_refs, alignment_data, consensus_data):
         
 
 
-def main(p5_path, bam_path, fasta_path, out_path, batchsize = 10, verb = False):
+def main(p5_path, bam_path, fasta_path, out_path, export, batchsize = 100, verb = False):
     '''
     main() serves to act as a method for processing each step in the process of extracting reads to
     constituent json files.
@@ -554,11 +664,12 @@ def main(p5_path, bam_path, fasta_path, out_path, batchsize = 10, verb = False):
     bam_path: path, as str, to bamfile from basecalling
     fasta_path: path, as str, to reference fasta
     out_path: path, as str, to directory that will hold json files
-    batchsize: size of the batch for multiprocessing the read aggregation. CURRENTLY DOES NOTHING.
+    export: boolean (default false) for if the output should be saved. Currently does not work unless run as script, as no JSON or PARQUET is specified.
+    batchsize: size of the batch for multiprocessing the read aggregation. defualt of 100.
     verb: flips verbosity variable if True
     
     Returns:
-    path of the output folder.
+    generator object for the consensuses, or path to saved files if exporting.
     '''
     global VERBOSE
     if verb: 
@@ -579,15 +690,7 @@ def main(p5_path, bam_path, fasta_path, out_path, batchsize = 10, verb = False):
     
     # aggregate the bam read data from the pod5 file.
     if VERBOSE: print("[ aggregate_reads.py {} ] Aggregating bam read data from pod5 file at {}...".format(datetime.datetime.now(), p5_path), end="\r")
-    '''
-    NOTE: Currently not functional, has capacity to 10x speed.
-    bam_data_pooled = [bam_data[i:i+batchsize] for i in range(0, len(bam_data), batchsize)]
-    p5_path_pooled = list(np.full(fill_value=p5_path, shape=batchsize))
-    sub_batch = list(zip(p5_path_pooled, bam_data_pooled))
-    list_of_joint_bam_reads = []
-    with multiprocessing.Pool(processes=batchsize) as pool:
-        list_of_joint_bam_reads.extend(pool.starmap(aggregate_reads_to_reference, sub_batch))
-    '''
+
     list_of_joint_bam_reads = aggregate_reads_to_reference(p5_path, bam_data) ######
     if VERBOSE: print("[ aggregate_reads.py {} ] Aggregation complete.                                                                                                                           ")
     
@@ -602,66 +705,86 @@ def main(p5_path, bam_path, fasta_path, out_path, batchsize = 10, verb = False):
     if VERBOSE: print("[ aggregate_reads.py {} ] Consensus Reads Data Generated.                                                                                                             ".format(datetime.datetime.now()))
     
     LAST_TIME = datetime.datetime.now()
-    if VERBOSE: print("[ aggregate_reads.py {} ] Exporting to json directory at {}...".format(LAST_TIME, out_path))
-    #with alive_bar(sum(1 for x in iterable_merged)) as bar:
-    '''
-    for batch in batched_bam_reads:
-        repeating_path_list = list(np.full(fill_value = out_path, shape=len(batch)))
-        batched_params = list(zip(batch, repeating_path_list))
 
-        with multiprocessing.Pool(batchsize) as pool:
-            pool.starmap(export_to_json, batched_params)
-        for i in range(batchsize):
-            bar()
-    '''
-    for read in iterable_merged:
-        read.export_to_json(out_path)
-    if VERBOSE: print("[ aggregate_reads.py {} ] Export complete. Have a nice day! :)                               ".format(datetime.datetime.now()))
-    
-    return out_path
+    export_dir = os.listdir(out_path)
+    if export:
+        if VERBOSE: print("[ aggregate_reads.py {} ] Exporting to directory at {}...".format(LAST_TIME, out_path))
+        for read in iterable_merged:
+            
+            if N_SAVED_TO_JSON == 0:
+                LAST_TIME = datetime.datetime.now()
+            
+            if store_json:
+                if read.ref_name + '.json' not in export_dir:
+                    read.export_to_json(out_path)
+                    
+            elif store_parquet:
+                if read.ref_name not in export_dir:
+                    read.feature_extraction(batchsize)
+                    read.save_batches_to_parquet(out_path)
+        if VERBOSE: print("[ aggregate_reads.py {} ] Export complete. Have a nice day! :)                               ".format(datetime.datetime.now()))
+        return out_path
+    else:
+        return iterable_merged
                 
         
 if __name__ == '__main__':
     
     # setup the args
     parser = argparse.ArgumentParser(description='Merges Pod5, Bam, and Fasta Files into consensus-organized read compilations in Json. ')
-    parser.add_argument('-y', help="Confirm Json deletion in output directory.", action="store_true")
+    parser.add_argument('-y', help="Confirm output directory initialization", action="store_true")
     parser.add_argument('-v', "--verbose", help="Make output verbose.", action="store_true")
     parser.add_argument('-bam', help="Bam filepath.")
     parser.add_argument('-pod5', help="Pod5 filepath.")
     parser.add_argument('-fasta', help="Fasta filepath.")
     parser.add_argument('-output', help="Output filepath.")
+    parser.add_argument('-json', help="flags output as JSON type", action = "store_true")
+    parser.add_argument('-parquet', help="flags output as JSON type", action = "store_true")
+    parser.add_argument('-batch_size', help="number of reads per batched consensus. Default=100")
+    
     
     # Parse the arguments
     args = parser.parse_args()
     
     # check the arguments and assign them
-    DESTROY_JSON = args.y
+    wipe_output = args.y
     VERBOSE = args.verbose
     bam_path = args.bam
     pod5_path = args.pod5
     fasta_path = args.fasta
     output_path = args.output
+    store_json = args.json
+    store_parquet = args.parquet
+    export = False
+    batchsize = args.batch_size
     
+    if store_json:
+        export = True
+    elif store_parquet:
+        export = True
+    else:
+        export = False
+        
     # double check the args
     if type(bam_path) == type(None): bam_path = input("[ aggregate_reads.py ] Bam Path: ")
     if type(pod5_path) == type(None): pod5_path = input("[ aggregate_reads.py ] Pod5 path: ")
     if type(fasta_path) == type(None): fasta_path = input("[ aggregate_reads.py ] Reference fasta path: ")
-    if type(output_path) == type(None): output_path = input("[ aggregate_reads.py ] Output path: ")
-    
-    # Check if json is ok to be removed
-    if DESTROY_JSON == False:
-        resp = input("[ aggregate_reads.py ] JSON files in {} will be removed. Continue? [Y/N]:".format(output_path))
+    if type(output_path) == type(None) and export: output_path = input("[ aggregate_reads.py ] Output path: ")
+    if type(batch_size) == type(None): batchsize = 100
+
+    # Check if output is ok to be removed
+    if (wipe_output == False) and (export):
+        resp = input("[ aggregate_reads.py ] files in {} will be removed. Continue? [Y/N]:".format(output_path))
         if str(resp) == 'Y':
-            DESTROY_JSON = True
-    if DESTROY_JSON == False:
-        print("[ aggregate_reads.py {} ] Closing.".format(datetime.datetime.now()))
-    else:
-        
-        # run the main method. Batchsize currently does nothing.
-        batchsize = 10
-        main(pod5_path, bam_path, fasta_path, output_path, batchsize)
-        print("[ aggregate_reads.py {} ] Closing.".format(datetime.datetime.now()))
+            wipe_output = True
+
+    # wipe the output directory if selected
+    if (wipe_output == True) and (export):
+        shutil.rmtree(output_path)
+    
+    # run the main method.
+    main(pod5_path, bam_path, fasta_path, output_path, export, batchsize)
+    print("[ aggregate_reads.py {} ] Closing.".format(datetime.datetime.now()))
     sys.exit()
 
     
