@@ -663,10 +663,10 @@ if __name__ == "__main__":
     p5_pool_count=args.p5_pool_count
     
     # check to make sure all of the required pieces have info
-    if type(pod5_path) == type(None): pod5_path = sys.argv[1]
-    if type(bam_path) == type(None): bam_path = sys.argv[2]
-    if type(fasta_path) == type(None): fasta_path = sys.argv[3]
-    if type(output_path) == type(None): output_path = sys.argv[4]
+    if type(bam_path) == type(None): bam_path = input("[ merge_consensus.py ] Bam Path: ")
+    if type(pod5_path) == type(None): pod5_path = input("[ merge_consensus.py ] Pod5 path: ")
+    if type(fasta_path) == type(None): fasta_path = input("[ merge_consensus.py ] Reference fasta path: ")
+    if type(output_path) == type(None): output_path = input("[ merge_consensus.py ] Output path: ")
     if type(p5_read_count) == type(None): p5_read_count = 5000 # lower end, should be based off of pulling user specs
     if type(p5_pool_count) == type(None): p5_pool_count = 5 # lower end, should be based off user specs
 

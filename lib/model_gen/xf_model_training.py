@@ -83,9 +83,9 @@ def preprocessing(working_directory, raw_data, reference_fasta, direction):
     
     return merged_pod5_path, filtered_bam_path
     
-def feature_extraction(working_dir, merged_pod5, fwd_aligned_bam, rev_aligned_bam, fwd_xfasta, rev_xfasta):
+def raw_basecall_features(working_dir, merged_pod5, fwd_aligned_bam, rev_aligned_bam, fwd_xfasta, rev_xfasta):
     """
-    feature_extractions runs the script to extract features from raw data & 
+    raw_basecall_features runs the script to extract features from raw data & 
     sequence space and merge them. Outputs each reference sequence as a json 
     file containing the reads with their merged features. 
     """
@@ -157,7 +157,7 @@ def main():
 
     #Generate json files for forward and reverse reads 
     if xfp.regenerate_json or not os.listdir(directories_list[5]):
-        json_dir = feature_extraction(in_w_dir, merged_pod5_path, fwd_filtered_bam_path, rev_filtered_bam_path, fwd_xfasta, rev_xfasta)
+        json_dir = raw_basecall_features(in_w_dir, merged_pod5_path, fwd_filtered_bam_path, rev_filtered_bam_path, fwd_xfasta, rev_xfasta)
     else: 
         json_dir = directories_list[5]
 
