@@ -1,4 +1,4 @@
-# XenoFind: A de novo XNA consensus formation & detection pipeline for XNA aptamers 
+# XenoFind: A de novo consensus formation & detection pipeline for XNA aptamers 
 
 ## About 
 
