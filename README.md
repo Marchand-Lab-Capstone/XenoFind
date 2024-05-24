@@ -15,7 +15,7 @@ The `lib` directory on the main branch contains four subdirectories:
 
 
 ## Dependencies 
-XenoFind requires ONT tools (pod5, Dorado), several bioinformatics packages, and various python packages. A full list of dependencies can be found in the xenofind-env.yml document, with the exception of dorado which requires manual installation through ONT. XenoFind was built and tested on Ubuntu 20.04.To use conda for installing dependencies, simply load xenofind-env.yml into a new environment with the following command: 
+XenoFind requires ONT tools (pod5, Dorado), several bioinformatics packages, and various python packages. A full list of dependencies can be found in the xenofind-env.yml document, with the exception of dorado which requires manual installation through ONT. XenoFind was built and tested on Ubuntu 20.04. To use conda for installing dependencies, simply load xenofind-env.yml into a new environment with the following command: 
 
     conda env create -f xenofind-env.yml
 To enter the XenoFind conda environment, then use:
@@ -34,7 +34,7 @@ This can be achieved with the folllowing commands:
 Xenofind has three subcommands to call: Consensus Formation, Find, and Model Generation. 
 
 ### Consensus Formation
-Consensus Formation is used to create accurate consensus sequences fr XNA aptamer aptamer datasets. These consensus sequences are decoupled for both the forward and reverse strands to reduce end specific nanopore sequencing error and are labelled accordingly. The consensus sequences are outputted in the FASTA file format in the desired working directory as "final_merged_consensus.fasta". This FASTA file will be a mandatory input in "Find". The output is a FASTA file named `final_merged_consensus.fasta`, which is required for the "Find" step. 
+Consensus Formation is used to create accurate consensus sequences for XNA aptamer aptamer datasets. These consensus sequences are decoupled for both the forward and reverse strands to reduce end specific nanopore sequencing error and are labelled accordingly. The consensus sequences are outputted in the FASTA file format in the desired working directory as "final_merged_consensus.fasta". This FASTA file will be a mandatory input in "Find". The output is a FASTA file named `final_merged_consensus.fasta`, which is required for the "Find" step. 
 
 Inputs needed:
 - Desired working directory
