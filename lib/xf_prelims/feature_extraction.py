@@ -229,6 +229,13 @@ def shift_to_alignment(ops, sigs, seq, quals, ref_len, r):
              qualities, and signals. 
     
     '''
+    
+    def swaplisttype(val):
+        if type(val) != type([]):
+            val = val.tolist()
+        return val
+    sigs = swaplisttype(sigs)
+    quals = swaplisttype(quals)
     # per-read alignment shifter
     
     # set up a dummy variable to hold the current base position
@@ -1017,7 +1024,7 @@ def feature_extraction(json_path):
     in_del_sigs = mess_with_in_del.T.add_suffix('_i-d')
     wo_in_del_sigs = mess_wo_in_del.T.add_suffix('_w/o')
 
-    xna_idx = int(consensus_id.split(':')[-1].split(']')[0])
+    xna_idx = int(consensus_id.split('#')[-1].split(']')[0])
     xna_df = pd.DataFrame(mismatch_probs.index, columns = ['XNA_PRESENT'])
     xna_df['XNA_PRESENT'] = 0
     xna_df['XNA_PRESENT'][xna_idx] = 1
@@ -1117,7 +1124,7 @@ def extract_batch_features(read_batch, ref_seq, freq, consensus_id):
     xna_df = pd.DataFrame(mismatch_probs.index, columns = ['XNA_PRESENT'])
     xna_df['XNA_PRESENT'] = 0
     try:
-        xna_idx = int(consensus_id.split(':')[-1].split(']')[0])
+        xna_idx = int(consensus_id.split('#')[-1].split(']')[0])
         xna_df['XNA_PRESENT'][xna_idx] = 1
     except:
         xna_df['XNA_PRESENT'] = 0
@@ -1227,7 +1234,7 @@ if __name__ == '__main__':
             
         batched_consensus.to_parquet(output_filepath)
 
-    print("[ feature_extraction.py {} ] Closing.".format(datetime.datetime.now()))
+    if VERBOSE: print("[ feature_extraction.py {} ] Closing.".format(datetime.datetime.now()))
     sys.exit()
     
         
