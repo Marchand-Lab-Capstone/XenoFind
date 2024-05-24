@@ -53,12 +53,12 @@ class CustomPlusCoolDownScheduler:
         else:
             return [self.cool_down_lr for _ in self.opt.param_groups]
 
-    def step(self, metrics):
+    def step(self, metrics=None):
         """
         Update the learning rate at each step (epoch).
 
         Args:
-            metrics (float): The value of the monitored metric (e.g., validation loss).
+            metrics (float, optional): The value of the monitored metric (e.g., validation loss).
         """
         self.last_epoch += 1
         if self.last_epoch < self.num_epochs - 1:
@@ -364,14 +364,16 @@ if __name__ == "__main__":
 
     # Generate the list of dataframes using consensus features
     dataframes = consensus_features(json_dir)
+    first_dataframe = [dataframes[0]]  # Use only the first dataframe for shape debugging
     max_columns = max(df.shape[1] for df in dataframes)
 
     # Prepare data and labels
     data, labels = prepare_data_and_labels(dataframes, max_columns)
     train_data, val_data, train_labels, val_labels = train_test_split(data, labels, test_size=0.2, random_state=42)
 
-    print(f"Training data tensor shape: {train_data.shape}")
-    print(f"Validation data tensor shape: {val_data.shape}")
+    # Print the shape of the tensor for the first dataframe only
+    first_data, first_labels = prepare_data_and_labels(first_dataframe, max_columns)
+    print(f"First data tensor shape: {first_data.shape}")
 
     # Initialize the model
     model = ConvLSTM(input_channels=1, hidden_channels=16, kernel_size=3, num_layers=2)
@@ -435,7 +437,6 @@ if __name__ == "__main__":
             print("No improvement in validation accuracy after 5 epochs. Stopping training.")
             break
 
-    # Save the trained model
     model_path = os.path.join(model_dir, 'convlstm_model.pt')
     torch.save(model.state_dict(), model_path)
     print(f'Model saved to {model_path}')

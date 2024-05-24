@@ -139,6 +139,11 @@ def main():
     ref_dir = directories_list[2]
     
    #xFasta generation 
+    '''
+    for dna ref fasta options 
+    1. make a script that makes the rc for dna 
+    2. check to make sure no xna characters present into dna set 
+    '''
     if os.path.isfile(os.path.expanduser(in_f_dir)): 
         cmd = 'python lib/model_gen/xr_fasta2x_rc.py '+os.path.expanduser(in_f_dir)+' '+os.path.join(ref_dir,'x'+os.path.basename(in_f_dir))
         os.system(cmd)
@@ -155,6 +160,7 @@ def main():
     #rev reads
     merged_pod5_path, rev_filtered_bam_path = preprocessing(in_w_dir, in_r_dir, rev_xfasta, 'rev')
 
+    '''
     #Generate json files for forward and reverse reads 
     if xfp.regenerate_json or not os.listdir(directories_list[5]):
         json_dir = raw_basecall_features(in_w_dir, merged_pod5_path, fwd_filtered_bam_path, rev_filtered_bam_path, fwd_xfasta, rev_xfasta)
@@ -163,6 +169,6 @@ def main():
 
     #Extract list consensus features 
     consensus_features_list = consensus_features(json_dir)
-
+    '''
 if __name__ == '__main__':
     main()
