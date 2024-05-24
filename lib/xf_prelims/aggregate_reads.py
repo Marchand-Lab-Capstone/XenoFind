@@ -39,6 +39,7 @@ import argparse
 from pathlib import Path
 from alive_progress import alive_bar
 import feature_extraction as fe
+sys.path.append("..//model_gen/")
 import setup_methods
 import shutil
 
@@ -706,6 +707,7 @@ def main(p5_path, bam_path, fasta_path, out_path, export, batchsize = 100, verb 
     LAST_TIME = datetime.datetime.now()
 
     export_dir = os.listdir(out_path)
+    N_SAVED_TO_JSON = len(export_dir)
     if export:
         if VERBOSE: print("[ aggregate_reads.py {} ] Exporting to directory at {}...".format(LAST_TIME, out_path))
         for read in iterable_merged:
@@ -765,19 +767,12 @@ if __name__ == '__main__':
         export = False
         
     # double check the args
-    '''
-    if type(pod5_path) == type(None): pod5_path = input("[ aggregate_reads.py ] Pod5 path: ")
     if type(bam_path) == type(None): bam_path = input("[ aggregate_reads.py ] Bam Path: ")
+    if type(pod5_path) == type(None): pod5_path = input("[ aggregate_reads.py ] Pod5 path: ")
     if type(fasta_path) == type(None): fasta_path = input("[ aggregate_reads.py ] Reference fasta path: ")
     if type(output_path) == type(None) and export: output_path = input("[ aggregate_reads.py ] Output path: ")
-    if type(batch_size) == type(None): batchsize = 100
-    '''
-    pod5_path = sys.argv[1]
-    bam_path = sys.argv[2]
-    fasta_path = sys.argv[3]
-    output_path = sys.argv[4]
-    batchsize = sys.argv[5]
-    
+    if type(batchsize) == type(None): batchsize = 100
+
     # Check if output is ok to be removed
     if (wipe_output == False) and (export):
         resp = input("[ aggregate_reads.py ] files in {} will be removed. Continue? [Y/N]:".format(output_path))
@@ -786,9 +781,13 @@ if __name__ == '__main__':
 
     # wipe the output directory if selected
     if (wipe_output == True) and (export):
+        print("Wiping output directory.")
         shutil.rmtree(output_path)
     
     # run the main method.
     main(pod5_path, bam_path, fasta_path, output_path, export, batchsize)
-    print("[ aggregate_reads.py {} ] Finished aggregating raw and sequence data.".format(datetime.datetime.now()))
+    print("[ aggregate_reads.py {} ] Closing.".format(datetime.datetime.now()))
+    sys.exit()
 
+    
+        
