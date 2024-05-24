@@ -50,7 +50,7 @@ def setup_directory_system(working_directory):
     p5dir = check_make_dir(os.path.join(model_train_dir, 'merged_pod5')) #3
     bcdir = check_make_dir(os.path.join(model_train_dir, 'basecall_directory')) #4
     json_dir = check_make_dir(os.path.join(model_train_dir, 'json_files')) #5
-    model_dir = check_make_dir(os.path.join(model_train_dir, 'model'))
-    parquet_dir = check_make_dir(os.path.join(model_train_dir, 'parquet_superdirectory')) #5 
-    return [wdir,model_train_dir, ref_dir, p5dir,bcdir, json_dir, parquet_dir]
+    parquet_dir = check_make_dir(os.path.join(model_train_dir, 'parquet_superdirectory')) #6
+    model_dir = check_make_dir(os.path.join(model_train_dir, 'model')) #7
+    return [wdir,model_train_dir, ref_dir, p5dir,bcdir, json_dir, parquet_dir, model_dir]
 
