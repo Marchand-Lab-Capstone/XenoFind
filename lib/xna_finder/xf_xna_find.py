@@ -22,6 +22,48 @@ consensus sequences are built.
 
 WIP
 """
+def split_fasta(input_file_path, output_directory):
+
+    fwd_fasta_path = os.path.join(output_directory, 'fwd_cons_seq.fasta')
+    rev_fasta_path = os.path.join(output_directory, 'rev_cons_seq.fasta')
+    fwd_seqs = []
+    rev_seqs = []
+    
+    print('XenoFind [STATUS] - Splitting consensus fasta by direction')
+    with open(input_file_path, 'r') as file:
+        lines = file.readlines()
+        current_header = ''
+        current_seq = ''
+        
+        for line in lines:
+            if line.startswith('>'):
+                if current_header:
+                    if 'fwd' in current_header:
+                        fwd_seqs.append((current_header, current_seq))
+                    elif 'rev' in current_header:
+                        rev_seqs.append((current_header, current_seq))
+                current_header = line.strip()
+                current_seq = ''
+            else:
+                current_seq += line.strip()
+        
+        # Add the last sequence to the appropriate list
+        if current_header:
+            if 'fwd' in current_header:
+                fwd_seqs.append((current_header, current_seq))
+            elif 'rev' in current_header:
+                rev_seqs.append((current_header, current_seq))
+    
+    with open(fwd_output_file_path, 'w') as fwd_file:
+        for header, seq in fwd_seqs:
+            fwd_file.write(f"{header}\n{seq}\n")
+    
+    with open(rev_output_file_path, 'w') as rev_file:
+        for header, seq in rev_seqs:
+            rev_file.write(f"{header}\n{seq}\n")
+
+    return fwd_fasta_path, rev_fasta_path
+
 def preprocessing(working_directory, raw_data, reference_fasta, direction):
     """
     preprocessing will generate necessary files needed for feature extraction 
@@ -138,22 +180,14 @@ def main():
     directories_list = setup.setup_directory_system(in_w_dir)
     ref_dir = directories_list[2]
     
-   #xFasta generation 
-    if os.path.isfile(os.path.expanduser(in_f_dir)): 
-        cmd = 'python lib/xna_finder/xr_fasta2x_rc.py '+os.path.expanduser(in_f_dir)+' '+os.path.join(ref_dir,'x'+os.path.basename(in_f_dir))
-        os.system(cmd)
-
-        fwd_xfasta = os.path.join(ref_dir, 'x'+os.path.basename(in_f_dir))
-        rev_xfasta = fwd_xfasta.replace('.fa','_rc')+'.fa'
-    else: 
-        print('XenoFind [ERROR] - XNA Reference fasta file not found. Please check file exist or file path.')
-        sys.exit()
+   #Consensus fasta splitting 
+    fwd_fasta, rev_fasta = split_fasta(in_f_dir)
         
     #fwd reads
-    merged_pod5_path, fwd_filtered_bam_path = preprocessing(in_w_dir, in_r_dir, fwd_xfasta, 'fwd')
+    merged_pod5_path, fwd_filtered_bam_path = preprocessing(in_w_dir, in_r_dir, fwd_fasta, 'fwd')
     
     #rev reads
-    merged_pod5_path, rev_filtered_bam_path = preprocessing(in_w_dir, in_r_dir, rev_xfasta, 'rev')
+    merged_pod5_path, rev_filtered_bam_path = preprocessing(in_w_dir, in_r_dir, rev_fasta, 'rev')
 
     #Generate json files for forward and reverse reads 
     if xfp.regenerate_json or not os.listdir(directories_list[5]):
