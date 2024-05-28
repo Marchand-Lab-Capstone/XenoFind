@@ -105,3 +105,13 @@ def setup_directory_system_find(working_directory):
     parquet_dir = check_make_dir(os.path.join(model_train_dir, 'parquet_superdirectory')) #6
     model_dir = check_make_dir(os.path.join(model_train_dir, 'model')) #7
     return [wdir,model_train_dir, ref_dir, p5dir,bcdir, json_dir, parquet_dir, model_dir]
+    
+def contains_xna_bases(fasta_file, xna_base_pairs):
+    with open(fasta_file, 'r') as f:
+        for line in f:
+            if not line.startswith('>'):
+                for base_pair in xna_base_pairs:
+                    if any(base in line for base in base_pair):
+                        return True
+    return False
+

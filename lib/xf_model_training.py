@@ -149,21 +149,32 @@ def main():
     else:
         generate fwd and rev strands with a different function (not in xfasta format) 
     '''
+    
+    # Check if the input file exists
     if os.path.isfile(os.path.expanduser(in_f_dir)): 
-        cmd = 'python lib/model_gen/xr_fasta2x_rc.py '+os.path.expanduser(in_f_dir)+' '+os.path.join(ref_dir,'x'+os.path.basename(in_f_dir))
-        os.system(cmd)
+        # Check for the presence of XNA bases
+        if setup.contains_xna_bases(os.path.expanduser(in_f_dir), xfp.xna_base_pairs):
+            cmd = 'python lib/xr_fasta2x_rc.py ' + os.path.expanduser(in_f_dir) + ' ' + os.path.join(ref_dir, 'x' + os.path.basename(in_f_dir))
+            os.system(cmd)
 
-        fwd_xfasta = os.path.join(ref_dir, 'x'+os.path.basename(in_f_dir))
-        rev_xfasta = fwd_xfasta.replace('.fa','_rc')+'.fa'
+            fwd_fasta = os.path.join(ref_dir, 'x' + os.path.basename(in_f_dir))
+            rev_fasta = fwd_fasta.replace('.fa', '_rc') + '.fa'
+        else:
+            cmd = 'python lib/xf_rc_fasta_gen.py ' + os.path.expanduser(in_f_dir) + ' ' + os.path.join(ref_dir, os.path.basename(in_f_dir))
+            os.system(cmd) 
+            
+            fwd_fasta = os.path.join(ref_dir, os.path.basename(in_f_dir))
+            rev_fasta = fwd_fasta.replace('.fa', '_rc') + '.fa'
     else: 
-        print('XenoFind [ERROR] - XNA Reference fasta file not found. Please check file exist or file path.')
+        print('XenoFind [ERROR] - Reference fasta file not found. Please check file exist or file path.')
         sys.exit()
+    
         
     #fwd reads
-    merged_pod5_path, fwd_filtered_bam_path = preprocessing(in_w_dir, in_r_dir, fwd_xfasta, 'fwd')
+    merged_pod5_path, fwd_filtered_bam_path = preprocessing(in_w_dir, in_r_dir, fwd_fasta, 'fwd')
     
     #rev reads
-    merged_pod5_path, rev_filtered_bam_path = preprocessing(in_w_dir, in_r_dir, rev_xfasta, 'rev')
+    merged_pod5_path, rev_filtered_bam_path = preprocessing(in_w_dir, in_r_dir, rev_fasta, 'rev')
 
     '''
     #Generate json files for forward and reverse reads 

@@ -268,7 +268,8 @@ def prepare_data_and_labels(dataframes, max_columns):
         df = df.reset_index(drop=True)  # Reset index to ensure the first row has index 0
         label = df.iloc[0, :].values[0]  # Extract the label from the first row
         labels.append(label)
-
+        mean_residence_time = df.iloc['mean_sig_time_i-d']
+        
         features_df = df.drop(index=0)
         tensor = torch.tensor(features_df.values, dtype=torch.float32)  # Convert dataframe to tensor
         data_tensors.append(tensor.unsqueeze(0))  # Add channel dimension
