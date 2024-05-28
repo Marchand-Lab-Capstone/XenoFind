@@ -84,7 +84,7 @@ xna_bases = np.concatenate(list(list(i) for i in xna_base_pairs))
 
 #Path to dorado basecaller
 #basecaller_path = 'dorado'
-basecaller_path = '/home/marchandlab/dorado-0.6.0-linux-x64/bin/dorado'
+basecaller_path = '/home/marchandlab/dorado-0.7.0-linux-x64/bin/dorado'
 
 #Dorado Model Parameters
 min_qscore = 5
