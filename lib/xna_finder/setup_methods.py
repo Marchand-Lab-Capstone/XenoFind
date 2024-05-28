@@ -11,7 +11,7 @@ setup_directory_system() - setup the directory system used for consensus_methods
 import os
 
 
-def check_make_dir(directory):
+def check_make_dir(directory, VERBOSE=True):
     """
     ADAPTED FROM XF_TOOLS.PY, By: By: J. Sumabat, N. Lai, Y. Huang, S. Peck, H. Kawabe, N. Kaplan, J. A. Marchand
     
@@ -28,8 +28,8 @@ def check_make_dir(directory):
     directory = os.path.expanduser(directory)
     if not os.path.exists(directory):
         os.makedirs(directory)
-    return str(os.path.abspath(directory))+"/"
-
+        if VERBOSE: print('XenoFind [STATUS] - Required directory not found. Creating directory: '+directory)
+    return directory
 
 def setup_directory_system(working_directory):
     """
@@ -45,23 +45,12 @@ def setup_directory_system(working_directory):
     
     # Use Check_make_dir to generate or validate the existing directories.
     wdir = check_make_dir(working_directory) #0
-    xna_find_dir = check_make_dir(working_directory + 'XNA_find/') #1
-    p5dir = check_make_dir(xna_find_dir + "merged_pod5") #2
-    bcdir = check_make_dir(xna_find_dir + "basecall_directory/") #3
-    fwd_dir = check_make_dir(xna_find_dir + 'forward_read') #4
-    fwd_qs = check_make_dir(fwd_dir + 'quality_score') #5
-    fwd_shannon = check_make_dir(fwd_dir + 'shannon_entropy') #6
-    fwd_signal = check_make_dir(fwd_dir + 'signal_level') #7
-    rev_dir = check_make_dir(xna_find_dir + 'reverse_read') #8
-    rev_qs = check_make_dir(rev_dir + 'quality_score') #9
-    rev_shannon = check_make_dir(rev_dir + 'shannon_entropy') #10
-    rev_signal = check_make_dir(rev_dir + 'signal_level') #11
-    rev_unflip_dir = check_make_dir(xna_find_dir + 'reverse_unflipped_read') #12
-    rev_unflip_qs = check_make_dir(rev_unflip_dir + 'quality_score') #13
-    rev_unflip_shannon = check_make_dir(rev_unflip_dir + 'shannon_entropy') #14
-    rev_unflip_signal = check_make_dir(rev_unflip_dir + 'signal_level') #15
-    total_dir = check_make_dir(xna_find_dir + 'total_read') #16
-    total_qs = check_make_dir(total_dir + 'quality_score') #17
-    total_shannon = check_make_dir(total_dir + 'shannon_entropy') #18
-    total_signal = check_make_dir(total_dir + 'signal_level') #19
-    return [wdir,xna_find_dir,p5dir,bcdir, fwd_dir, fwd_qs, fwd_shannon, fwd_signal, rev_dir, rev_qs, rev_shannon, rev_signal, rev_unflip_dir, rev_unflip_qs, rev_unflip_shannon, rev_unflip_signal, total_dir, total_qs, total_shannon, total_signal]
+    model_train_dir = check_make_dir(os.path.join(working_directory, 'model_training')) #1
+    ref_dir = check_make_dir(os.path.join(working_directory, 'reference')) #2
+    p5dir = check_make_dir(os.path.join(working_dir, 'merged_pod5')) #3
+    bcdir = check_make_dir(os.path.join(model_train_dir, 'basecall_directory')) #4
+    json_dir = check_make_dir(os.path.join(model_train_dir, 'json_files')) #5
+    parquet_dir = check_make_dir(os.path.join(model_train_dir, 'parquet_superdirectory')) #6
+    model_dir = check_make_dir(os.path.join(model_train_dir, 'model')) #7
+    return [wdir,model_train_dir, ref_dir, p5dir,bcdir, json_dir, parquet_dir, model_dir]
+

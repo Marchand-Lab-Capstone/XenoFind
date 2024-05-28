@@ -300,6 +300,7 @@ def consensus_features(json_dir):
             consensus_features = fe.feature_extraction(json_file_path)
             cons_features_list.append(consensus_features.T)
             bar()  # Update the progress bar
+    print(cons_features_list)
     return cons_features_list
 
 def update_model_with_new_data(model, new_dataframes, optimizer, criterion, max_columns, epochs=10):
