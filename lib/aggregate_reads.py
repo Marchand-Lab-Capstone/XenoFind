@@ -39,7 +39,6 @@ import argparse
 from pathlib import Path
 from alive_progress import alive_bar
 import feature_extraction as fe
-sys.path.append("..//model_gen/")
 import setup_methods
 import shutil
 
@@ -707,7 +706,6 @@ def main(p5_path, bam_path, fasta_path, out_path, export, batchsize = 100, verb 
     LAST_TIME = datetime.datetime.now()
 
     export_dir = os.listdir(out_path)
-    N_SAVED_TO_JSON = len(export_dir)
     if export:
         if VERBOSE: print("[ aggregate_reads.py {} ] Exporting to directory at {}...".format(LAST_TIME, out_path))
         for read in iterable_merged:
@@ -740,7 +738,7 @@ if __name__ == '__main__':
     parser.add_argument('-fasta', help="Fasta filepath.")
     parser.add_argument('-output', help="Output filepath.")
     parser.add_argument('-json', help="flags output as JSON type", action = "store_true")
-    parser.add_argument('-parquet', help="flags output as JSON type", action = "store_true")
+    parser.add_argument('-parquet', help="flags output as parquet type", action = "store_true")
     parser.add_argument('-batch_size', help="number of reads per batched consensus. Default=100")
     
     
@@ -771,7 +769,7 @@ if __name__ == '__main__':
     if type(pod5_path) == type(None): pod5_path = input("[ aggregate_reads.py ] Pod5 path: ")
     if type(fasta_path) == type(None): fasta_path = input("[ aggregate_reads.py ] Reference fasta path: ")
     if type(output_path) == type(None) and export: output_path = input("[ aggregate_reads.py ] Output path: ")
-    if type(batchsize) == type(None): batchsize = 100
+    if type(batch_size) == type(None): batchsize = 100
 
     # Check if output is ok to be removed
     if (wipe_output == False) and (export):
@@ -781,7 +779,6 @@ if __name__ == '__main__':
 
     # wipe the output directory if selected
     if (wipe_output == True) and (export):
-        print("Wiping output directory.")
         shutil.rmtree(output_path)
     
     # run the main method.
