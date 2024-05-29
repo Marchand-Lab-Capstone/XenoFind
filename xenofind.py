@@ -137,7 +137,7 @@ if args.subparsers == 'full':
         doing a scuffed extract for now 
         '''
         consensus_fasta = os.path.join(args.w, 'consensus_files/consensus.fasta')
-        cmd = 'python lib/xf_xna_find.py '+args.w+' '+args.f' '+consensus_fasta
+        cmd = 'python lib/xf_xna_find.py '+args.w+' '+args.f+' '+consensus_fasta
         os.system(cmd)
     else: 
         print('XenoFind [ERROR] - At least one file path not properly set. XenoFind exiting.')

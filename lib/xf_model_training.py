@@ -36,7 +36,7 @@ def preprocessing(working_directory, raw_data, reference_fasta, direction):
     basecall_fname = 'basecall' # fq file
 
 
-    directories_list = setup.setup_directory_system(working_directory)
+    directories_list = setup.setup_directory_system_model(working_directory)
     
     #File path string for the merged pod5
     merged_pod5_path = os.path.join(directories_list[3], p5_fname + '.pod5')
@@ -83,23 +83,26 @@ def preprocessing(working_directory, raw_data, reference_fasta, direction):
     
     return merged_pod5_path, filtered_bam_path
     
-def raw_basecall_features(working_dir, merged_pod5, fwd_aligned_bam, rev_aligned_bam, fwd_xfasta, rev_xfasta):
+def raw_basecall_features(working_dir, merged_pod5, aligned_bam, fasta):
     """
     raw_basecall_features runs the script to extract features from raw data & 
     sequence space and merge them. Outputs each reference sequence as a json 
     file containing the reads with their merged features. 
     """
     #Set up directory system
-    directories_list = setup.setup_directory_system(working_dir)
+    directories_list = setup.setup_directory_system_model(working_dir)
     json_dir = directories_list[5] +'/'
     
-    #fwd reference sequences 
-    cmd = 'python lib/aggregate_reads.py '+merged_pod5+' '+fwd_aligned_bam+' '+fwd_xfasta+' '+json_dir
-    os.system(cmd)
-    
-    #reverse_reference sequences 
-    cmd = 'python lib/aggregate_reads.py '+merged_pod5+' '+rev_aligned_bam+' '+rev_xfasta+' '+json_dir
-    os.system(cmd)
+    for item in ['python',
+                'aggregate_reads.py',
+                '-v',
+                '-bam',aligned_bam,
+                '-pod5',merged_pod5,
+                '-fasta',fasta,
+                '-output', json_dir,
+                 '-json', '-overwrite_off']:
+        cmd = out_str + item + " "
+    subprocess.run(cmd)
     
     return json_dir
 
@@ -123,7 +126,7 @@ def consensus_features(json_dir):
     with alive_bar(len(json_file_names), title="Processing JSON files") as bar:
         for i in range(len(json_file_names)):
             json_file_path = os.path.join(json_dir, json_file_names[i])
-            consensus_features = fe.feature_extraction(json_file_path, verbose=False)
+            consensus_features = fe.feature_extraction(json_file_path, batch_size=100, verbose=False)
             cons_features_list.append(consensus_features.T)
             print('Consensus sequence', i, 'features', consensus_features.T)
             bar()  # Update the progress bar
@@ -135,20 +138,9 @@ def main():
     in_f_dir = sys.argv[3]
     
     #Create list of directories
-    directories_list = setup.setup_directory_system(in_w_dir)
+    directories_list = setup.setup_directory_system_model(in_w_dir)
     ref_dir = directories_list[2]
     
-   #xFasta generation 
-    '''
-    for dna ref fasta options 
-    1. make a script that makes the rc for dna 
-    2. check to make sure no xna characters present into dna set 
-    psuedo code: 
-    if xna in sequences 
-        perform xFASTA stuff 
-    else:
-        generate fwd and rev strands with a different function (not in xfasta format) 
-    '''
     
     # Check if the input file exists
     if os.path.isfile(os.path.expanduser(in_f_dir)): 
@@ -176,15 +168,15 @@ def main():
     #rev reads
     merged_pod5_path, rev_filtered_bam_path = preprocessing(in_w_dir, in_r_dir, rev_fasta, 'rev')
 
-    '''
-    #Generate json files for forward and reverse reads 
-    if xfp.regenerate_json or not os.listdir(directories_list[5]):
-        json_dir = raw_basecall_features(in_w_dir, merged_pod5_path, fwd_filtered_bam_path, rev_filtered_bam_path, fwd_xfasta, rev_xfasta)
-    else: 
-        json_dir = directories_list[5]
+    #feature aggregation
+    json_dir = raw_basecall_features(in_w_dir, merged_pod5_path, fwd_filtered_bam_path, fwd_fasta) 
+    json_dir = raw_basecall_features(in_w_dir, merged_pod5_path, rev_filtered_bam_path, rev_fasta)
 
     #Extract list consensus features 
     consensus_features_list = consensus_features(json_dir)
-    '''
+
+    #model training 
+    
+    #return moodel
 if __name__ == '__main__':
     main()
