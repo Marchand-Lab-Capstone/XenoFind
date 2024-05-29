@@ -42,6 +42,7 @@ import feature_extraction as fe
 sys.path.append("..//model_gen/")
 import setup_methods
 import shutil
+import psutil
 
 VERBOSE = False
 N_SAVED_TO_JSON = 0
@@ -51,6 +52,25 @@ TOTAL_ELAPSED = 0
 store_json = False
 store_parquet = False
 
+
+def run_mem_limit_check(line):
+    over = psutil.virtual_memory().percent > 80
+    if over:
+        print("{}: CRITICAL ERROR - MEMORY USE EXCEEDED 90% OF AVAILABLE. CLOSING & CONTINUING.".format(line))
+        atexit.register(restart_main)
+        sys.exit()
+        
+
+def restart_main():
+    cmd = "python"
+    for arg in sys.argv:
+        cmd = cmd + " "  + arg
+    if ("-overwrite_off" in cmd) == False:
+        cmd = cmd+" " + "-overwrite_off"
+    print(cmd)
+    os.system(cmd)
+
+    
 class Read: 
     '''
     class Read stores the read id, signal, and frequency of a given read.
@@ -200,6 +220,7 @@ class ConsensusReadsData:
         '''
         # read the alignment data.
         read_alignment_data = fe.extract_alignment_from_dict(self.reads_data, self.ref_seq)
+        run_mem_limit_check(219)
         self.reads_data = None
         # batch the data.
         batched_reads = fe.batch_read_alignment_data(read_alignment_data, batch_size)
@@ -210,10 +231,12 @@ class ConsensusReadsData:
         for i in range(len(batched_reads)):
             batch = batched_reads[i]
             prepped_batches.append((batch, self.ref_seq, self.freq, self.ref_name))
+            run_mem_limit_check(230)
         
         # iterate through the parameters and process the features.
         self.batched_assembled_features = []
         with multiprocessing.Pool(processes=len(batched_reads)) as feat_gen_pool:
+            run_mem_limit_check(235)
             self.batched_assembled_features = feat_gen_pool.starmap(fe.extract_batch_features, prepped_batches)
         
         # return the features. 
@@ -233,9 +256,10 @@ class ConsensusReadsData:
 
         # get the total number of batches
         total_batches = len(self.batched_assembled_features)
-        
+
         # loop through each batch
         for i in range(total_batches):
+            run_mem_limit_check(258)
             
             # get the batch of features
             batched_consensus = self.batched_assembled_features[i]
@@ -704,10 +728,14 @@ def main(p5_path, bam_path, fasta_path, out_path, export, batchsize = 100, verb 
     iterable_merged = iterable_merged_data(list_of_joint_bam_reads, bam_data, fasta_data)
     if VERBOSE: print("[ aggregate_reads.py {} ] Consensus Reads Data Generated.                                                                                                             ".format(datetime.datetime.now()))
     
+    global LAST_TIME
     LAST_TIME = datetime.datetime.now()
 
     export_dir = os.listdir(out_path)
+
+    global N_SAVED_TO_JSON
     N_SAVED_TO_JSON = len(export_dir)
+    print(N_SAVED_TO_JSON)
     if export:
         if VERBOSE: print("[ aggregate_reads.py {} ] Exporting to directory at {}...".format(LAST_TIME, out_path))
         for read in iterable_merged:
@@ -742,11 +770,12 @@ if __name__ == '__main__':
     parser.add_argument('-json', help="flags output as JSON type", action = "store_true")
     parser.add_argument('-parquet', help="flags output as JSON type", action = "store_true")
     parser.add_argument('-batch_size', help="number of reads per batched consensus. Default=100")
+    parser.add_argument('-overwrite_off', help='overwrite files at output path.', action="store_true")
     
     
     # Parse the arguments
     args = parser.parse_args()
-    
+
     # check the arguments and assign them
     wipe_output = args.y
     VERBOSE = args.verbose
@@ -758,6 +787,7 @@ if __name__ == '__main__':
     store_parquet = args.parquet
     export = False
     batchsize = args.batch_size
+    overwrite_off = args.overwrite_off
     
     if store_json:
         export = True
@@ -774,18 +804,27 @@ if __name__ == '__main__':
     if type(batchsize) == type(None): batchsize = 100
 
     # Check if output is ok to be removed
-    if (wipe_output == False) and (export):
-        resp = input("[ aggregate_reads.py ] files in {} will be removed. Continue? [Y/N]:".format(output_path))
+    if (wipe_output == False) and (export) and overwrite_off == False:
+        resp = input("[ aggregate_reads.py ] Overwrite existing files at {}? [Y/N]:".format(output_path))
         if str(resp) == 'Y':
             wipe_output = True
 
+            
+    print()     
+    print("----------------------------")
+    print("[ aggregate_reads.py {} ] Merge: bam:{}, fasta:{}, pod5:{} ".format(datetime.datetime.now(), bam_path, fasta_path, pod5_path))
+    print("[ aggregate_reads.py {} ] Output: {}, as JSON={} Parquet={} ".format(datetime.datetime.now(), output_path, store_json, store_parquet))
+    print("[ aggregate_reads.py {} ] Other: Batches:{}, wipe output:{}".format(datetime.datetime.now(), batchsize, wipe_output))
+    print("----------------------------")
+    print()
     # wipe the output directory if selected
-    if (wipe_output == True) and (export):
+    if (wipe_output == True) and (export) and (overwrite_off==False):
         print("Wiping output directory.")
         shutil.rmtree(output_path)
     
+    
     # run the main method.
-    main(pod5_path, bam_path, fasta_path, output_path, export, batchsize)
+    main(pod5_path, bam_path, fasta_path, output_path, export, batchsize, VERBOSE)
     print("[ aggregate_reads.py {} ] Closing.".format(datetime.datetime.now()))
     sys.exit()
 
