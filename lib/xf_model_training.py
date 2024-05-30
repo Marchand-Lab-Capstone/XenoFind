@@ -7,6 +7,7 @@ import setup_methods as setup
 import raw_read_merger as rrm
 import xf_basecall as bc
 import feature_extraction as fe
+import subprocess
 from alive_progress import alive_bar
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -36,7 +37,7 @@ def preprocessing(working_directory, raw_data, reference_fasta, direction):
     basecall_fname = 'basecall' # fq file
 
 
-    directories_list = setup.setup_directory_system(working_directory)
+    directories_list = setup.setup_directory_system_model(working_directory)
     
     #File path string for the merged pod5
     merged_pod5_path = os.path.join(directories_list[3], p5_fname + '.pod5')
@@ -83,27 +84,22 @@ def preprocessing(working_directory, raw_data, reference_fasta, direction):
     
     return merged_pod5_path, filtered_bam_path
     
-def raw_basecall_features(working_dir, merged_pod5, fwd_aligned_bam, rev_aligned_bam, fwd_xfasta, rev_xfasta):
+def raw_basecall_features(working_dir, merged_pod5, aligned_bam, fasta):
     """
     raw_basecall_features runs the script to extract features from raw data & 
     sequence space and merge them. Outputs each reference sequence as a json 
     file containing the reads with their merged features. 
     """
     #Set up directory system
-    directories_list = setup.setup_directory_system(working_dir)
+    directories_list = setup.setup_directory_system_model(working_dir)
     json_dir = directories_list[5] +'/'
     
-    #fwd reference sequences 
-    cmd = 'python lib/aggregate_reads.py '+merged_pod5+' '+fwd_aligned_bam+' '+fwd_xfasta+' '+json_dir
-    os.system(cmd)
-    
-    #reverse_reference sequences 
-    cmd = 'python lib/aggregate_reads.py '+merged_pod5+' '+rev_aligned_bam+' '+rev_xfasta+' '+json_dir
+    cmd = 'python lib/aggregate_reads.py -v -bam '+aligned_bam+' -pod5 '+merged_pod5+' -fasta '+fasta+' -output '+json_dir+' -json'
     os.system(cmd)
     
     return json_dir
 
-def consensus_features(json_dir):
+def consensus_features(working_dir, json_dir):
     """
     Takes in a the file path containing the json files with merged raw and 
     sequence space data. Calculates consensus features for each of json file. 
@@ -115,6 +111,8 @@ def consensus_features(json_dir):
     return 
     cons_features_list - list of dataframes containing consensus level features 
     """
+    directories_list = setup.setup_directory_system_model(working_dir)
+    parquet_dir = directories_list[6]
     warnings.filterwarnings("ignore")  # stops a warning from spamming your output
     sys.path.append('..//')  # path to directory holding feature_extraction
     json_file_names = os.listdir(json_dir)
@@ -123,7 +121,8 @@ def consensus_features(json_dir):
     with alive_bar(len(json_file_names), title="Processing JSON files") as bar:
         for i in range(len(json_file_names)):
             json_file_path = os.path.join(json_dir, json_file_names[i])
-            consensus_features = fe.feature_extraction(json_file_path, verbose=False)
+            #consensus_features = fe.feature_extraction(json_file_path, batch_size=100, verbose=False)
+            consensus_features = fe.batched_feature_extraction(json_file_path, batch_size=100)
             cons_features_list.append(consensus_features.T)
             print('Consensus sequence', i, 'features', consensus_features.T)
             bar()  # Update the progress bar
@@ -135,20 +134,9 @@ def main():
     in_f_dir = sys.argv[3]
     
     #Create list of directories
-    directories_list = setup.setup_directory_system(in_w_dir)
+    directories_list = setup.setup_directory_system_model(in_w_dir)
     ref_dir = directories_list[2]
     
-   #xFasta generation 
-    '''
-    for dna ref fasta options 
-    1. make a script that makes the rc for dna 
-    2. check to make sure no xna characters present into dna set 
-    psuedo code: 
-    if xna in sequences 
-        perform xFASTA stuff 
-    else:
-        generate fwd and rev strands with a different function (not in xfasta format) 
-    '''
     
     # Check if the input file exists
     if os.path.isfile(os.path.expanduser(in_f_dir)): 
@@ -169,22 +157,27 @@ def main():
         print('XenoFind [ERROR] - Reference fasta file not found. Please check file exist or file path.')
         sys.exit()
     
+    #Extra Parameter Check since realignment takes so long. Add an additional conditional that double checks if fwd, rev exist, and if pod5 exists 
+    if xfp.regenerate_preprocessing == True:
+        #fwd reads
+        merged_pod5_path, fwd_filtered_bam_path = preprocessing(in_w_dir, in_r_dir, fwd_fasta, 'fwd')
         
-    #fwd reads
-    merged_pod5_path, fwd_filtered_bam_path = preprocessing(in_w_dir, in_r_dir, fwd_fasta, 'fwd')
-    
-    #rev reads
-    merged_pod5_path, rev_filtered_bam_path = preprocessing(in_w_dir, in_r_dir, rev_fasta, 'rev')
-
-    '''
-    #Generate json files for forward and reverse reads 
-    if xfp.regenerate_json or not os.listdir(directories_list[5]):
-        json_dir = raw_basecall_features(in_w_dir, merged_pod5_path, fwd_filtered_bam_path, rev_filtered_bam_path, fwd_xfasta, rev_xfasta)
-    else: 
-        json_dir = directories_list[5]
+        #rev reads
+        merged_pod5_path, rev_filtered_bam_path = preprocessing(in_w_dir, in_r_dir, rev_fasta, 'rev')
+    else:
+        merged_pod5_path = os.path.join(directories_list[3], 'merged.pod5')
+        fwd_filtered_bam_path = os.path.join(directories_list[4], 'fwd_filtered.bam')
+        rev_filtered_bam_path = os.path.join(directories_list[4], 'rev_filtered.bam')
+        
+    #feature aggregation
+    json_dir = raw_basecall_features(in_w_dir, merged_pod5_path, fwd_filtered_bam_path, fwd_fasta)
+    json_dir = raw_basecall_features(in_w_dir, merged_pod5_path, rev_filtered_bam_path, rev_fasta)
 
     #Extract list consensus features 
-    consensus_features_list = consensus_features(json_dir)
-    '''
+    consensus_features_list = consensus_features(in_w_dir, json_dir)
+
+    #model training 
+    
+    #return moodel
 if __name__ == '__main__':
     main()

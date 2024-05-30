@@ -1207,7 +1207,7 @@ if __name__ == '__main__':
     
     for i in range(len(assembled_features)):
         batched_consensus = assembled_features[i]
-        output_filepath = output_path + "consensus{}.parquet".format(i)
+        output_filepath = os.path.join(output_path,"consensus{}.parquet".format(i))
         print(output_filepath)
         batched_consensus.to_parquet(output_filepath)
         
