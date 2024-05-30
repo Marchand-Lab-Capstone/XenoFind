@@ -755,7 +755,7 @@ if __name__ == '__main__':
     store_json = args.json
     store_parquet = args.parquet
     export = False
-    batchsize = args.batch_size
+    batch_size = args.batch_size
     
     if store_json:
         export = True
@@ -771,6 +771,7 @@ if __name__ == '__main__':
     if type(output_path) == type(None) and export: output_path = input("[ aggregate_reads.py ] Output path: ")
     if type(batch_size) == type(None): batchsize = 100
 
+    '''
     # Check if output is ok to be removed
     if (wipe_output == False) and (export):
         resp = input("[ aggregate_reads.py ] files in {} will be removed. Continue? [Y/N]:".format(output_path))
@@ -780,7 +781,7 @@ if __name__ == '__main__':
     # wipe the output directory if selected
     if (wipe_output == True) and (export):
         shutil.rmtree(output_path)
-    
+    '''
     # run the main method.
     main(pod5_path, bam_path, fasta_path, output_path, export, batchsize)
     print("[ aggregate_reads.py {} ] Closing.".format(datetime.datetime.now()))
