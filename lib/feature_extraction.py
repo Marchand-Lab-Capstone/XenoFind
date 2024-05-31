@@ -230,6 +230,13 @@ def shift_to_alignment(ops, sigs, seq, quals, ref_len, r):
     '''
     # per-read alignment shifter
     
+    def swaplisttype(val):
+        if type(val) != type([]):
+            val = val.tolist()
+        return val
+    sigs = swaplisttype(sigs)
+    quals = swaplisttype(quals)
+    
     # set up a dummy variable to hold the current base position
     base_position = 0
     
@@ -1113,10 +1120,13 @@ def extract_batch_features(read_batch, ref_seq, freq, consensus_id):
     in_del_sigs = mess_with_in_del.T.add_suffix('_i-d')
     wo_in_del_sigs = mess_wo_in_del.T.add_suffix('_w/o')
 
-    xna_idx = int(consensus_id.split(':')[-1].split(']')[0])
     xna_df = pd.DataFrame(mismatch_probs.index, columns = ['XNA_PRESENT'])
     xna_df['XNA_PRESENT'] = 0
-    xna_df['XNA_PRESENT'][xna_idx] = 1
+    try:
+        xna_idx = int(consensus_id.split('#')[-1].split(']')[0])
+        xna_df['XNA_PRESENT'][xna_idx] = 1
+    except:
+        xna_df['XNA_PRESENT'] = 0
     
     assembled_features = pd.concat([xna_df, base_probs, mismatch_probs, shentropy_col, no_quals, id_quals, rawmeds, in_del_sigs, wo_in_del_sigs], axis=1)
     
