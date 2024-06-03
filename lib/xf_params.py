@@ -18,16 +18,16 @@ import numpy as np
 ##Analysis instructions 
 
 #Remerge fast5 or pod5 files into single pod5 file 
-regenerate_pod5 = False
+regenerate_pod5 = True
 
 #Re-basecall pod5 file. Required if new reference files are being used. 
-basecall_pod = False
+basecall_pod = True
 
 #Perform Quality Score Analysis 
 analyze_fastq = True
 
 #Reperform Preprocessing
-regenerate_preprocessing = False
+regenerate_preprocessing = True
 
 ######################XFASTA GENERATION######################
 #Fasta2x - write sequences to xfasta even if they do no contain XNAs. Default = False 

@@ -1023,7 +1023,7 @@ def feature_extraction(json_path):
     in_del_sigs = mess_with_in_del.T.add_suffix('_i-d')
     wo_in_del_sigs = mess_wo_in_del.T.add_suffix('_w/o')
 
-    xna_idx = int(consensus_id.split(':')[-1].split(']')[0])
+    xna_idx = int(consensus_id.split('#')[-1].split(']')[0])
     xna_df = pd.DataFrame(mismatch_probs.index, columns = ['XNA_PRESENT'])
     xna_df['XNA_PRESENT'] = 0
     xna_df['XNA_PRESENT'][xna_idx] = 1

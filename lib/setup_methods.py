@@ -100,11 +100,10 @@ def setup_directory_system_find(working_directory):
     find_dir = check_make_dir(os.path.join(working_directory, 'xna_find')) #1
     ref_dir = check_make_dir(os.path.join(working_directory, 'reference')) #2
     p5dir = check_make_dir(os.path.join(working_directory, 'merged_pod5')) #3
-    bcdir = check_make_dir(os.path.join(model_train_dir, 'basecall_directory')) #4
-    json_dir = check_make_dir(os.path.join(model_train_dir, 'json_files')) #5
-    parquet_dir = check_make_dir(os.path.join(model_train_dir, 'parquet_superdirectory')) #6
-    model_dir = check_make_dir(os.path.join(model_train_dir, 'model')) #7
-    return [wdir,model_train_dir, ref_dir, p5dir,bcdir, json_dir, parquet_dir, model_dir]
+    bcdir = check_make_dir(os.path.join(find_dir, 'basecall_directory')) #4
+    json_dir = check_make_dir(os.path.join(find_dir, 'json_files')) #5
+    parquet_dir = check_make_dir(os.path.join(find_dir, 'parquet_superdirectory')) #6
+    return [wdir,find_dir, ref_dir, p5dir,bcdir, json_dir, parquet_dir]
     
 def contains_xna_bases(fasta_file, xna_base_pairs):
     with open(fasta_file, 'r') as f:

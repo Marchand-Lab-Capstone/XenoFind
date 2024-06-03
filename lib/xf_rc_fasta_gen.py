@@ -9,11 +9,13 @@ def reverse_complement_fasta(input_fasta, output_fasta):
     for record in SeqIO.parse(input_fasta, "fasta"):
         record.seq = record.seq.reverse_complement()
         record.id += "+RC"
-        record.description = record.description.split()[0] + "+RC"
+        record.description = record.id
         records.append(record)
     
-    # Write the reverse complemented sequences to the output file
-    SeqIO.write(records, output_fasta, "fasta")
+    # Write the reverse complemented sequences to the output file with sequences in one line
+    with open(output_fasta, 'w') as output_handle:
+        for record in records:
+            output_handle.write(f">{record.id}\n{str(record.seq)}\n")
 
 def main():
     input_fasta = sys.argv[1]
