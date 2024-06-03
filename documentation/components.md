@@ -31,6 +31,12 @@ This script splits the reads based on the direction (forward/reverse) and calls 
 
 ## Internal Components/ Functions 
 
+### check_make_dir(setup_methods.py)
+check_make_dir is a function that takes in a directory in the form of a string to actually generate that directory by using the built in os.makedirs() function. The string that is generated is either the inputted working directory string from the user or other predetermined directories that are put into the working directory. There are added print statements to help users know what directory is being generated. 
+
+### consensus_generation(weighted_consensus_split.py)
+consensus_generation takes in working directory, reads, and a barcoded fasta file and performs basecalling on them using Dorado. It then performs alignment using minimap2 set with custom parameters to maximize the amount of reads that align to the initial placeholder fasta, filters with the primary aligned reads, and trims and sorts the read using default of 95% margin. The trimmed and sorted reads are then fed into vsearch clustering and the outcome consensus of each cluster is weighted by the number of reads that gets aligned to. Realign the reads to the weighted consensus and reperform the vsearch steps until the final consensus is generated.
+
 ### read_trim(xf_consensus.py)
 This function takes in the sam file generated from minimap2, trim the reads according to the length of the reference sequence and outputs the reads with approximately the same length in a fasta file. This is done by truncating reads the bases that are longer than the 'dummy' reference file where we have a length approximation of the dataset. The output of read_trim is a fasta file formatted as the following 
 
@@ -55,9 +61,6 @@ get_fast5_subdir is a function that takes in a fast5 containing directory as its
 
 ### get_pod5_subdir (xf_tools)
 get_pod5_subdir is a function that takes in a pod5 containing directory as its input and extracts that path to be given to other functions such as pod5_merge. The pathway extracted is the xna_raw_dir, dna_raw_dir, or bc_raw pathways in the string datatype from either terminal calling xenofind.py or from xenofind_pipe.py
-
-### check_make_dir (xf_tools)
-check_make_dir is a function that takes in a directory in the form of a string to actually generate that directory by using the built in os.makedirs() function. The string that is generated is either the inputted working directory string from the user or other predetermined directories that are put into the working directory. There are added print statements to help users know what directory is being generated. 
 
 ### cod5_to_fast5 (xf_tools)
 cod5_to_fast5 is a function that calls the pod5 package from ONT to convert and merge a fast5 dataset to a single pod5 file within the desired pod5 directory. This is generally the generated pod5 directory in the working directory chosen by the user. 
