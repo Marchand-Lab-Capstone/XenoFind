@@ -6,25 +6,28 @@
 This would be the main UI for users. A user would call ```python xenofind.py [method] [fast5/pod5 directory] [reference fasta]``` with required inputs. Progress and errors would show up here.
 
 ### xenofind_pipe.py 
-This will be the other 'UI' for users. Users would input where they want the working directory to be, as well as the directories for inputted fast5/pod5 and the reference fasta for basecalling. In addition, you would set which detection method you would want to use on this script. This is essenetially pretty much the same as running the command line as mentioned above except it those inputs would be stored and easy to see. 
+This will be the other 'UI' for users. Users would input where they want the working directory to be, as well as the directories for inputted fast5/pod5 and the reference fasta for basecalling. In addition, users would set which detection method they would want to use on this script. This is essenetially pretty much the same as running the command line as mentioned above except it those inputs would be stored and easy to see. 
 
 ### xenofind.py
 This is the primary script. This will call the desired detection method in the ```lib``` directory regard if it is called using the command line or xenofind_pipe.py. 
 
-### xf_params
+### xf_params.py
 This will contain the parameters used in any of the detection methods such as the path for the basecaller. It also contains toggleable variables to only run certain parts of the script (e.g., initial basecall). This is imported into most of the scripts in this program. 
 
-### xf_tools 
-This script contains all the reusable, general functions that can be called as needed (e.g., fast5 to pod5 conversion). This script is imported to most of the scripts in this program. 
+### setup_methods.py
+This script contains the functions to set up the directories for the detection method that the users would want to use. This is imported in the main scripts in this program.
 
-### xf_consensus.py
-(old) This script takes in the fast5 files generated from Nanopore Sequencing and outputs a fasta file as the reference sequence for downstream possible location detection of the XNAs.
+### weighted_consensus_split.py
+This script takes in the fast5 files generated from Nanopore Sequencing, splits the forward and reverse reads, and outputs a fasta file containing the consensus sequences of the forward and reverse reads respectively as the reference sequences for downstream possible location detection of the XNAs.
 
-### consensus_methods.py
+### consensus_methods_split.py
 This script contains all relevant functions for consensus formation to occur. 
 
-### xf_low_qual.py
-This script outlines the first approach for identifying potential positions of XNA bases with limited accuracy and precision. In this method, the raw datasets will be merged and basecalled with the fasta reference sequence from ```consensus.py``` into a ```.bam``` file, and the features of the reads in the bam file will be generated. Then it conducts a statistical test to identify low-quality scores on a per-read basis. Following this assessment, the reads are recentered and grouped to the reference sequence. Finally, positions with low-quality scores indicative of XNA presence are extracted.
+### xf_model_training.py
+This is the main script to call submethods to generate features from training dataset (forward/reverse respectively) for training the model to detect XNA position after consensus sequences are built.
+
+### xf_xna_find.py
+This script splits the reads based on the direction (forward/reverse) and calls all the submethods to generate features from the data that the users provided. The features are going to be fed into the trained model and XNA detection will be performed.
 
 ## Internal Components/ Functions 
 
