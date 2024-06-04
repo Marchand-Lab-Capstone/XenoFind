@@ -83,7 +83,7 @@ This would be the main UI for users. A user would call ```python xenofind.py [me
 ```filter_primary_alignments``` filters a BAM file to retain only primary alignments and outputs the result to a new BAM file named 'primary_alignments.bam' in the same directory as the input file.
 
 ### read_trim (consensus_methods_split.py)
-```read_trim``` takes in the sam file generated from minimap2, trim the reads according to the length of the reference sequence and outputs the reads with approximately the same length in a FASTA file. This is done by truncating reads the bases that are longer than the 'dummy' reference file where we have a length approximation of the dataset. The output of read_trim is a FASTA file formatted as the following 
+```read_trim``` takes in the SAM file generated from minimap2, trim the reads according to the length of the reference sequence and outputs the reads with approximately the same length in a FASTA file. This is done by truncating reads the bases that are longer than the 'dummy' reference file where we have a length approximation of the dataset. The output of read_trim is a FASTA file formatted as the following 
 
     >readID
     trimmed sequence
@@ -104,7 +104,7 @@ This would be the main UI for users. A user would call ```python xenofind.py [me
 ```weight_generation``` takes in an aligned BAM (primary reads only) and returns a dictionary containing the references (clusters) from VSEARCH and the associated count of primary aligned reads.
 
 ### weighted_fasta_gen (consensus_methods_split.py)
-```weighted_fasta_gen``` will take a cluster FASTA outputted from VSEARCH as well as a dictionary containing the reference sequences in that sam file (clusters outputted from VSEARCH) and the number of reads aligned to that particular reference sequence. It will generate a FASTA file with the same reference sequence except multiplied by the number of reads that aligned to perfor weight cluster formation downstream. 
+```weighted_fasta_gen``` will take a cluster FASTA outputted from VSEARCH as well as a dictionary containing the reference sequences in that SAM file (clusters outputted from VSEARCH) and the number of reads aligned to that particular reference sequence. It will generate a FASTA file with the same reference sequence except multiplied by the number of reads that aligned to perfor weight cluster formation downstream. 
 
 ### rename_consensus_headers (consensus_methods_split.py)
 ```rename_consensus_headers``` will rename the headers in the consensus FASTA file based on the provided first and last N indexes. All headers will be renamed using the same j and k values.
@@ -221,28 +221,38 @@ class ```Signal``` contains and automatically runs a handful of valuable pieces 
 ### class GroupedSignals (feature_extraction.py)
 class ```GroupedSignals``` contains useful methods for processing groups of signal objects.
 
-### export_to_json
+### export_to_json (aggregate_reads.py)
+```export_to_json``` takes in a directory path and saves the ConsensusReadsData object to a JSON file at that path.
 
-### feature_extraction
+### feature_extraction (aggregate_reads.py)
+```feature_extraction``` runs the feature extraction methods on the data stored within the current object.
 
-### save_batches_to_parquet
+### save_batches_to_parquet (aggregate_reads.py)
+```save_batches_to_parquet``` takes in an output superdirectory, and saves the batched consensus features as parquets to that directory.
 
-### percenttobar
+### percenttobar (aggregate_reads.py)
+```percenttobar``` converts a fractional value to a loading progress bar string.
 
-### load_bam
+### load_bam (aggregate_reads.py)
+```load_bam``` takes in a path to a basecalled and aligned consensus BAM file, and converts the data into a list of dicts format.
 
-### load_fasta
+### load_fasta (aggregate_reads.py)
+```load_fasta``` takes in a consensus fasta path, and returns a list of dicts containing the read IDs and sequences of all valid samples.
 
-### map_signal_to moves
+### map_signal_to moves (aggregate_reads.py)
+```map_signal_to_moves``` takes in a moves table, base offeset, and a signal, and then maps the signal to each corresponding move/observation in the table.
 
-### iterable_reads
+### iterable_reads (aggregate_reads.py)
+```iterable_reads``` uses a path to a POD5 file and a list of valid read IDs, and returns an iterable generator of Read objects constructed from the POD5 file.
 
-### aggregate_reads_to_reference
+### aggregate_reads_to_reference (aggregate_reads.py)
+```aggregate_reads_to_reference``` generates a list of JointBamReads based on a POD5 path and BAM data.
 
-### iterable_merged_data
+### iterable_merged_data (aggregate_reads.py)
+```create an generator``` of ConsensusReadsData objects from alignment data and the fasta data, as well as a list of JointBamReads objects.
 
 ### class Read (aggregate_reads.py) 
-class ```Read``` stores the read id, signal, and frequency of a given read.
+class ```Read``` stores the read ID, signal, and frequency of a given read.
 
 ### class JointBamReads (aggregate_reads.py)
 class ```JointBamReads ``` stores the reference name and read iterator for a given reference sequence.
