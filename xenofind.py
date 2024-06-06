@@ -88,6 +88,7 @@ if args.subparsers == 'consensus':
         print('XenoFind [ERROR] - At least one file path not properly set. XenoFind exiting.')
         sys.exit()
 
+## CURRENTLY IRRELEVANT TO MVP  -S, 6/6
 if args.subparsers == 'model_gen': 
     if os.path.exists(os.path.expanduser(args.f))==False:
         print('XenoFind [ERROR] - model_gen requires either a Pod5 or Fast5 directory. This file path is invalid. Check to ensure pod5/fast path is correct.')
@@ -103,7 +104,9 @@ if args.subparsers == 'model_gen':
     else: 
         print('XenoFind [ERROR] - At least one file path not properly set. XenoFind exiting.')
         sys.exit()
-
+###
+        
+        
 if args.subparsers == 'find': 
     if os.path.exists(os.path.expanduser(args.f))==False:
         print('XenoFind [ERROR] - Inputted fast5/pod5 directory path not found or is not valid. Check to ensure path to fast5/pod5 directory is correct.')

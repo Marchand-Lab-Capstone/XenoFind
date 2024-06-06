@@ -198,10 +198,9 @@ def window_detection(window_model, read_feature_df, pca):
             
         # append the window's 1d features to the list.
         window_features.append(window_sub_features)
-        
     # step 2: scale the data.
-    window_scaler = StandardScaler()
-    scaled_features = window_scaler.fit_transform(window_features)
+    
+    scaled_features = StandardScaler().fit_transform(window_features)
     
      # step 3as;lkvskvna;lkf: generate PCA - THIS IS BAD FORM AND SHOULD NOT BE DONE THIS WAY BUT TIME HAS FORCED MY HAND
     #n_pca_features = window_model.n_features

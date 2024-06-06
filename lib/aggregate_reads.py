@@ -54,8 +54,8 @@ store_parquet = False
 store_txt = False
 
 # TODO: IN THE FUTURE, UPDATE THESE TO BE DYNAMICALLY LOCATED -S 
-window_model_dir = "/models/window_model_v1"
-base_model_dir = "/models/base_model_v1"
+window_model_dir = os.getcwd() + '/'+"models/window_model_v1/"
+base_model_dir = os.getcwd() + '/'+"models/base_model_v1/"
 
 
 class Read: 
@@ -714,42 +714,55 @@ def main(p5_path, bam_path, fasta_path, out_path, export, batchsize = 100, verb 
     LAST_TIME = datetime.datetime.now()
 
     export_dir = os.listdir(out_path)
+    
+    indexer = 0
+    
     if export:
         if VERBOSE: print("[ aggregate_reads.py {} ] Exporting to directory at {}...".format(LAST_TIME, out_path))
         for read in iterable_merged:
-            
+            indexer += 1
             if N_SAVED_TO_JSON == 0:
                 LAST_TIME = datetime.datetime.now()
             
             if store_json:
-                if VERBOSE: print("[ aggregate_reads.py {} ] STORAGE TYPE JSON".format(LAST_TIME, out_path))
+                #if VERBOSE: print("[ aggregate_reads.py {} ] STORAGE TYPE JSON".format(LAST_TIME, out_path))
                 if read.ref_name + '.json' not in export_dir:
                     read.export_to_json(out_path)
                     
             elif store_parquet:
-                if VERBOSE: print("[ aggregate_reads.py {} ] STORAGE TYPE PARQUET".format(LAST_TIME, out_path))
+                #if VERBOSE: print("[ aggregate_reads.py {} ] STORAGE TYPE PARQUET".format(LAST_TIME, out_path))
                 if read.ref_name not in export_dir:
                     read.feature_extraction(batchsize)
                     read.save_batches_to_parquet(out_path)
             
-            elif store_results:
-                if VERBOSE: print("[ aggregate_reads.py {} ] STORAGE TYPE TXT RESULTS".format(LAST_TIME, out_path))
-                filename = read.ref_name + '.txt'
-                feats = pd.concat(read.feature_extraction(1))
-                # Generate the models and load the pca I KNOW THATS NOT GOOD BUT I NEED TO DO IT
-                w_m, b_m = modeling.load_models(window_model_dir, base_model_dir)
-                w_p, b_p = modeling.load_pcas(window_model_dir, base_model_dir)
-
-                # gEnerate the windowwZsd
-                windows = modeling.window_detection(w_m, feats, w_p)
-
-                # GENERATE THE aoutput ductuinary pof identified windows and their bases
-                out_dict = {}
-                for window in windows:
-                    out_dict[str(window)] = modeling.windowed_base_detection(b_m, window, feats, b_p)
-                    
+            elif store_txt:
+                #if VERBOSE: print("[ aggregate_reads.py {} ] STORAGE TYPE TXT RESULTS".format(LAST_TIME, out_path))
+                filename = out_path + read.ref_name + '.txt'
+                print(filename)
+                #if VERBOSE: print("                                             {}".format(filename), end='\r')
+                batched_feats = read.feature_extraction(int(batchsize))
                 with open(filename, 'w') as f:
-                    f.write(out_dict)
+                    for feats in batched_feats:
+                        #feats = feats.dropna(how='any') 
+                        #print(len(feats))
+                        # Generate the models and load the pca I KNOW THATS NOT GOOD BUT I NEED TO DO IT
+                        w_m, b_m = modeling.load_models(window_model_dir, base_model_dir)
+                        w_p, b_p = modeling.load_pcas(window_model_dir, base_model_dir)
+
+                        # gEnerate the windowwZsd
+                        windows = modeling.window_detection(w_m, feats, w_p)
+                        # GENERATE THE aoutput ductuinary pof identified windows and their bases
+                        out_dict = {}
+                        for window in windows:
+                            out_dict[str(window)] = modeling.windowed_base_detection(b_m, window, feats, b_p)
+
+                        f.write(str(out_dict) + '\n')
+                        
+                        print(str(out_dict))
+                f.close()
+                    
+                
+
                 
         if VERBOSE: print("[ aggregate_reads.py {} ] Export complete. Have a nice day! :)                               ".format(datetime.datetime.now()))
         return out_path
@@ -790,6 +803,7 @@ if __name__ == '__main__':
     export = False
     batch_size = args.batch_size
     
+    
     if store_json:
         export = True
     elif store_parquet:
@@ -804,7 +818,7 @@ if __name__ == '__main__':
     if type(pod5_path) == type(None): pod5_path = input("[ aggregate_reads.py ] Pod5 path: ")
     if type(fasta_path) == type(None): fasta_path = input("[ aggregate_reads.py ] Reference fasta path: ")
     if type(output_path) == type(None) and export: output_path = input("[ aggregate_reads.py ] Output path: ")
-    if type(batch_size) == type(None): batchsize = 100
+    if type(batch_size) == type(None): batch_size = 100
 
     '''
     # Check if output is ok to be removed
@@ -818,7 +832,7 @@ if __name__ == '__main__':
         shutil.rmtree(output_path)
     '''
     # run the main method.
-    main(pod5_path, bam_path, fasta_path, output_path, export, batchsize)
+    main(pod5_path, bam_path, fasta_path, output_path, export, int(batch_size))
     print("[ aggregate_reads.py {} ] Closing.".format(datetime.datetime.now()))
     sys.exit()
 
