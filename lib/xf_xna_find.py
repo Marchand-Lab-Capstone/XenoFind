@@ -48,11 +48,11 @@ def split_fasta(input_file_path, output_directory):
             elif 'rev' in current_header:
                 rev_seqs.append((current_header, current_seq))
     
-    with open(fwd_output_file_path, 'w') as fwd_file:
+    with open(fwd_fasta_path, 'w') as fwd_file:
         for header, seq in fwd_seqs:
             fwd_file.write(f"{header}\n{seq}\n")
     
-    with open(rev_output_file_path, 'w') as rev_file:
+    with open(rev_fasta_path, 'w') as rev_file:
         for header, seq in rev_seqs:
             rev_file.write(f"{header}\n{seq}\n")
 
@@ -119,9 +119,9 @@ def preprocessing(working_directory, raw_data, reference_fasta, direction):
     
     return merged_pod5_path, filtered_bam_path
     
-def feature_extraction(working_dir, merged_pod5, fwd_aligned_bam, rev_aligned_bam, fwd_xfasta, rev_xfasta):
+def raw_basecall_features(working_dir, merged_pod5, aligned_bam, fasta):
     """
-    feature_extractions runs the script to extract features from raw data & 
+    raw_basecall_features runs the script to extract features from raw data & 
     sequence space and merge them. Outputs each reference sequence as a json 
     file containing the reads with their merged features. 
     """
@@ -129,17 +129,12 @@ def feature_extraction(working_dir, merged_pod5, fwd_aligned_bam, rev_aligned_ba
     directories_list = setup.setup_directory_system_find(working_dir)
     json_dir = directories_list[5] +'/'
     
-    #fwd reference sequences 
-    cmd = 'python lib/model_gen/data_concatenation.py '+merged_pod5+' '+fwd_aligned_bam+' '+fwd_xfasta+' '+json_dir
-    os.system(cmd)
-    
-    #reverse_reference sequences 
-    cmd = 'python lib/model_gen/data_concatenation.py '+merged_pod5+' '+rev_aligned_bam+' '+rev_xfasta+' '+json_dir
+    cmd = 'python lib/aggregate_reads.py -v -bam '+aligned_bam+' -pod5 '+merged_pod5+' -fasta '+fasta+' -output '+json_dir+' -json'
     os.system(cmd)
     
     return json_dir
 
-def consensus_features(json_dir):
+def consensus_features(working_dir, json_dir):
     """
     Takes in a the file path containing the json files with merged raw and 
     sequence space data. Calculates consensus features for each of json file. 
@@ -151,6 +146,7 @@ def consensus_features(json_dir):
     return 
     cons_features_list - list of dataframes containing consensus level features 
     """
+    directories_list = setup.setup_directory_system_find(working_dir)
     warnings.filterwarnings("ignore")  # stops a warning from spamming your output
     sys.path.append('..//')  # path to directory holding feature_extraction
     json_file_names = os.listdir(json_dir)
@@ -159,9 +155,10 @@ def consensus_features(json_dir):
     with alive_bar(len(json_file_names), title="Processing JSON files") as bar:
         for i in range(len(json_file_names)):
             json_file_path = os.path.join(json_dir, json_file_names[i])
-            consensus_features = fe.feature_extraction(json_file_path, verbose=False)
-            cons_features_list.append(consensus_features.T)
-            print('Consensus sequence', i, 'features', consensus_features.T)
+            #consensus_features = fe.feature_extraction(json_file_path, batch_size=100, verbose=False)
+            consensus_features = fe.batched_feature_extraction(json_file_path, batch_size=100)
+            cons_features_list.append(consensus_features)
+            print('Consensus sequence', i, 'features', consensus_features)
             bar()  # Update the progress bar
     return cons_features_list
 
@@ -175,22 +172,26 @@ def main():
     ref_dir = directories_list[2]
     
    #Consensus fasta splitting 
-    fwd_fasta, rev_fasta = split_fasta(in_f_dir)
+    fwd_fasta, rev_fasta = split_fasta(in_f_dir, ref_dir)
         
-    #fwd reads
-    merged_pod5_path, fwd_filtered_bam_path = preprocessing(in_w_dir, in_r_dir, fwd_fasta, 'fwd')
-    
-    #rev reads
-    merged_pod5_path, rev_filtered_bam_path = preprocessing(in_w_dir, in_r_dir, rev_fasta, 'rev')
-
-    #Generate json files for forward and reverse reads 
-    if xfp.regenerate_json or not os.listdir(directories_list[5]):
-        json_dir = feature_extraction(in_w_dir, merged_pod5_path, fwd_filtered_bam_path, rev_filtered_bam_path, fwd_xfasta, rev_xfasta)
-    else: 
-        json_dir = directories_list[5]
+    #Extra Parameter Check since realignment takes so long. Add an additional conditional that double checks if fwd, rev exist, and if pod5 exists 
+    if xfp.regenerate_preprocessing == True:
+        #fwd reads
+        merged_pod5_path, fwd_filtered_bam_path = preprocessing(in_w_dir, in_r_dir, fwd_fasta, 'fwd')
+        
+        #rev reads
+        merged_pod5_path, rev_filtered_bam_path = preprocessing(in_w_dir, in_r_dir, rev_fasta, 'rev')
+    else:
+        merged_pod5_path = os.path.join(directories_list[3], 'merged.pod5')
+        fwd_filtered_bam_path = os.path.join(directories_list[4], 'fwd_filtered.bam')
+        rev_filtered_bam_path = os.path.join(directories_list[4], 'rev_filtered.bam')
+        
+    #feature aggregation
+    json_dir = raw_basecall_features(in_w_dir, merged_pod5_path, fwd_filtered_bam_path, fwd_fasta)
+    json_dir = raw_basecall_features(in_w_dir, merged_pod5_path, rev_filtered_bam_path, rev_fasta)
 
     #Extract list consensus features 
-    consensus_features_list = consensus_features(json_dir)
+    consensus_features_list = consensus_features(in_w_dir, json_dir)
 
 if __name__ == '__main__':
     main()

@@ -123,8 +123,8 @@ def consensus_features(working_dir, json_dir):
             json_file_path = os.path.join(json_dir, json_file_names[i])
             #consensus_features = fe.feature_extraction(json_file_path, batch_size=100, verbose=False)
             consensus_features = fe.batched_feature_extraction(json_file_path, batch_size=100)
-            cons_features_list.append(consensus_features.T)
-            print('Consensus sequence', i, 'features', consensus_features.T)
+            cons_features_list.append(consensus_features)
+            print('Consensus sequence', i, 'features', consensus_features)
             bar()  # Update the progress bar
     return cons_features_list
 

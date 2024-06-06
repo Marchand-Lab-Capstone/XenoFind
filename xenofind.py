@@ -45,7 +45,7 @@ parser_train.add_argument('-w',metavar = '[working_dir]', type=str,required = Tr
 parser_train.add_argument('-f',metavar ='[raw_dir]', type=str,required = True, help='Path to input directories containing multi-fast5 or pod5 folder')
 parser_train.add_argument('-r',metavar = '[placeholder_fasta]', type=str, required = True, help='Path to FASTA (.fa, .fasta) file of sequence or sequences with barcodes for alignment and randomer placeholders for consensus formation. ')
 
-#Consensus Formation
+#Model Generatiom
 parser_train = subparsers.add_parser('model_gen', help='[-w working_dir] [-f raw_dir] [-r placeholder_fasta]')
 parser_train.add_argument('-w',metavar = '[working_dir]', type=str,required = True, help='Path to output directory for storing outputs and intermediates')
 parser_train.add_argument('-f',metavar ='[raw_dir]', type=str,required = True, help='Path to input directories containing multi-fast5 or pod5 folder')
