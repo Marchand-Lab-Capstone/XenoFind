@@ -1,0 +1,1 @@
+cuda|20|2|[22, 20, 10]|Tanh()|CrossEntropyLoss()|12|1|42|[0.3, 0.5]|

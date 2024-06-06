@@ -42,6 +42,8 @@ import feature_extraction as fe
 import setup_methods
 import shutil
 
+import modeling
+
 VERBOSE = False
 N_SAVED_TO_JSON = 0
 N_TOTAL_CONSENSUS = 0
@@ -49,6 +51,12 @@ LAST_TIME = datetime.datetime.now()
 TOTAL_ELAPSED = 0
 store_json = False
 store_parquet = False
+store_txt = False
+
+# TODO: IN THE FUTURE, UPDATE THESE TO BE DYNAMICALLY LOCATED -S 
+window_model_dir = "/models/window_model_v1"
+base_model_dir = "/models/base_model_v1"
+
 
 class Read: 
     '''
@@ -714,17 +722,40 @@ def main(p5_path, bam_path, fasta_path, out_path, export, batchsize = 100, verb 
                 LAST_TIME = datetime.datetime.now()
             
             if store_json:
+                if VERBOSE: print("[ aggregate_reads.py {} ] STORAGE TYPE JSON".format(LAST_TIME, out_path))
                 if read.ref_name + '.json' not in export_dir:
                     read.export_to_json(out_path)
                     
             elif store_parquet:
+                if VERBOSE: print("[ aggregate_reads.py {} ] STORAGE TYPE PARQUET".format(LAST_TIME, out_path))
                 if read.ref_name not in export_dir:
                     read.feature_extraction(batchsize)
                     read.save_batches_to_parquet(out_path)
+            
+            elif store_results:
+                if VERBOSE: print("[ aggregate_reads.py {} ] STORAGE TYPE TXT RESULTS".format(LAST_TIME, out_path))
+                filename = read.ref_name + '.txt'
+                feats = pd.concat(read.feature_extraction(1))
+                # Generate the models and load the pca I KNOW THATS NOT GOOD BUT I NEED TO DO IT
+                w_m, b_m = modeling.load_models(window_model_dir, base_model_dir)
+                w_p, b_p = modeling.load_pcas(window_model_dir, base_model_dir)
+
+                # gEnerate the windowwZsd
+                windows = modeling.window_detection(w_m, feats, w_p)
+
+                # GENERATE THE aoutput ductuinary pof identified windows and their bases
+                out_dict = {}
+                for window in windows:
+                    out_dict[str(window)] = modeling.windowed_base_detection(b_m, window, feats, b_p)
+                    
+                with open(filename, 'w') as f:
+                    f.write(out_dict)
+                
         if VERBOSE: print("[ aggregate_reads.py {} ] Export complete. Have a nice day! :)                               ".format(datetime.datetime.now()))
         return out_path
     else:
         return iterable_merged
+    
                 
         
 if __name__ == '__main__':
@@ -739,6 +770,7 @@ if __name__ == '__main__':
     parser.add_argument('-output', help="Output filepath.")
     parser.add_argument('-json', help="flags output as JSON type", action = "store_true")
     parser.add_argument('-parquet', help="flags output as parquet type", action = "store_true")
+    parser.add_argument('-txt', help="flags output as txt model results", action = "store_true")
     parser.add_argument('-batch_size', help="number of reads per batched consensus. Default=100")
     
     
@@ -754,12 +786,15 @@ if __name__ == '__main__':
     output_path = args.output
     store_json = args.json
     store_parquet = args.parquet
+    store_txt = args.txt
     export = False
     batch_size = args.batch_size
     
     if store_json:
         export = True
     elif store_parquet:
+        export = True
+    elif store_txt:
         export = True
     else:
         export = False

@@ -4,6 +4,7 @@ J. Sumabat, N, Lai, S. Peck, Y. Huang
 4/29/2024 -- Created by S. Peck
 5/5/2024 -- Updated by S. Peck
 5/16/2024 -- Updated by S. Peck
+5/21/2024 -- Updated by S. Peck
 
 feature_extraction.py contains methods useful for extracting possible ml features from
 a consensus of reads and their aggregate information as produced by merge_consensus.py.
@@ -228,6 +229,13 @@ def shift_to_alignment(ops, sigs, seq, quals, ref_len, r):
              qualities, and signals. 
     
     '''
+    
+    def swaplisttype(val):
+        if type(val) != type([]):
+            val = val.tolist()
+        return val
+    sigs = swaplisttype(sigs)
+    quals = swaplisttype(quals)
     # per-read alignment shifter
     
     # set up a dummy variable to hold the current base position
@@ -1016,10 +1024,16 @@ def feature_extraction(json_path):
     in_del_sigs = mess_with_in_del.T.add_suffix('_i-d')
     wo_in_del_sigs = mess_wo_in_del.T.add_suffix('_w/o')
 
-    xna_idx = int(consensus_id.split(':')[-1].split(']')[0])
+    
     xna_df = pd.DataFrame(mismatch_probs.index, columns = ['XNA_PRESENT'])
-    xna_df['XNA_PRESENT'] = 0
-    xna_df['XNA_PRESENT'][xna_idx] = 1
+    
+    try:
+        xna_idx = int(consensus_id.split('#')[-1].split(']')[0])
+        xna_df['XNA_PRESENT'][xna_idx] = 1
+        xna_df['XNA_PRESENT'] = 0
+    except:
+        xna_df['XNA_PRESENT'] = 0
+
     
     assembled_features = pd.concat([xna_df, base_probs, mismatch_probs, shentropy_col, no_quals, id_quals, rawmeds, in_del_sigs, wo_in_del_sigs], axis=1)
     if VERBOSE: print(str(datetime.datetime.now()) + ' features assembled.  ')
@@ -1113,10 +1127,13 @@ def extract_batch_features(read_batch, ref_seq, freq, consensus_id):
     in_del_sigs = mess_with_in_del.T.add_suffix('_i-d')
     wo_in_del_sigs = mess_wo_in_del.T.add_suffix('_w/o')
 
-    xna_idx = int(consensus_id.split(':')[-1].split(']')[0])
     xna_df = pd.DataFrame(mismatch_probs.index, columns = ['XNA_PRESENT'])
     xna_df['XNA_PRESENT'] = 0
-    xna_df['XNA_PRESENT'][xna_idx] = 1
+    try:
+        xna_idx = int(consensus_id.split('#')[-1].split(']')[0])
+        xna_df['XNA_PRESENT'][xna_idx] = 1
+    except:
+        xna_df['XNA_PRESENT'] = 0
     
     assembled_features = pd.concat([xna_df, base_probs, mismatch_probs, shentropy_col, no_quals, id_quals, rawmeds, in_del_sigs, wo_in_del_sigs], axis=1)
     
@@ -1133,15 +1150,23 @@ def batched_feature_extraction(json_path, batch_size):
     batch_size: positive int representing size of each batch of reads
     '''
     
+    if VERBOSE: print("[ feature_extraction.py {} ] Reading json at {}...".format(datetime.datetime.now(),json_path), end = '\r')
     # extract the cnsensus id, data dict, reference sequence, and frequency from the json
     consensus_id, data_dict, ref_seq, freq = load_info_from_json(json_path)
+    if VERBOSE: print("[ feature_extraction.py {} ] json read.                                            ".format(datetime.datetime.now(),json_path))
     
     # read the alignment data
+    if VERBOSE: print("[ feature_extraction.py {} ] Extracting alignment...".format(datetime.datetime.now(),json_path), end = '\r')
     read_alignment_data =extract_alignment_from_dict(data_dict, ref_seq)
+    if VERBOSE: print("[ feature_extraction.py {} ] Alignment extracted.                                  ".format(datetime.datetime.now(),json_path))
     
     # convert the reads to batches of reads
+    if VERBOSE: print("[ feature_extraction.py {} ] Batching reads...".format(datetime.datetime.now(),json_path), end = '\r')
     batched_reads = batch_read_alignment_data(read_alignment_data, batch_size)
+    if VERBOSE: print("[ feature_extraction.py {} ] Reads batched.                                        ".format(datetime.datetime.now(),json_path))
     
+    
+    if VERBOSE: print("[ feature_extraction.py {} ] Extracting features...".format(datetime.datetime.now(),json_path), end = '\r')
     # create an empty list to hold the touples of reads
     prepped_batches = []
     
@@ -1156,7 +1181,7 @@ def batched_feature_extraction(json_path, batch_size):
     # use the multiprocessing to run all the batches at once. 
     with multiprocessing.Pool(processes=len(batched_reads)) as feat_gen_pool:
         batched_assembled_features = feat_gen_pool.starmap(extract_batch_features, prepped_batches)
-        
+    if VERBOSE: print("[ feature_extraction.py {} ] Features extracted.                                      ".format(datetime.datetime.now(),json_path))
     # return the batched features.
     return batched_assembled_features
 
@@ -1200,7 +1225,7 @@ if __name__ == '__main__':
     json_path = args.json_path
     output_path = args.output
 
-    if type(json_path) == type(None): bam_path = input("[ feature_extraction.py ] Json Path: ")
+    if type(json_path) == type(None): json_path = input("[ feature_extraction.py ] Json Path: ")
     if type(output_path) == type(None): pod5_path = input("[ feature_extraction.py ] Output path: ")
     
     assembled_features = main(json_path, batch_size)
@@ -1208,9 +1233,14 @@ if __name__ == '__main__':
     for i in range(len(assembled_features)):
         batched_consensus = assembled_features[i]
         output_filepath = output_path + "consensus{}.parquet".format(i)
-        print(output_filepath)
+        #print(output_filepath, end='\r')
+                # remove any existing json with that filepath
+        if os.path.exists(output_filepath):
+            os.remove(output_filepath)
+            
         batched_consensus.to_parquet(output_filepath)
-        
+
+    if VERBOSE: print("[ feature_extraction.py {} ] Closing.".format(datetime.datetime.now()))
     sys.exit()
     
         
