@@ -2,6 +2,7 @@
 aggregate_reads.py 
 J. Sumabat, N. Lai, S. Peck, Y. Huang
 5/21/2024 -- Created by S. Peck
+6/10/2024 -- Updated by S. Peck
 
 aggregate_reads.py is designed around importing a bamfile of reads, a consensensus fasta, and a pod5 file, 
 and then combining the information contained into separate json files organized by consensus sequence and constituent reads.
@@ -13,15 +14,19 @@ Classes:
 Read - stores read id, signal, frequency of given read
 JointBamReads - stores reference name and iterator of Reads for a reference
 ConsensusReadsData - stores all information that could be saved to a json file, as well as the method to do so.
+                    - export_to_json() exports the object to a json file of the reference sequence and its reads.
+                    - feature_extraction() exports features of the reference as batches of parquet files after running feature extraction
+
 
 Methods:
+percenttobar() - converts a fractional value to a loading progress bar string.
 load_bam() - uses pysam to load relevant information from a bamfile.
 load_fasta() - reads a fasta of consensus sequences.
 map_signal_to_moves() - map a nanopore sequencing signal to the corresponding moves table extracted from that read's bamfile.
 iterable_reads() - creates an iterable generator of Read objects constructed from the pod5 file.
 aggregate_reads_to_reference() - generates a list of JointBamReads based on a pod5 path and bam data.
 iterable_merged_data() - create a generator of ConsensusReadsData objects from alignment data and the fasta data
-main() - run all steps needed to convert bam, pod5, and fasta to several json at output dir.
+main() - run all steps needed to convert bam, pod5, and fasta to either json, parquet, or identified xna textfiles
 '''
 import os
 import sys
@@ -52,11 +57,6 @@ TOTAL_ELAPSED = 0
 store_json = False
 store_parquet = False
 store_txt = False
-
-# TODO: IN THE FUTURE, UPDATE THESE TO BE DYNAMICALLY LOCATED -S 
-window_model_dir = os.getcwd() + '/'+"models/window_model_v1/"
-base_model_dir = os.getcwd() + '/'+"models/base_model_v1/"
-
 
 class Read: 
     '''
@@ -661,7 +661,15 @@ def iterable_merged_data(aggregate_refs, alignment_data, consensus_data):
         
 
 
-def main(p5_path, bam_path, fasta_path, out_path, export, batchsize = 100, verb = False):
+def main(p5_path,
+         bam_path,
+         fasta_path,
+         out_path,
+         export,
+         batchsize = 100,
+         verb = False,
+         window_model_dir= str(os.getcwd() + "/../models/window_model_v1/"),
+         base_model_dir= str(os.getcwd() + "/../models/base_model_v1/")):
     '''
     main() serves to act as a method for processing each step in the process of extracting reads to
     constituent json files.
@@ -674,6 +682,8 @@ def main(p5_path, bam_path, fasta_path, out_path, export, batchsize = 100, verb 
     export: boolean (default false) for if the output should be saved. Currently does not work unless run as script, as no JSON or PARQUET is specified.
     batchsize: size of the batch for multiprocessing the read aggregation. defualt of 100.
     verb: flips verbosity variable if True
+    window_model_dir: path to directory holding PyTorchClassifier export data, defaults to window_model_v1
+    base_model_dir: path to directory holding PyTorchClassifier export data, defaults to base_model_v1
     
     Returns:
     generator object for the consensuses, or path to saved files if exporting.
@@ -699,7 +709,7 @@ def main(p5_path, bam_path, fasta_path, out_path, export, batchsize = 100, verb 
     if VERBOSE: print("[ aggregate_reads.py {} ] Aggregating bam read data from pod5 file at {}...".format(datetime.datetime.now(), p5_path), end="\r")
 
     list_of_joint_bam_reads = aggregate_reads_to_reference(p5_path, bam_data) ######
-    if VERBOSE: print("[ aggregate_reads.py {} ] Aggregation complete.                                                                                                                           ")
+    if VERBOSE: print("[ aggregate_reads.py {} ] Aggregation complete.                                                                                                                           ".format(datetime.datetime.now()))
     
     # read the batched bam reads
     if VERBOSE: print("[ aggregate_reads.py {} ] Batching the data...".format(datetime.datetime.now()), end='\r')
@@ -748,7 +758,7 @@ def main(p5_path, bam_path, fasta_path, out_path, export, batchsize = 100, verb 
                         # Generate the models and load the pca I KNOW THATS NOT GOOD BUT I NEED TO DO IT
                         w_m, b_m = modeling.load_models(window_model_dir, base_model_dir)
                         w_p, b_p = modeling.load_pcas(window_model_dir, base_model_dir)
-
+                        
                         # gEnerate the windowwZsd
                         windows = modeling.window_detection(w_m, feats, w_p)
                         # GENERATE THE aoutput ductuinary pof identified windows and their bases
@@ -784,8 +794,9 @@ if __name__ == '__main__':
     parser.add_argument('-json', help="flags output as JSON type", action = "store_true")
     parser.add_argument('-parquet', help="flags output as parquet type", action = "store_true")
     parser.add_argument('-txt', help="flags output as txt model results", action = "store_true")
-    parser.add_argument('-batch_size', help="number of reads per batched consensus. Default=100")
-    
+    parser.add_argument('-batch_size', help="number of reads per batch. Default=100")
+    parser.add_argument('-wm', help='Path to the desired window model. Defaults to in-built window model.')
+    parser.add_argument('-bm', help='Path to the desired base model. Defaults to in-built base model.')
     
     # Parse the arguments
     args = parser.parse_args()
@@ -802,6 +813,8 @@ if __name__ == '__main__':
     store_txt = args.txt
     export = False
     batch_size = args.batch_size
+    window_model_dir = args.wm
+    base_model_dir = args.bm
     
     
     if store_json:
@@ -819,20 +832,20 @@ if __name__ == '__main__':
     if type(fasta_path) == type(None): fasta_path = input("[ aggregate_reads.py ] Reference fasta path: ")
     if type(output_path) == type(None) and export: output_path = input("[ aggregate_reads.py ] Output path: ")
     if type(batch_size) == type(None): batch_size = 100
-
-    '''
-    # Check if output is ok to be removed
-    if (wipe_output == False) and (export):
-        resp = input("[ aggregate_reads.py ] files in {} will be removed. Continue? [Y/N]:".format(output_path))
-        if str(resp) == 'Y':
-            wipe_output = True
-
-    # wipe the output directory if selected
-    if (wipe_output == True) and (export):
-        shutil.rmtree(output_path)
-    '''
+    if type(window_model_dir == type(None)): window_model_dir = os.getcwd() + "/../models/window_model_v1/"
+    if type(base_model_dir == type(None)): base_model_dir = os.getcwd() + "/../models/base_model_v1/"
     # run the main method.
-    main(pod5_path, bam_path, fasta_path, output_path, export, int(batch_size))
+
+    main(pod5_path,
+         bam_path,
+         fasta_path,
+         output_path,
+         export,
+         int(batch_size),
+         VERBOSE,
+         window_model_dir,
+         base_model_dir)
+    
     print("[ aggregate_reads.py {} ] Closing.".format(datetime.datetime.now()))
     sys.exit()
 

@@ -1,24 +1,27 @@
 '''
 modeling.py
-Written by S. Peck at 8:46 PM on the wednesday night before this whole thing comes due
+S. Peck
 
+modeling.py contains methods critical for running an evaluation of XNA location using 
+the machine learning methods from a given PyTorchClassifier. 
 
-
-
-Dave, im so sorry
+run_check_device() - checks the current device pytorch is running on, or can run on
+percenttobar() - converts a percentage value to a progress bar string
+activ_func_parser() - parses an activity function string.
+loss_func_parser() - parses a loss function from parameters
+get_model_params() - generates the model parameter tuple from a directory.
+load_models() - loads the pytorch classifier models from the directories passed.
+load_pcas() - loads the window model and the base model PCA as exported from model training. NOT GOOD CODE OR ML TODO
+window_detection() - uses a pytorcclassifier to detect XNA windows from a dataframe of features
+windowed_base_detection() - uses a pytorchclassifier to detect XNA within a window from a dataframe of features.
 '''
 
-
-# ------------------------ MASS IMPORT OF JUNK THAT I MAY OR MAY NOT NEED 
 # First, we import all the relevant packages:
 # Base packages for data processing and cleanliness
 import os
 import sys
 import numpy as np
-import subprocess
-import multiprocessing
 import itertools
-import matplotlib.pyplot as plt
 import pandas as pd
 import random
 import datetime
@@ -55,6 +58,14 @@ DEVICE=(
 )
 
 def run_check_device():
+    '''
+    run_check_device() checks which devices are available to run pytorch on and returns it as a string.
+    Parameters:
+    N/A
+    
+    Returns:
+    string indicating torch capable device.
+    '''
     d = (
     "cuda"
     if torch.cuda.is_available()
@@ -67,6 +78,14 @@ def run_check_device():
 
 
 def percenttobar(frac):
+    '''
+    Percenttobar takes in a fraction and reutrns a progress bar.
+    Parameters:
+    frac: fraction, as a float
+    
+    Returns:
+    string representation of progress out of 100% to get that fraction.
+    '''
     bar_str = "|"
     max_bars = 20
     perc = frac*2000
@@ -81,7 +100,15 @@ def percenttobar(frac):
 
 def activ_func_parser(act_str):
     '''
-    parses an activity function string. Currently only works with nn.tanh()
+    parses an activation function string. Currently only works with nn.tanh()
+    
+    Parameters:
+    act_str: string containing the activation function from params
+    
+    Returns:
+    currently only returns nn.Tanh() function
+    
+    TODO: Add more activity function options
     '''
     if act_str == 'Tanh()':
         return nn.Tanh()
@@ -93,6 +120,18 @@ def loss_func_parser(loss_str, wt, device):
     '''
     parses a loss function string with weight and device. Currently only uses
     nn.CrossEntropyLoss()
+    
+    Parameters: 
+    loss_str: the string representation of a loss function
+    wt: list containing weights of classes
+    device: device to pass tensors to
+    
+    Returns:
+    if the weight array has more than 1 class, nn.CrossEntropyLoss with weights
+    otherwise, nn.CrossEntropyLoss()
+    
+    TODO: 
+    Add more loss functions
     '''
     if len(wt) > 1:
         wt = torch.tensor(wt).type(torch.float).to(device)
@@ -106,10 +145,15 @@ def get_model_params(model_dir):
     '''
     generates the model paramater touple from a given model directory.
     assumes model directory contains 'params.txt'.
+    
+    Parameters:
+    model_dir: directory to model parameters
+    
+    Returns: a tuple of the parameters for the model
     '''
     DEVICE = run_check_device()
     param_string = None
-    with open(os.path.join(model_dir,"params.txt"), 'r') as f:
+    with open(model_dir+"params.txt", 'r') as f:
         param_string = f.readline()
 
     param_list = param_string.split("|")
@@ -142,6 +186,20 @@ def load_models(window_model_dir, base_model_dir):
     '''
     this is very hastily written code and should be revised to be better. 
     forgive me :( -S
+    
+    load_models takes in a window model and base model directory,
+    and then loads the parameters to generate PyTorchClassifiers with them
+    
+    Parameters:
+    window_model_dir: path, as str, to window model directory
+    base_model_dir: path, as str, to base_model directory
+    
+    Returns:
+    pytorchclassifiers of( window model, base model) as tuple
+    
+    TODO: 
+    Make individual so that it doesnt require both base and window.
+    
     '''
     run_check_device()
     # open params:
@@ -162,6 +220,19 @@ def load_models(window_model_dir, base_model_dir):
 def load_pcas(window_model_dir, base_model_dir):
     '''
     Dave, I know this is bad code and bad ML but genuinely i am writing this on wednesday at 8:10 pm -S
+    
+    load_pcas tkaes in a window model directory, a base model directory,
+    and then loads the PCA for each that was exported.
+    
+    Parameters:
+    window_model_dir: path to window model directory as str
+    base_model_dir: path to base model directory as str
+    
+    Returns:
+    tuple of windowed pca, based pca.
+    
+    TODO:
+    REMOVE THIS, PCA SHOULD BE RUN ON EACH INDIVIDUAL DATASET
     '''
     pca_window = pk.load(open(window_model_dir+"pca.pkl",'rb'))
     pca_base = pk.load(open(base_model_dir+"pca.pkl", 'rb'))
@@ -171,6 +242,14 @@ def load_pcas(window_model_dir, base_model_dir):
 def window_detection(window_model, read_feature_df, pca):
     '''
     uses a window model to detect xna windows from the data
+    
+    Parameters:
+    window_model: pytorchclassifier of the window model
+    read_feature_df: dataframe of all the read features for each base
+    pca: the pca used when training the window model
+    
+    Returns:
+    a list of tuples representing the windows XNA were detected in using the model.
     '''
     DEVICE = run_check_device()
     # step 1: split the data into windows of size 7 ----------------
@@ -233,6 +312,18 @@ def window_detection(window_model, read_feature_df, pca):
 def windowed_base_detection(base_model, window, read_feature_df, pca):
     '''
     uses a base model to detect bases from a window
+    
+    parameters:
+    base_model: pytorchclassifier trained on windowed bases
+    window: tuple of lower and upper bound of window of detection
+    read_feature_df: dataframe containing the read features for all bases in the reference
+    pca: pca the base_model was trained on
+    
+    Returns:
+    list of bases detected as XNA in the given window
+    
+    TODO:
+    REMOVE PCA FROM PARAMS AND INCLUDE INSIDE
     '''
     DEVICE = run_check_device()
     
