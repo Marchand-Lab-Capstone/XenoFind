@@ -737,7 +737,7 @@ def main(p5_path, bam_path, fasta_path, out_path, export, batchsize = 100, verb 
             
             elif store_txt:
                 #if VERBOSE: print("[ aggregate_reads.py {} ] STORAGE TYPE TXT RESULTS".format(LAST_TIME, out_path))
-                filename = out_path + read.ref_name + '.txt'
+                filename = os.path.join(out_path,read.ref_name + '.txt')
                 print(filename)
                 #if VERBOSE: print("                                             {}".format(filename), end='\r')
                 batched_feats = read.feature_extraction(int(batchsize))

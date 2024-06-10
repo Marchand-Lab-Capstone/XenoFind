@@ -120,7 +120,7 @@ def preprocessing(working_directory, raw_data, reference_fasta, direction):
     
     return merged_pod5_path, filtered_bam_path
     
-def locate_XNA(working_dir, merged_pod5, aligned_bam, fasta):
+def locate_XNA(working_dir, merged_pod5, aligned_bam, fasta, direction):
     """
     raw_basecall_features runs the script to extract features from raw data & 
     sequence space and merge them. Outputs each reference sequence's XNA predictions as text files
@@ -128,9 +128,9 @@ def locate_XNA(working_dir, merged_pod5, aligned_bam, fasta):
     """
     #Set up directory system
     directories_list = setup.setup_directory_system_find(working_dir)
-    out_dir = directories_list[7] +'/'
+    out_dir = setup.check_make_dir(os.path.join(directories_list[7], direction))
     
-    cmd = 'python lib/aggregate_reads.py -v -bam '+aligned_bam+' -pod5 '+merged_pod5+' -fasta '+fasta+' -output '+out_dir+' -txt'+ '-batch_size 100000000'
+    cmd = 'python lib/aggregate_reads.py -v -bam '+aligned_bam+' -pod5 '+merged_pod5+' -fasta '+fasta+' -output '+out_dir+' -txt '+ '-batch_size 100000000'
     os.system(cmd)
     
     return out_dir
@@ -188,11 +188,10 @@ def main():
         rev_filtered_bam_path = os.path.join(directories_list[4], 'rev_filtered.bam')
         
     #feature aggregation
-    json_dir = locate_XNA(in_w_dir, merged_pod5_path, fwd_filtered_bam_path, fwd_fasta)
-    json_dir = locate_XNA(in_w_dir, merged_pod5_path, rev_filtered_bam_path, rev_fasta)
+    fwd_xna_dir = locate_XNA(in_w_dir, merged_pod5_path, fwd_filtered_bam_path, fwd_fasta, 'fwd')
+    rev_xna_dir = locate_XNA(in_w_dir, merged_pod5_path, rev_filtered_bam_path, rev_fasta, 'rev')
 
-    #Extract list consensus features 
-    #consensus_features_list = consensus_features(in_w_dir, json_dir)
+    #Generate an xFASTA file from the found xna positiosn 
 
 if __name__ == '__main__':
     main()

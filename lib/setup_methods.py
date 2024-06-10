@@ -103,7 +103,7 @@ def setup_directory_system_find(working_directory):
     bcdir = check_make_dir(os.path.join(find_dir, 'basecall_directory')) #4
     json_dir = check_make_dir(os.path.join(find_dir, 'json_files')) #5
     parquet_dir = check_make_dir(os.path.join(find_dir, 'parquet_superdirectory')) #6
-    output_directory = check_make_dir(os.path.join(preprocess_dir, "output/")) #7
+    output_directory = check_make_dir(os.path.join(find_dir, "output/")) #7
     return [wdir,find_dir, ref_dir, p5dir,bcdir, json_dir, parquet_dir, output_directory]
     
 def contains_xna_bases(fasta_file, xna_base_pairs):

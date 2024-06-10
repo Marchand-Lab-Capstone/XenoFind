@@ -109,7 +109,7 @@ def get_model_params(model_dir):
     '''
     DEVICE = run_check_device()
     param_string = None
-    with open(model_dir+"params.txt", 'r') as f:
+    with open(os.path.join(model_dir,"params.txt"), 'r') as f:
         param_string = f.readline()
 
     param_list = param_string.split("|")

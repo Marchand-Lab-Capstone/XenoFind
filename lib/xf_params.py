@@ -18,15 +18,15 @@ import numpy as np
 ##Analysis instructions 
 
 #Remerge fast5 or pod5 files into single pod5 file 
-regenerate_pod5 = True
+regenerate_pod5 = False
 
 #Re-basecall pod5 file. Required if new reference files are being used. 
-basecall_pod = True
+basecall_pod = False
 
 #Perform Quality Score Analysis 
 analyze_fastq = True
 
-#Reperform Preprocessing
+#Re-perform Preprocessing
 regenerate_preprocessing = True
 
 ######################XFASTA GENERATION######################
